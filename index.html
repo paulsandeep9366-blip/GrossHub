@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GrossHub | Agartala's Favorite Local Grocery Express</title>
+  <meta name="description" content="GrossHub delivers fresh groceries, daily essentials, rice, dals, oils and produce directly to your doorstep in Agartala, Tripura in 30-45 minutes.">
+  <meta name="theme-color" content="#064e3b">
+
+  <!-- OpenGraph / Social Meta Tags -->
+  <meta property="og:title" content="GrossHub - Fresh Groceries Delivered in 30-45 Mins">
+  <meta property="og:description" content="Fast online grocery shopping in Bhattapukur, Agartala. Order on Website or directly via WhatsApp.">
+  <meta property="og:image" content="images/hero-basket.jpg">
+  <meta property="og:type" content="website">
+
+  <!-- Favicons & App Icons -->
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="top-announcement-bar">
+    <span>⚡ <strong>30-45 Min Express Delivery</strong> in Agartala • Free Delivery above <span id="bannerFreeThreshold">₹499</span>!</span>
+    <div class="top-bar-links">
+      <a href="javascript:void(0)" onclick="openModal('customerPortalModal')">👤 My Account</a>
+      <a href="javascript:void(0)" onclick="openModal('riderModal')">🛵 Rider Mode</a>
+      <a href="javascript:void(0)" onclick="openModal('adminModal')">⚙️ Merchant Admin</a>
+    </div>
+  </div>
+
+  <!-- Main Navigation Header -->
+  <header class="main-header">
+    <div class="header-container">
+      <a href="/" class="brand-logo-wrap" title="GrossHub Home">
+        <img src="icons/icon.svg" alt="GrossHub Logo" class="brand-logo-img">
+        <div class="brand-info">
+          <h1 class="store-name-text">GrossHub</h1>
+          <div style="display:flex; align-items:center;">
+            <span>Bhattapukur, Agartala</span>
+            <span id="storeStatusBadge" class="status-pill open">
+              <span class="dot"></span> Open Now
+            </span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Instant Live Search Bar -->
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="search" id="storeSearchInput" class="search-input" placeholder="Search rice, mustard oil, dal, tea, vegetables..." autocomplete="off">
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="header-actions">
+        <button class="header-btn btn-track" onclick="openModal('trackingModal')" title="Track live order status">
+          📍 <span>Track Order</span>
+        </button>
+        <button class="header-btn btn-header-wa" onclick="proceedToWhatsAppOrder()" title="Quick order via WhatsApp">
+          💬 <span>WhatsApp</span>
+        </button>
+        <button class="header-btn btn-cart-trigger" onclick="openCartDrawer()" title="View your shopping cart">
+          🛒 <span>Cart</span>
+          <span class="cart-count-badge" style="display: none;">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Banner Section -->
+  <section class="hero-section">
+    <div class="hero-banner-card">
+      <div class="hero-decor-circle"></div>
+      <div class="hero-text-content">
+        <div class="hero-badge-pill">
+          <span>⚡ Local Agartala Express</span>
+          <span>•</span>
+          <span>100% Authentic & Fresh</span>
+        </div>
+        <h2 class="hero-title">
+          Fresh Groceries Delivered in <span>30-45 Mins</span>
+        </h2>
+        <p class="hero-subtitle store-tagline-text">
+          Agartala's premier local grocery service in Bhattapukur. Quality essentials, wholesale local rates, and instant home delivery.
+        </p>
+
+        <div class="hero-features-list">
+          <div class="hf-item"><span>🥬</span> Farm-Fresh Daily</div>
+          <div class="hf-item"><span>💵</span> Cash on Delivery & UPI</div>
+          <div class="hf-item"><span>🚀</span> Free Delivery over ₹499</div>
+        </div>
+
+        <div class="hero-cta-group">
+          <button class="btn-hero-primary" onclick="document.getElementById('catalogSection').scrollIntoView({behavior:'smooth'})">
+            🛒 Browse Catalog
+          </button>
+          <button class="btn-hero-wa" onclick="proceedToWhatsAppOrder()">
+            💬 Order on WhatsApp
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-image-wrap">
+        <img src="images/hero-basket.jpg" alt="Fresh Grocery Basket GrossHub" class="hero-main-img">
+      </div>
+    </div>
+  </section>
+
+  <!-- Category Pills Navigation Bar -->
+  <section class="category-section" id="catalogSection">
+    <div class="category-pills-bar" id="categoryPillsContainer">
+      <!-- Injected dynamically by app.js -->
+    </div>
+  </section>
+
+  <!-- Main Catalog Content -->
+  <main class="main-content">
+    <div class="catalog-header-bar">
+      <div class="catalog-title-group">
+        <h2>Grocery Essentials</h2>
+        <span id="displayedProductsCount">Loading products...</span>
+      </div>
+
+      <div class="catalog-controls">
+        <label for="storeSortSelect" style="font-size:0.85rem; font-weight:600; color:var(--slate-600);">Sort by:</label>
+        <select id="storeSortSelect" class="sort-select">
+          <option value="featured">✨ Featured Items</option>
+          <option value="price-low">💵 Price: Low to High</option>
+          <option value="price-high">💎 Price: High to Low</option>
+          <option value="discount">🏷️ Highest Savings</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="products-grid" id="productsGrid">
+      <!-- Injected dynamically by app.js -->
+    </div>
+  </main>
+
+  <!-- Slide-out Cart Drawer -->
+  <div class="cart-drawer-backdrop" id="cartDrawerBackdrop" onclick="closeCartDrawer()"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="drawer-header">
+      <div class="drawer-title-box">
+        <span>🛒</span>
+        <h3>Your Grocery Basket</h3>
+        <span class="cart-count-badge">0</span>
+      </div>
+      <button class="btn-drawer-close" onclick="closeCartDrawer()" title="Close Cart">✕</button>
+    </div>
+
+    <!-- Free Delivery Progress Meter -->
+    <div class="free-delivery-meter">
+      <div class="progress-text" id="freeDeliveryProgressText">
+        Add <strong>₹499</strong> more to unlock <strong>FREE Delivery!</strong>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="freeDeliveryProgressFill" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="cart-drawer-empty" id="cartDrawerEmpty">
+      <div class="cde-icon">🧺</div>
+      <h4>Your basket is empty</h4>
+      <p>Explore our wide selection of fresh grains, oils, dairy, and vegetables to start shopping.</p>
+      <button class="btn-hero-primary" onclick="closeCartDrawer()">Start Shopping</button>
+    </div>
+
+    <!-- Cart Items Scrollable List -->
+    <div class="cart-drawer-body" id="cartDrawerItems" style="display: none;">
+      <!-- Populated dynamically -->
+    </div>
+
+    <!-- Cart Footer with Totals & Dual Checkout -->
+    <div class="cart-drawer-footer" id="cartDrawerFooter" style="display: none;">
+      <!-- Coupon Code Box -->
+      <div class="coupon-input-group" id="couponInputRow">
+        <input type="text" id="couponCodeInput" class="coupon-input" placeholder="Promo code (e.g. WELCOME50)">
+        <button class="btn-apply-coupon" onclick="applyCoupon()">Apply</button>
+      </div>
+      <div class="applied-coupon-box" id="appliedCouponBox" style="display: none;">
+        <span id="appliedCouponText">WELCOME50 applied</span>
+        <button class="btn-remove-coupon" onclick="removeCoupon()">✕ Remove</button>
+      </div>
+
+      <!-- Bill Breakdown -->
+      <div class="bill-summary-box">
+        <div class="bill-row">
+          <span>Items Subtotal:</span>
+          <strong id="drawerSubtotal">₹0</strong>
+        </div>
+        <div class="bill-row">
+          <span>Delivery Charge:</span>
+          <strong id="drawerDeliveryFee">₹30</strong>
+        </div>
+        <div class="bill-row text-success" id="drawerDiscountRow" style="display: none;">
+          <span>Coupon Discount:</span>
+          <strong id="drawerDiscount">-₹0</strong>
+        </div>
+        <div class="bill-row grand-total">
+          <span>Final Total:</span>
+          <strong id="drawerGrandTotal">₹0</strong>
+        </div>
+      </div>
+
+      <!-- Dual Checkout Action Buttons -->
+      <div class="drawer-action-btns">
+        <button class="btn-checkout-primary" onclick="openCheckoutModal()">
+          Proceed to Web Checkout ➔
+        </button>
+        <button class="btn-checkout-wa" onclick="proceedToWhatsAppOrder()">
+          💬 Order via WhatsApp (Shop: 9862272399)
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Floating Mobile Cart Pill -->
+  <div class="floating-cart-bar" id="floatingCartBar" onclick="openCartDrawer()">
+    <div class="fcb-left">
+      <span class="fcb-badge cart-count-badge">0</span>
+      <span>Items</span>
+      <span>•</span>
+      <span class="fcb-amount" id="floatingCartSubtotal">₹0</span>
+    </div>
+    <div class="fcb-right">
+      <span>View Basket</span>
+      <span>➔</span>
+    </div>
+  </div>
+
+  <!-- Web Checkout Modal -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>🛍️ Finalize Delivery</h3>
+        <button class="btn-modal-close" onclick="closeModal('checkoutModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="checkoutForm">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="checkoutName">Your Full Name *</label>
+              <input type="text" id="checkoutName" class="form-input" placeholder="e.g. Bikram Debbarma" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="checkoutPhone">10-Digit Mobile Number *</label>
+              <input type="tel" id="checkoutPhone" class="form-input" placeholder="e.g. 9862272399" maxlength="10" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="checkoutAddress">Delivery Address (Agartala, Tripura) *</label>
+            <input type="text" id="checkoutAddress" class="form-input" placeholder="House/Flat No, Lane, Bhattapukur / Area" required>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="checkoutLandmark">Nearby Landmark</label>
+              <input type="text" id="checkoutLandmark" class="form-input" placeholder="e.g. Near Kali Temple / School">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="checkoutSlotSelect">Preferred Delivery Slot</label>
+              <select id="checkoutSlotSelect" class="form-select">
+                <option value="Instant Delivery (30-45 mins)">⚡ Instant Express (30-45 mins)</option>
+                <option value="Today Evening (6:00 PM - 8:00 PM)">🌆 Today Evening (6:00 PM - 8:00 PM)</option>
+                <option value="Tomorrow Morning (8:00 AM - 10:00 AM)">🌅 Tomorrow Morning (8:00 AM - 10:00 AM)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="checkoutNotes">Delivery Notes / Instructions</label>
+            <input type="text" id="checkoutNotes" class="form-input" placeholder="e.g. Please ring bell twice or call upon arrival">
+          </div>
+
+          <!-- Payment Selection -->
+          <div class="form-group" style="margin-top: 20px;">
+            <label class="form-label">Select Payment Method</label>
+            <div class="payment-selector-grid">
+              <div class="payment-option-card selected" data-method="Cash on Delivery" onclick="selectPaymentOption('Cash on Delivery')">
+                <span class="poc-icon">💵</span>
+                <div class="poc-info">
+                  <strong>Cash on Delivery</strong>
+                  <small>Pay cash to rider at doorstep</small>
+                </div>
+              </div>
+              <div class="payment-option-card" data-method="Instant UPI" onclick="selectPaymentOption('Instant UPI')">
+                <span class="poc-icon">📲</span>
+                <div class="poc-info">
+                  <strong>Instant UPI QR</strong>
+                  <small>GPay, PhonePe, Paytm, BHIM</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic UPI QR Container -->
+            <div class="upi-qr-box" id="upiPaymentDetailsBox" style="display: none;">
+              <span class="cat-pill-small">Fast & Contactless UPI</span>
+              <p style="font-size:0.85rem; margin-top:6px; color:var(--slate-600);">
+                Scan QR with any UPI app to pay GrossHub:
+              </p>
+              <img src="" id="upiQrCodeImage" alt="GrossHub UPI QR Code" class="upi-qr-img">
+              <div>
+                <small style="color:var(--slate-500);">GrossHub UPI VPA: <strong id="upiIdDisplay">9862272399@upi</strong></small>
+              </div>
+              <a href="#" id="btnPayUpiDeepLink" class="btn-pay-upi-deep" target="_blank">
+                📱 Open UPI Payment App
+              </a>
+            </div>
+          </div>
+
+          <!-- Mini Summary Inside Checkout Modal -->
+          <div class="bill-summary-box" style="margin-top: 20px;">
+            <div class="bill-row">
+              <span>Items Total:</span>
+              <span id="checkoutSubtotal">₹0</span>
+            </div>
+            <div class="bill-row">
+              <span>Delivery Fee:</span>
+              <span id="checkoutDelivery">₹30</span>
+            </div>
+            <div class="bill-row text-success" id="checkoutDiscountRow" style="display: none;">
+              <span>Promo Savings:</span>
+              <span id="checkoutDiscount">-₹0</span>
+            </div>
+            <div class="bill-row grand-total">
+              <span>Grand Total Payable:</span>
+              <span id="checkoutGrandTotal">₹0</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-checkout-primary" style="margin-top: 10px;">
+            🎉 Place Order with GrossHub
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Success Confirmation Modal -->
+  <div class="modal-overlay" id="orderSuccessModal">
+    <div class="modal-container">
+      <div class="modal-header" style="background:#ecfdf5;">
+        <h3 style="color:#065f46;">🎉 Order Confirmed!</h3>
+        <button class="btn-modal-close" onclick="closeModal('orderSuccessModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div style="font-size:3.5rem; margin-bottom:8px;">🛍️</div>
+        <h2>Thank You for Ordering!</h2>
+        <p style="color:var(--slate-600); margin-bottom: 16px;">
+          Your order has been received at our Bhattapukur store and is being prepared for express delivery.
+        </p>
+
+        <div class="bill-summary-box" style="text-align: left;">
+          <div class="bill-row">
+            <span>Order Reference:</span>
+            <strong id="confirmOrderId">GH-XXXX</strong>
+          </div>
+          <div class="bill-row">
+            <span>Customer:</span>
+            <strong id="confirmCustomerName">-</strong>
+          </div>
+          <div class="bill-row">
+            <span>Delivery Address:</span>
+            <span id="confirmCustomerAddress">-</span>
+          </div>
+          <div class="bill-row">
+            <span>Delivery Slot:</span>
+            <strong id="confirmDeliverySlot">-</strong>
+          </div>
+          <div class="bill-row">
+            <span>Payment Mode:</span>
+            <span id="confirmPaymentMethod">-</span>
+          </div>
+          <div class="bill-row grand-total">
+            <span>Total Payable:</span>
+            <strong id="confirmOrderTotal">₹0</strong>
+          </div>
+        </div>
+
+        <div class="track-actions-footer" style="justify-content: center; margin-top: 20px;">
+          <button class="btn-hero-primary" id="btnTrackConfirmedOrder">
+            📍 Track Live Status
+          </button>
+          <button class="btn-hero-wa" id="btnSendReceiptWhatsApp">
+            💬 Send Slip on WhatsApp
+          </button>
+          <button class="btn-secondary" onclick="window.print()">
+            🖨️ Print Receipt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Order Tracking Modal -->
+  <div class="modal-overlay" id="trackingModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>📍 Live Order Tracking</h3>
+        <button class="btn-modal-close" onclick="closeModal('trackingModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-wrapper" style="max-width: 100%; margin-bottom: 20px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="trackingSearchInput" class="search-input" placeholder="Enter Order ID (e.g. GH-8102) or Phone number...">
+          <button class="btn-hero-primary" id="btnDoTracking" style="position: absolute; right: 4px; padding: 6px 14px; font-size: 0.85rem;">
+            Track
+          </button>
+        </div>
+
+        <div id="trackingEmptyState" style="text-align: center; padding: 30px 10px;">
+          <span style="font-size: 3rem;">📦</span>
+          <h4>Track Your Delivery in Real Time</h4>
+          <p style="color:var(--slate-500); font-size: 0.9rem;">
+            Enter your order ID (sent upon checkout) or 10-digit phone number to track your package live from Bhattapukur store to your doorstep.
+          </p>
+        </div>
+
+        <div id="trackingResultCard" style="display: none;">
+          <!-- Dynamically populated by tracking.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Portal Modal -->
+  <div class="modal-overlay" id="customerPortalModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>👤 Customer Order History</h3>
+        <button class="btn-modal-close" onclick="closeModal('customerPortalModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="custPortalPhoneInput">Enter Your Registered Mobile Number:</label>
+          <input type="tel" id="custPortalPhoneInput" class="form-input" placeholder="e.g. 9862272399">
+        </div>
+
+        <div id="customerOrderHistoryList" style="margin-top: 20px;">
+          <p class="text-muted">Enter your phone number above to view all past orders and reorder items in 1 click.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delivery Partner / Rider Portal Modal -->
+  <div class="modal-overlay" id="riderModal">
+    <div class="modal-container rider-modal-container">
+      <div class="rider-header-banner">
+        <div>
+          <h3>🛵 GrossHub Rider Portal</h3>
+          <small>Delivery Operations Dispatch</small>
+        </div>
+        <div>
+          <select id="riderSelectProfile" class="rider-profile-select">
+            <option value="Rider Bikash">Rider Bikash</option>
+            <option value="Rider Rahul">Rider Rahul</option>
+            <option value="Rider Samir">Rider Samir</option>
+          </select>
+        </div>
+        <button class="btn-modal-close" onclick="closeModal('riderModal')" style="background:rgba(255,255,255,0.2); color:#fff;">✕</button>
+      </div>
+
+      <div class="rider-tab-nav">
+        <button class="rider-tab-btn active" data-tab="active" onclick="RiderPanel.switchTab('active')">
+          🛵 Active Deliveries
+        </button>
+        <button class="rider-tab-btn" data-tab="completed" onclick="RiderPanel.switchTab('completed')">
+          ✅ Completed Deliveries
+        </button>
+      </div>
+
+      <div class="modal-body" style="background:#f8fafc;">
+        <div class="rider-orders-list" id="riderOrdersContainer">
+          <!-- Populated dynamically by rider.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Merchant Admin Portal Modal -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal-container admin-modal-container">
+      
+      <!-- Login View -->
+      <div id="adminLoginView" class="modal-body" style="text-align: center; padding: 60px 20px;">
+        <div style="font-size:3.5rem; margin-bottom:12px;">🛡️</div>
+        <h2>GrossHub Merchant Portal</h2>
+        <p style="color:var(--slate-500); margin-bottom:24px;">Please enter your administrator security password to continue.</p>
+
+        <form id="adminLoginForm" style="max-width:320px; margin:0 auto;">
+          <div class="form-group">
+            <input type="password" id="adminPasswordInput" class="form-input" placeholder="Password (default: grosshub123)" required>
+            <div id="adminLoginError" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:6px;"></div>
+          </div>
+          <button type="submit" class="btn-hero-primary" style="width:100%;">
+            Unlock Dashboard ➔
+          </button>
+        </form>
+      </div>
+
+      <!-- Dashboard View -->
+      <div id="adminDashboardView" class="admin-layout" style="display: none;">
+        <div class="admin-top-bar">
+          <h3>🛡️ GrossHub Admin Control Center</h3>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn-xs btn-outline" style="background:#334155; color:#fff;" onclick="AdminPanel.exportOrdersToCSV()">
+              📥 Export CSV
+            </button>
+            <button class="btn-xs" style="background:#ef4444; color:#fff;" onclick="AdminPanel.handleLogout()">
+              Logout
+            </button>
+            <button class="btn-modal-close" onclick="closeModal('adminModal')" style="background:#334155; color:#fff;">✕</button>
+          </div>
+        </div>
+
+        <nav class="admin-nav-tabs">
+          <button class="admin-nav-item active" data-tab="overview" onclick="AdminPanel.switchTab('overview')">📊 Overview</button>
+          <button class="admin-nav-item" data-tab="orders" onclick="AdminPanel.switchTab('orders')">📦 Orders Management</button>
+          <button class="admin-nav-item" data-tab="products" onclick="AdminPanel.switchTab('products')">🥬 Product Catalog</button>
+          <button class="admin-nav-item" data-tab="settings" onclick="AdminPanel.switchTab('settings')">⚙️ Store Settings</button>
+        </nav>
+
+        <div class="admin-content-viewport">
+          <!-- Overview Tab -->
+          <div id="adminPanel-overview">
+            <div class="kpi-grid">
+              <div class="kpi-card revenue">
+                <span class="kpi-label">Gross Revenue</span>
+                <span class="kpi-value" id="kpiRevenue">₹0</span>
+              </div>
+              <div class="kpi-card orders">
+                <span class="kpi-label">Total Orders</span>
+                <span class="kpi-value" id="kpiOrders">0</span>
+              </div>
+              <div class="kpi-card pending">
+                <span class="kpi-label">Pending Orders</span>
+                <span class="kpi-value" id="kpiPending">0</span>
+              </div>
+              <div class="kpi-card delivered">
+                <span class="kpi-label">Delivered Orders</span>
+                <span class="kpi-value" id="kpiDelivered">0</span>
+              </div>
+              <div class="kpi-card products">
+                <span class="kpi-label">Active SKUs</span>
+                <span class="kpi-value" id="kpiProducts">0</span>
+              </div>
+            </div>
+
+            <div style="background:var(--white); padding:20px; border-radius:var(--radius-md); border:1px solid var(--slate-200);">
+              <h4 style="margin-bottom:14px;">Recent Orders Quick Look</h4>
+              <div id="adminRecentOrdersSnippet">
+                <!-- Snippet items -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Orders Tab -->
+          <div id="adminPanel-orders" style="display: none;">
+            <div class="admin-table-controls">
+              <div style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="adminOrderSearch" class="admin-search-input" placeholder="Search ID, customer, phone...">
+                <select id="adminOrderFilter" class="sort-select">
+                  <option value="all">All Orders</option>
+                  <option value="placed">Placed</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="preparing">Preparing</option>
+                  <option value="out_for_delivery">Out for Delivery</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <button class="btn-secondary" onclick="AdminPanel.exportOrdersToCSV()">
+                📊 Download CSV Report
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Order & Time</th>
+                    <th>Customer</th>
+                    <th>Address</th>
+                    <th>Total</th>
+                    <th>Rider Assigned</th>
+                    <th>Order Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminOrdersTableBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Products Tab -->
+          <div id="adminPanel-products" style="display: none;">
+            <div class="admin-table-controls">
+              <h4>Store Catalog Inventory</h4>
+              <button class="btn-hero-primary" onclick="AdminPanel.openProductAddModal()">
+                + Add New Product
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Pack Size</th>
+                    <th>Price / MRP</th>
+                    <th>Stock Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminProductsTableBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Store Settings Tab -->
+          <div id="adminPanel-settings" style="display: none;">
+            <div style="background:var(--white); padding:24px; border-radius:var(--radius-md); border:1px solid var(--slate-200); max-width:700px;">
+              <h4 style="margin-bottom:18px;">Store Configuration & Business Rules</h4>
+              <form id="adminSettingsForm">
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Shop Name</label>
+                    <input type="text" id="adminSetShopName" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Tagline</label>
+                    <input type="text" id="adminSetTagline" class="form-input">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Shop Address</label>
+                  <input type="text" id="adminSetAddress" class="form-input">
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Primary Phone (Phone 1)</label>
+                    <input type="text" id="adminSetPhone1" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Secondary Phone (Phone 2)</label>
+                    <input type="text" id="adminSetPhone2" class="form-input">
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">WhatsApp Number (e.g. 919862272399)</label>
+                    <input type="text" id="adminSetWhatsapp" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Store UPI ID</label>
+                    <input type="text" id="adminSetUpiId" class="form-input">
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Standard Delivery Charge (₹)</label>
+                    <input type="number" id="adminSetDeliveryFee" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Free Delivery Threshold (₹)</label>
+                    <input type="number" id="adminSetFreeThreshold" class="form-input">
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Store Status (Open / Accepting Orders)</label>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                      <label class="switch">
+                        <input type="checkbox" id="adminSetStoreStatus" checked>
+                        <span class="slider round"></span>
+                      </label>
+                      <span>Store Open</span>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Update Admin Password</label>
+                    <input type="password" id="adminSetNewPassword" class="form-input" placeholder="Leave blank to keep unchanged">
+                  </div>
+                </div>
+
+                <button type="submit" class="btn-hero-primary" style="margin-top: 14px;">
+                  💾 Save Store Settings
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Add / Edit Product Modal -->
+  <div class="modal-overlay" id="adminProductModal">
+    <div class="modal-container" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 id="modalProductTitle">Add New Product</h3>
+        <button class="btn-modal-close" onclick="closeModal('adminProductModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="adminProductForm">
+          <div class="form-group">
+            <label class="form-label">Product Name *</label>
+            <input type="text" id="prodName" class="form-input" placeholder="e.g. Pure Mustard Oil" required>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select id="prodCategory" class="form-select" required>
+                <option value="rice-atta">Rice & Atta</option>
+                <option value="dal-pulses">Dal & Pulses</option>
+                <option value="oils-ghee">Cooking Oils & Ghee</option>
+                <option value="spices-masala">Spices & Masalas</option>
+                <option value="dairy-breakfast">Dairy & Breakfast</option>
+                <option value="tea-snacks">Tea & Snacks</option>
+                <option value="cleaning-home">Cleaning & Home</option>
+                <option value="fresh-produce">Fresh Produce</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pack Size / Unit *</label>
+              <input type="text" id="prodUnit" class="form-input" placeholder="e.g. 1 Liter bottle" required>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Selling Price (₹) *</label>
+              <input type="number" id="prodPrice" class="form-input" placeholder="150" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">MRP (₹) *</label>
+              <input type="number" id="prodMrp" class="form-input" placeholder="170">
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Emoji Icon</label>
+              <input type="text" id="prodEmoji" class="form-input" placeholder="🫗">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Badge Tag</label>
+              <input type="text" id="prodBadge" class="form-input" placeholder="Bestseller / New">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="prodDesc" class="form-textarea" rows="2" placeholder="Brief details about product"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="switch">
+              <input type="checkbox" id="prodInStock" checked>
+              <span class="slider round"></span>
+            </label>
+            <span style="font-weight:600;">Product is In-Stock</span>
+          </div>
+
+          <button type="submit" class="btn-checkout-primary" style="margin-top: 10px;">
+            Save Product
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trust & Value Proposition -->
+  <section style="background:var(--white); border-top:1px solid var(--slate-200); border-bottom:1px solid var(--slate-200); padding:40px 20px;">
+    <div style="max-width:1280px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:24px;">
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        <span style="font-size:2.2rem;">⚡</span>
+        <div>
+          <h4 style="font-size:1.05rem; font-weight:700;">30-45 Mins Express</h4>
+          <p style="font-size:0.85rem; color:var(--slate-500);">Direct fulfillment from our Bhattapukur hub straight to your gate.</p>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        <span style="font-size:2.2rem;">🥬</span>
+        <div>
+          <h4 style="font-size:1.05rem; font-weight:700;">100% Authentic Quality</h4>
+          <p style="font-size:0.85rem; color:var(--slate-500);">Fresh stock, verified brands, and direct local Tripura tea & produce.</p>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        <span style="font-size:2.2rem;">💰</span>
+        <div>
+          <h4 style="font-size:1.05rem; font-weight:700;">Wholesale Local Prices</h4>
+          <p style="font-size:0.85rem; color:var(--slate-500);">Save with everyday discounts, MRP cuts, and special promo codes.</p>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; align-items:flex-start;">
+        <span style="font-size:2.2rem;">💵</span>
+        <div>
+          <h4 style="font-size:1.05rem; font-weight:700;">COD & Instant UPI</h4>
+          <p style="font-size:0.85rem; color:var(--slate-500);">Pay cash on doorstep or scan QR with Google Pay, PhonePe, or Paytm.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Store Footer -->
+  <footer class="store-footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+          <img src="icons/icon.svg" alt="GrossHub Icon" style="width:36px; height:36px; border-radius:8px;">
+          <h3 style="color:#fff; font-size:1.35rem;" class="store-name-text">GrossHub</h3>
+        </div>
+        <p class="store-tagline-text" style="margin-bottom:12px;">Agartala's Favorite Local Grocery Express.</p>
+        <p style="font-size:0.85rem;">
+          📍 <span class="store-address-text">Bhattapukur, Agartala, Tripura - 799003</span><br>
+          📞 Phone 1: <a href="tel:9862272399" id="headerPhone1" style="color:var(--accent-400);">+91 9862272399</a><br>
+          📞 Phone 2: <a href="tel:6009430922" id="headerPhone2" style="color:var(--accent-400);">+91 6009430922</a>
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Top Categories</h4>
+        <ul>
+          <li><a href="javascript:void(0)" onclick="selectCategory('rice-atta')">Rice & Atta</a></li>
+          <li><a href="javascript:void(0)" onclick="selectCategory('dal-pulses')">Dal & Pulses</a></li>
+          <li><a href="javascript:void(0)" onclick="selectCategory('oils-ghee')">Cooking Oils & Ghee</a></li>
+          <li><a href="javascript:void(0)" onclick="selectCategory('dairy-breakfast')">Dairy & Breakfast</a></li>
+          <li><a href="javascript:void(0)" onclick="selectCategory('tea-snacks')">Tripura Tea & Snacks</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Customer Care</h4>
+        <ul>
+          <li><a href="javascript:void(0)" onclick="openModal('trackingModal')">Live Order Tracking</a></li>
+          <li><a href="javascript:void(0)" onclick="openModal('customerPortalModal')">My Past Orders</a></li>
+          <li><a href="javascript:void(0)" onclick="proceedToWhatsAppOrder()">WhatsApp Support</a></li>
+          <li><a href="tel:9862272399">Call Store Support</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Business & Ops</h4>
+        <ul>
+          <li><a href="javascript:void(0)" onclick="openModal('riderModal')">Rider Delivery View</a></li>
+          <li><a href="javascript:void(0)" onclick="openModal('adminModal')">Store Admin Login</a></li>
+          <li><span>Standard Delivery: ₹30</span></li>
+          <li><span>Free Delivery: Orders ₹499+</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 GrossHub Agartala. All rights reserved.</span>
+      <span>Designed with care for speed & freshness.</span>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/tracking.js"></script>
+  <script src="js/rider.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(err => {
+          console.log('SW registration skipped or error:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

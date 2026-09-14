@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="50%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <linearGradient id="bagGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f0fdf4"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#022c22" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle organic background pattern -->
+  <circle cx="430" cy="90" r="140" fill="#34d399" opacity="0.15"/>
+  <circle cx="80" cy="420" r="120" fill="#f59e0b" opacity="0.12"/>
+
+  <!-- Shopping Bag Body -->
+  <g filter="url(#shadow)">
+    <!-- Bag handles -->
+    <path d="M 190 190 C 190 120, 322 120, 322 190" fill="none" stroke="url(#accentGrad)" stroke-width="26" stroke-linecap="round"/>
+    
+    <!-- Bag shape -->
+    <path d="M 130 190 L 382 190 L 358 405 C 356 422, 342 435, 325 435 L 187 435 C 170 435, 156 422, 154 405 Z" fill="url(#bagGrad)"/>
+    
+    <!-- Fresh Leaf Emblem in Center -->
+    <path d="M 256 240 C 295 240, 320 270, 310 325 C 265 335, 235 310, 235 270 C 235 250, 245 240, 256 240 Z" fill="#10b981"/>
+    <path d="M 235 325 Q 275 295 305 260" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Small Sparkle / Star Accent -->
+    <path d="M 345 220 Q 360 220 360 205 Q 360 220 375 220 Q 360 220 360 235 Q 360 220 345 220 Z" fill="url(#accentGrad)"/>
+  </g>
+</svg>
