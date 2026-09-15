@@ -88,8 +88,12 @@ const AdminPanel = {
   handleLogout() {
     this.isAuthenticated = false;
     sessionStorage.removeItem('grosshub_admin_logged_in');
-    document.getElementById('adminDashboardView').style.display = 'none';
-    document.getElementById('adminLoginView').style.display = 'block';
+    const dashView = document.getElementById('adminDashboardView');
+    const loginView = document.getElementById('adminLoginView');
+    if (dashView) dashView.style.display = 'none';
+    if (loginView) loginView.style.display = 'block';
+    const topLogout = document.getElementById('btnAdminTopLogout');
+    if (topLogout) topLogout.style.display = 'none';
     showToast('Logged out of Admin Portal', 'info');
   },
 
@@ -98,6 +102,8 @@ const AdminPanel = {
     const dashView = document.getElementById('adminDashboardView');
     if (loginView) loginView.style.display = 'none';
     if (dashView) dashView.style.display = 'block';
+    const topLogout = document.getElementById('btnAdminTopLogout');
+    if (topLogout) topLogout.style.display = 'inline-flex';
 
     this.renderMetrics();
     this.renderOrders();

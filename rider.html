@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rider Dispatch Portal — GrossHub Agartala</title>
+  <meta name="description" content="GrossHub Delivery Partner & Rider Operations Portal: Real-time orders, customer calling, and Google Maps routing.">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    body {
+      background: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .rider-page-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: var(--white);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--accent-500);
+      box-shadow: var(--shadow-sm);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .rph-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--white);
+    }
+    .rph-brand .logo-icon {
+      background: #0284c7;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+    .rph-brand h1 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--white);
+    }
+    .rph-brand span.badge-rider {
+      background: var(--accent-500);
+      color: var(--slate-900);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      margin-left: 6px;
+      text-transform: uppercase;
+    }
+    .rph-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .rph-link-btn {
+      background: rgba(255,255,255,0.1);
+      color: var(--slate-200);
+      padding: 7px 14px;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rph-link-btn:hover {
+      background: rgba(255,255,255,0.2);
+      color: var(--white);
+    }
+    .rider-standalone-container {
+      max-width: 680px;
+      width: 100%;
+      margin: 20px auto;
+      padding: 0 16px;
+      flex: 1;
+    }
+    .rider-card-wrapper {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .live-pulse-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: #10b981;
+      font-weight: 700;
+      background: #ecfdf5;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid #a7f3d0;
+    }
+    .live-pulse-dot {
+      width: 7px;
+      height: 7px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Rider Header Bar -->
+  <header class="rider-page-header">
+    <a href="rider.html" class="rph-brand">
+      <div class="logo-icon">🛵</div>
+      <div>
+        <h1>GrossHub <span class="badge-rider">Rider Operations</span></h1>
+        <small style="color:var(--slate-400); display:block; font-size:0.75rem;">Bhattapukur Store, Agartala</small>
+      </div>
+    </a>
+
+    <div class="rph-controls">
+      <!-- Active Rider Profile Selector -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:0.8rem; color:var(--slate-300); font-weight:600;">Active Partner:</span>
+        <select id="riderSelectProfile" class="rider-profile-select">
+          <option value="Rider Bikash">Rider Bikash</option>
+          <option value="Rider Rahul">Rider Rahul</option>
+          <option value="Rider Samir">Rider Samir</option>
+        </select>
+      </div>
+
+      <a href="index.html" class="rph-link-btn" title="View Customer Storefront">
+        🛒 View Store
+      </a>
+      <a href="admin.html" class="rph-link-btn" title="Merchant Admin Dashboard">
+        ⚙️ Admin
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="rider-standalone-container">
+    
+    <!-- Top Status Bar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="live-pulse-badge">
+        <span class="live-pulse-dot"></span> Live Dispatch Feed
+      </div>
+      <button class="btn-xs btn-outline" onclick="RiderPanel.renderOrders(); showToast('Orders refreshed! 🔄', 'info');">
+        🔄 Refresh Now
+      </button>
+    </div>
+
+    <div class="rider-card-wrapper">
+      
+      <!-- Tab Navigation -->
+      <div class="rider-tab-nav" style="border-radius:0;">
+        <button class="rider-tab-btn active" data-tab="active" onclick="RiderPanel.switchTab('active')">
+          🛵 Active Deliveries
+        </button>
+        <button class="rider-tab-btn" data-tab="completed" onclick="RiderPanel.switchTab('completed')">
+          ✅ Completed Today
+        </button>
+      </div>
+
+      <!-- Orders List -->
+      <div style="padding: 16px; background:#f8fafc; min-height:60vh;">
+        <div class="rider-orders-list" id="riderOrdersContainer">
+          <!-- Rendered dynamically by js/rider.js -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Global Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/rider.js"></script>
+  <script>
+    function escapeHTML(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function showToast(message, type = "info") {
+      const c = document.getElementById("toastContainer");
+      if (!c) return;
+      const t = document.createElement("div");
+      t.className = `toast toast-${type}`;
+      t.textContent = message;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = "0";
+        setTimeout(() => t.remove(), 300);
+      }, 3500);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      RiderPanel.init();
+      RiderPanel.renderOrders();
+
+      // Auto-poll for new assigned orders every 15 seconds
+      setInterval(() => {
+        RiderPanel.renderOrders();
+      }, 15000);
+    });
+  </script>
+</body>
+</html>

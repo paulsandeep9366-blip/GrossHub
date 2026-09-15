@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchant Admin Portal — GrossHub Agartala</title>
+  <meta name="description" content="GrossHub Merchant Control Center: Real-time orders, catalog inventory, rider dispatch, and distance-based delivery settings.">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    body {
+      background: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .admin-page-header {
+      background: var(--slate-900);
+      color: var(--white);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--slate-800);
+      box-shadow: var(--shadow-sm);
+    }
+    .aph-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--white);
+    }
+    .aph-brand .logo-icon {
+      background: var(--primary-600);
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+    .aph-brand h1 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--white);
+    }
+    .aph-brand span.badge-admin {
+      background: var(--accent-500);
+      color: var(--slate-900);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      margin-left: 6px;
+      text-transform: uppercase;
+    }
+    .aph-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .aph-link-btn {
+      background: var(--slate-800);
+      color: var(--slate-200);
+      padding: 7px 14px;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .aph-link-btn:hover {
+      background: var(--slate-700);
+      color: var(--white);
+    }
+    .admin-standalone-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 1300px;
+      width: 100%;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+    .admin-card-container {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 80vh;
+    }
+    .admin-login-fullscreen {
+      max-width: 420px;
+      margin: 80px auto;
+      background: var(--white);
+      padding: 36px 28px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Admin Standalone Header Bar -->
+  <header class="admin-page-header">
+    <a href="admin.html" class="aph-brand">
+      <div class="logo-icon">🥬</div>
+      <div>
+        <h1>GrossHub <span class="badge-admin">Merchant Admin</span></h1>
+      </div>
+    </a>
+    <div class="aph-links">
+      <a href="index.html" class="aph-link-btn" title="View Customer Storefront">
+        🛒 View Store
+      </a>
+      <a href="rider.html" class="aph-link-btn" title="Open Delivery Partner Portal">
+        🛵 Rider Portal
+      </a>
+      <a href="customer.html" class="aph-link-btn" title="Open Customer Account Portal">
+        👤 Customer Portal
+      </a>
+      <button class="aph-link-btn" id="btnAdminTopLogout" style="background:#ef4444; color:#fff; border:none; cursor:pointer;" onclick="AdminPanel.handleLogout()">
+        🚪 Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- Main View Area -->
+  <main class="admin-standalone-wrapper">
+    
+    <!-- Login Card View -->
+    <div id="adminLoginView" class="admin-login-fullscreen">
+      <div style="font-size:3.5rem; margin-bottom:12px;">🛡️</div>
+      <h2 style="margin-bottom:6px;">GrossHub Merchant Portal</h2>
+      <p style="color:var(--slate-500); font-size:0.9rem; margin-bottom:24px;">Please enter your administrator security password to access store management.</p>
+
+      <form id="adminLoginForm">
+        <div class="form-group" style="text-align:left;">
+          <label class="form-label" for="adminPasswordInput">Admin Password</label>
+          <input type="password" id="adminPasswordInput" class="form-input" placeholder="Enter password (default: grosshub123)" required>
+          <div id="adminLoginError" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:6px;"></div>
+        </div>
+        <button type="submit" class="btn-hero-primary" style="width:100%; margin-top:8px;">
+          Unlock Dashboard ➔
+        </button>
+      </form>
+    </div>
+
+    <!-- Authenticated Dashboard View -->
+    <div id="adminDashboardView" class="admin-card-container" style="display: none;">
+      
+      <!-- Top Bar Inside Dashboard -->
+      <div class="admin-top-bar">
+        <h3>🛡️ GrossHub Admin Control Center</h3>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-xs btn-outline" style="background:#334155; color:#fff;" onclick="AdminPanel.exportOrdersToCSV()">
+            📥 Export Orders CSV
+          </button>
+          <button class="btn-xs" style="background:#ef4444; color:#fff; border:none; cursor:pointer;" onclick="AdminPanel.handleLogout()">
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="admin-nav-tabs">
+        <button class="admin-nav-item active" data-tab="overview" onclick="AdminPanel.switchTab('overview')">📊 Overview</button>
+        <button class="admin-nav-item" data-tab="orders" onclick="AdminPanel.switchTab('orders')">📦 Orders Management</button>
+        <button class="admin-nav-item" data-tab="products" onclick="AdminPanel.switchTab('products')">🥬 Product Catalog</button>
+        <button class="admin-nav-item" data-tab="settings" onclick="AdminPanel.switchTab('settings')">⚙️ Store Settings & Distance Fees</button>
+      </nav>
+
+      <!-- Content Viewport -->
+      <div class="admin-content-viewport">
+        
+        <!-- 1. Overview Tab -->
+        <div id="adminPanel-overview">
+          <div class="kpi-grid">
+            <div class="kpi-card revenue">
+              <span class="kpi-label">Gross Revenue</span>
+              <span class="kpi-value" id="kpiRevenue">₹0</span>
+            </div>
+            <div class="kpi-card orders">
+              <span class="kpi-label">Total Orders</span>
+              <span class="kpi-value" id="kpiOrders">0</span>
+            </div>
+            <div class="kpi-card pending">
+              <span class="kpi-label">Pending Orders</span>
+              <span class="kpi-value" id="kpiPending">0</span>
+            </div>
+            <div class="kpi-card delivered">
+              <span class="kpi-label">Delivered Orders</span>
+              <span class="kpi-value" id="kpiDelivered">0</span>
+            </div>
+            <div class="kpi-card products">
+              <span class="kpi-label">Active SKUs</span>
+              <span class="kpi-value" id="kpiProducts">0</span>
+            </div>
+          </div>
+
+          <div style="background:var(--white); padding:20px; border-radius:var(--radius-md); border:1px solid var(--slate-200);">
+            <h4 style="margin-bottom:14px;">Recent Orders Quick Look</h4>
+            <div id="adminRecentOrdersSnippet">
+              <!-- Snippet items -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Orders Tab -->
+        <div id="adminPanel-orders" style="display: none;">
+          <div class="admin-table-controls">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <input type="text" id="adminOrderSearch" class="admin-search-input" placeholder="Search ID, customer, phone...">
+              <select id="adminOrderFilter" class="sort-select">
+                <option value="all">All Orders</option>
+                <option value="placed">Placed</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="preparing">Preparing</option>
+                <option value="out_for_delivery">Out for Delivery</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <button class="btn-secondary" onclick="AdminPanel.exportOrdersToCSV()">
+              📊 Download CSV Report
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order & Time</th>
+                  <th>Customer</th>
+                  <th>Address & Distance</th>
+                  <th>Total</th>
+                  <th>Rider Assigned</th>
+                  <th>Order Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminOrdersTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3. Products Tab -->
+        <div id="adminPanel-products" style="display: none;">
+          <div class="admin-table-controls">
+            <h4>Store Catalog Inventory</h4>
+            <button class="btn-hero-primary" onclick="AdminPanel.openProductAddModal()">
+              + Add New Product
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Pack Size</th>
+                  <th>Price / MRP</th>
+                  <th>Stock Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminProductsTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 4. Store Settings & Distance Fees Tab -->
+        <div id="adminPanel-settings" style="display: none;">
+          <div style="background:var(--white); padding:24px; border-radius:var(--radius-md); border:1px solid var(--slate-200); max-width:760px;">
+            <h4 style="margin-bottom:18px;">Store Configuration & Business Rules</h4>
+            <form id="adminSettingsForm">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Shop Name</label>
+                  <input type="text" id="adminSetShopName" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tagline</label>
+                  <input type="text" id="adminSetTagline" class="form-input">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Shop Address</label>
+                <input type="text" id="adminSetAddress" class="form-input">
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Primary Phone (Phone 1)</label>
+                  <input type="text" id="adminSetPhone1" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Secondary Phone (Phone 2)</label>
+                  <input type="text" id="adminSetPhone2" class="form-input">
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">WhatsApp Number (e.g. 919862272399)</label>
+                  <input type="text" id="adminSetWhatsapp" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Store UPI ID</label>
+                  <input type="text" id="adminSetUpiId" class="form-input">
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Standard Delivery Charge (₹)</label>
+                  <input type="number" id="adminSetDeliveryFee" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Free Delivery Threshold (₹)</label>
+                  <input type="number" id="adminSetFreeThreshold" class="form-input">
+                </div>
+              </div>
+
+              <div class="admin-distance-settings-box">
+                <label class="form-label" style="font-weight:700; color:var(--emerald-800);">📍 Distance-Based Delivery Rates (Agartala)</label>
+                <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:12px;">Configure delivery charges for each distance tier from Bhattapukur store:</p>
+                
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">0 – 2 km (Local) Fee (₹)</label>
+                    <input type="number" id="adminTierFee_tier_1" class="form-input" min="0" placeholder="15">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">2 – 5 km (City Core) Fee (₹)</label>
+                    <input type="number" id="adminTierFee_tier_2" class="form-input" min="0" placeholder="30">
+                  </div>
+                </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">5 – 8 km (Extended City) Fee (₹)</label>
+                    <input type="number" id="adminTierFee_tier_3" class="form-input" min="0" placeholder="50">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">8 – 12 km (Suburbs) Fee (₹)</label>
+                    <input type="number" id="adminTierFee_tier_4" class="form-input" min="0" placeholder="75">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" style="font-size:0.8rem;">12+ km (Outskirts) Fee (₹)</label>
+                  <input type="number" id="adminTierFee_tier_5" class="form-input" min="0" placeholder="100">
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Store Status (Open / Accepting Orders)</label>
+                  <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                    <label class="switch">
+                      <input type="checkbox" id="adminSetStoreStatus" checked>
+                      <span class="slider round"></span>
+                    </label>
+                    <span>Store Open</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Update Admin Password</label>
+                  <input type="password" id="adminSetNewPassword" class="form-input" placeholder="Leave blank to keep unchanged">
+                </div>
+              </div>
+
+              <button type="submit" class="btn-hero-primary" style="margin-top: 14px;">
+                💾 Save Store Settings
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Admin Add / Edit Product Modal -->
+  <div class="modal-overlay" id="adminProductModal">
+    <div class="modal-container" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 id="modalProductTitle">Add New Product</h3>
+        <button class="btn-modal-close" onclick="closeModal('adminProductModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="adminProductForm">
+          <div class="form-group">
+            <label class="form-label">Product Name *</label>
+            <input type="text" id="prodName" class="form-input" placeholder="e.g. Pure Mustard Oil" required>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select id="prodCategory" class="form-select" required>
+                <option value="rice-atta">Rice & Atta</option>
+                <option value="dal-pulses">Dal & Pulses</option>
+                <option value="oils-ghee">Cooking Oils & Ghee</option>
+                <option value="spices-masala">Spices & Masalas</option>
+                <option value="dairy-breakfast">Dairy & Breakfast</option>
+                <option value="tea-snacks">Tea & Snacks</option>
+                <option value="cleaning-home">Cleaning & Home</option>
+                <option value="fresh-produce">Fresh Produce</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pack Size / Unit *</label>
+              <input type="text" id="prodUnit" class="form-input" placeholder="e.g. 1 Liter bottle" required>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Selling Price (₹) *</label>
+              <input type="number" id="prodPrice" class="form-input" placeholder="150" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">MRP (₹) *</label>
+              <input type="number" id="prodMrp" class="form-input" placeholder="170">
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Emoji Icon</label>
+              <input type="text" id="prodEmoji" class="form-input" placeholder="🫗">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Badge Tag</label>
+              <input type="text" id="prodBadge" class="form-input" placeholder="Bestseller / New">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="prodDesc" class="form-textarea" rows="2" placeholder="Brief details about product"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="switch">
+              <input type="checkbox" id="prodInStock" checked>
+              <span class="slider round"></span>
+            </label>
+            <span style="font-size:0.9rem; font-weight:600; margin-left:8px;">In Stock (Available for Purchase)</span>
+          </div>
+
+          <button type="submit" class="btn-hero-primary" style="width:100%; margin-top:14px;" id="btnSaveProduct">
+            Save Product to Catalog
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // Utility helpers for standalone modals & toasts
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add("active");
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove("active");
+    }
+    function escapeHTML(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    function showToast(message, type = "info") {
+      const c = document.getElementById("toastContainer");
+      if (!c) return;
+      const t = document.createElement("div");
+      t.className = `toast toast-${type}`;
+      t.textContent = message;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = "0";
+        setTimeout(() => t.remove(), 300);
+      }, 3500);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      AdminPanel.init();
+      // Update top bar logout button visibility based on session
+      const logoutBtn = document.getElementById("btnAdminTopLogout");
+      if (logoutBtn) {
+        logoutBtn.style.display = sessionStorage.getItem("grosshub_admin_logged_in") === "true" ? "inline-flex" : "none";
+      }
+    });
+  </script>
+</body>
+</html>

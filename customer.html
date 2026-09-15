@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Customer Account & Orders — GrossHub Agartala</title>
+  <meta name="description" content="Manage your GrossHub customer profile, track live grocery deliveries in Agartala, and view your complete order history.">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      background: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .customer-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--slate-200);
+      padding: 14px 20px;
+      box-shadow: var(--shadow-xs);
+    }
+    .ch-container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .ch-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--slate-900);
+    }
+    .ch-brand .logo-icon {
+      background: var(--primary-600);
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      color: var(--white);
+    }
+    .ch-brand h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--slate-900);
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+    .ch-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ch-btn {
+      background: var(--primary-50);
+      color: var(--primary-700);
+      border: 1px solid var(--primary-200);
+      padding: 7px 14px;
+      border-radius: var(--radius-full);
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ch-btn:hover {
+      background: var(--primary-100);
+    }
+    .customer-main {
+      max-width: 900px;
+      width: 100%;
+      margin: 24px auto;
+      padding: 0 16px;
+      flex: 1;
+    }
+    .customer-profile-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-xs);
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .cpc-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .cpc-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #ecfdf5;
+      color: var(--primary-700);
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #a7f3d0;
+    }
+    .cpc-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--slate-900);
+    }
+    .cpc-meta {
+      font-size: 0.85rem;
+      color: var(--slate-500);
+      margin-top: 2px;
+    }
+    .phone-lookup-box {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-xs);
+    }
+    .lookup-input-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .order-history-section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Customer Header -->
+  <header class="customer-header">
+    <div class="ch-container">
+      <a href="index.html" class="ch-brand">
+        <div class="logo-icon">🥬</div>
+        <div>
+          <h1>GrossHub <span style="font-size:0.8rem; font-weight:600; color:var(--primary-600); margin-left:4px;">Customer Account</span></h1>
+        </div>
+      </a>
+      <div class="ch-links">
+        <a href="index.html" class="ch-btn">
+          🛒 Back to Grocery Shop
+        </a>
+        <a href="https://wa.me/919862272399?text=Hello%20GrossHub%20Support" target="_blank" class="ch-btn" style="background:#ecfdf5; color:#065f46; border-color:#a7f3d0;">
+          💬 WhatsApp Help
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="customer-main">
+
+    <!-- Profile Overview Card -->
+    <div class="customer-profile-card">
+      <div class="cpc-left">
+        <div class="cpc-avatar">👤</div>
+        <div>
+          <div class="cpc-title" id="custNameDisplay">Customer Account</div>
+          <div class="cpc-meta" id="custMetaDisplay">Enter mobile number below to view saved details & orders</div>
+        </div>
+      </div>
+      <div>
+        <span class="cat-pill-small" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">
+          📍 Delivery Hub: Bhattapukur, Agartala
+        </span>
+      </div>
+    </div>
+
+    <!-- Mobile Lookup / Switcher Box -->
+    <div class="phone-lookup-box">
+      <label class="form-label" style="font-weight:700;">📱 View Orders for Mobile Number:</label>
+      <div class="lookup-input-row">
+        <input type="tel" id="custPhoneInput" class="form-input" placeholder="e.g. 9862272399" maxlength="10" style="max-width:300px;">
+        <button class="btn-hero-primary" style="padding:10px 20px;" onclick="loadOrdersForPhone()">
+          🔍 View My Orders
+        </button>
+      </div>
+    </div>
+
+    <!-- Orders Section -->
+    <div>
+      <div class="order-history-section-title">
+        <h3 style="margin:0; font-size:1.15rem;">📦 Past & Active Orders</h3>
+        <span id="orderCountBadge" class="cat-pill-small" style="background:#f1f5f9; color:var(--slate-700);">
+          0 Orders
+        </span>
+      </div>
+
+      <div id="customerOrderHistoryList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Live Order Tracking Modal -->
+  <div class="modal-overlay" id="trackingModal">
+    <div class="modal-container tracking-modal-container" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3>🛵 Live Delivery Tracker</h3>
+        <button class="btn-modal-close" onclick="closeModal('trackingModal')">✕</button>
+      </div>
+      <div class="modal-body" id="trackingModalContent">
+        <!-- Rendered dynamically by tracking.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/tracking.js"></script>
+  <script>
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add("active");
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove("active");
+    }
+    function escapeHTML(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    function showToast(message, type = "info") {
+      const c = document.getElementById("toastContainer");
+      if (!c) return;
+      const t = document.createElement("div");
+      t.className = `toast toast-${type}`;
+      t.textContent = message;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = "0";
+        setTimeout(() => t.remove(), 300);
+      }, 3500);
+    }
+
+    function loadOrdersForPhone() {
+      const input = document.getElementById("custPhoneInput");
+      const phone = input?.value.trim().replace(/\D/g, "");
+
+      if (!phone || phone.length < 10) {
+        showToast("Please enter a valid 10-digit mobile number.", "warning");
+        return;
+      }
+
+      // Save customer phone into Store customer cache
+      const saved = Store.getCustomer() || {};
+      Store.saveCustomer({ ...saved, phone });
+
+      renderPortalOrders(phone);
+    }
+
+    function renderPortalOrders(phone) {
+      const listContainer = document.getElementById("customerOrderHistoryList");
+      const countBadge = document.getElementById("orderCountBadge");
+      const nameDisp = document.getElementById("custNameDisplay");
+      const metaDisp = document.getElementById("custMetaDisplay");
+
+      const orders = Store.getOrdersByPhone(phone);
+      if (countBadge) countBadge.textContent = `${orders.length} Order${orders.length === 1 ? "" : "s"}`;
+
+      if (orders.length > 0) {
+        const latest = orders[0];
+        if (nameDisp) nameDisp.textContent = latest.customer?.name || "Valued Customer";
+        if (metaDisp) metaDisp.textContent = `📞 ${phone} • 📍 ${latest.customer?.address || "Agartala"}`;
+      } else {
+        const saved = Store.getCustomer();
+        if (nameDisp) nameDisp.textContent = saved?.name || "Customer Account";
+        if (metaDisp) metaDisp.textContent = `📞 ${phone}`;
+      }
+
+      if (orders.length === 0) {
+        listContainer.innerHTML = `
+          <div class="empty-history-box" style="background:var(--white); padding:40px 20px; text-align:center; border-radius:var(--radius-lg); border:1px dashed var(--slate-300);">
+            <span style="font-size:3rem; display:block; margin-bottom:12px;">🛍️</span>
+            <h4 style="margin-bottom:6px;">No orders found for ${phone}</h4>
+            <p style="color:var(--slate-500); font-size:0.9rem; margin-bottom:16px;">You haven't placed any orders with this number yet.</p>
+            <a href="index.html" class="btn-hero-primary" style="display:inline-block; text-decoration:none;">
+              Start Shopping Groceries ➔
+            </a>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = orders.map(o => {
+        const dateStr = new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+        const timeStr = new Date(o.createdAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+        const isPaid = (o.paymentStatus || "").toLowerCase().includes("paid");
+
+        return `
+          <div class="history-order-card" style="background:var(--white); border:1.5px solid var(--slate-200); border-radius:var(--radius-lg); padding:18px; margin-bottom:16px; box-shadow:var(--shadow-xs);">
+            <div class="hoc-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+              <div>
+                <strong style="font-size:1.1rem; color:var(--slate-900);">${o.id}</strong>
+                <span class="track-badge ${o.status}" style="margin-left:8px;">${formatStatusLabel(o.status)}</span>
+                <div style="font-size:0.8rem; color:var(--slate-500); margin-top:2px;">
+                  🗓️ ${dateStr} at ${timeStr} • Slot: <strong>${o.deliverySlot || "Instant Express"}</strong>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-size:1.2rem; font-weight:800; color:var(--slate-900);">₹${o.summary?.grandTotal || 0}</span>
+                <span style="display:block; font-size:0.72rem; font-weight:700; color:${isPaid ? "#065f46" : "#92400e"};">
+                  ${isPaid ? "PAID ONLINE" : "CASH ON DELIVERY"}
+                </span>
+              </div>
+            </div>
+
+            <div class="hoc-items" style="font-size:0.88rem; color:var(--slate-700); background:#f8fafc; padding:10px 14px; border-radius:var(--radius-md); margin-bottom:12px;">
+              <strong>Items:</strong> ${(o.items || []).map(i => `${escapeHTML(i.name)} × ${i.qty}`).join(", ")}
+              ${o.deliveryDistanceLabel ? `<div style="font-size:0.78rem; color:var(--slate-500); margin-top:4px;">🛵 Distance: ${escapeHTML(o.deliveryDistanceLabel)} • Delivery Fee: ${o.summary?.deliveryCharge === 0 ? "FREE" : `₹${o.summary?.deliveryCharge}`}</div>` : ""}
+            </div>
+
+            <div class="hoc-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div style="font-size:0.82rem; color:var(--slate-500);">
+                📍 Delivered to: <em>${escapeHTML(o.customer?.address || "Agartala")}</em>
+              </div>
+              <div class="hoc-actions" style="display:flex; gap:8px;">
+                <button class="btn-xs" style="background:var(--primary-600); color:var(--white); padding:6px 14px; border-radius:var(--radius-full); font-weight:700; border:none; cursor:pointer;" onclick="openOrderTracker('${o.id}')">
+                  📍 Live Tracker
+                </button>
+                <button class="btn-xs btn-primary-outline" style="padding:6px 14px; border-radius:var(--radius-full); font-weight:700; cursor:pointer;" onclick="reorderCustomerItems('${o.id}')">
+                  🔁 Reorder
+                </button>
+                <button class="btn-xs btn-outline" style="padding:6px 12px; border-radius:var(--radius-full); font-size:0.75rem; cursor:pointer;" onclick="Tracking.contactSupportForOrder('${o.id}')">
+                  💬 Support
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openOrderTracker(orderId) {
+      Tracking.trackOrder(orderId);
+      openModal("trackingModal");
+    }
+
+    function reorderCustomerItems(orderId) {
+      const order = Store.getOrderById(orderId);
+      if (!order || !order.items) {
+        showToast("Could not find items to reorder.", "error");
+        return;
+      }
+      // Add all items from order to cart
+      order.items.forEach(item => {
+        Store.addToCart(item, item.qty);
+      });
+      showToast("Items added to your grocery basket! Redirecting to shop...", "success");
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 800);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Check saved customer phone
+      const saved = Store.getCustomer();
+      if (saved && saved.phone) {
+        const input = document.getElementById("custPhoneInput");
+        if (input) input.value = saved.phone;
+        renderPortalOrders(saved.phone);
+      } else {
+        // Render all local orders if only one customer on device
+        const allOrders = Store.getOrders();
+        if (allOrders.length > 0 && allOrders[0].customer?.phone) {
+          const defaultPhone = allOrders[0].customer.phone;
+          const input = document.getElementById("custPhoneInput");
+          if (input) input.value = defaultPhone;
+          renderPortalOrders(defaultPhone);
+        } else {
+          renderPortalOrders("");
+        }
+      }
+    });
+  </script>
+</body>
+</html>
