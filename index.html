@@ -286,6 +286,25 @@
             <input type="text" id="checkoutNotes" class="form-input" placeholder="e.g. Please ring bell twice or call upon arrival">
           </div>
 
+          <!-- Distance-Based Delivery Zone & GPS Detection -->
+          <div class="form-group distance-selector-section">
+            <div class="distance-header-row">
+              <label class="form-label" style="margin-bottom:0; font-weight:600;">📍 Delivery Distance & Fee</label>
+              <button type="button" class="btn-gps-detect" id="btnGpsDetect" onclick="handleAutoDetectLocation()">
+                <span id="gpsDetectIcon">🎯</span> <span id="gpsDetectText">Auto-Detect (GPS)</span>
+              </button>
+            </div>
+            <div id="gpsStatusMessage" class="gps-status-msg" style="display: none;"></div>
+
+            <div class="distance-tiers-list" id="distanceTiersContainer">
+              <!-- Rendered dynamically by app.js -->
+            </div>
+            <input type="hidden" id="checkoutSelectedDistance" value="1.5">
+            <div class="distance-hint-row">
+              <small class="text-muted">🛵 Calculated from GrossHub Hub, Bhattapukur. Free delivery above ₹499 within 5 km!</small>
+            </div>
+          </div>
+
           <!-- Payment Selection -->
           <div class="form-group" style="margin-top: 20px;">
             <label class="form-label">Select Payment Method</label>
@@ -688,6 +707,36 @@
                   <div class="form-group">
                     <label class="form-label">Free Delivery Threshold (₹)</label>
                     <input type="number" id="adminSetFreeThreshold" class="form-input">
+                  </div>
+                </div>
+
+                <div class="admin-distance-settings-box">
+                  <label class="form-label" style="font-weight:700; color:var(--emerald-800);">📍 Distance-Based Delivery Rates (Agartala)</label>
+                  <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:12px;">Configure delivery charges for each distance tier from Bhattapukur store:</p>
+                  
+                  <div class="form-row-2">
+                    <div class="form-group">
+                      <label class="form-label" style="font-size:0.8rem;">0 – 2 km (Local) Fee (₹)</label>
+                      <input type="number" id="adminTierFee_tier_1" class="form-input" min="0" placeholder="15">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" style="font-size:0.8rem;">2 – 5 km (City Core) Fee (₹)</label>
+                      <input type="number" id="adminTierFee_tier_2" class="form-input" min="0" placeholder="30">
+                    </div>
+                  </div>
+                  <div class="form-row-2">
+                    <div class="form-group">
+                      <label class="form-label" style="font-size:0.8rem;">5 – 8 km (Extended City) Fee (₹)</label>
+                      <input type="number" id="adminTierFee_tier_3" class="form-input" min="0" placeholder="50">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" style="font-size:0.8rem;">8 – 12 km (Suburbs) Fee (₹)</label>
+                      <input type="number" id="adminTierFee_tier_4" class="form-input" min="0" placeholder="75">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">12+ km (Outskirts) Fee (₹)</label>
+                    <input type="number" id="adminTierFee_tier_5" class="form-input" min="0" placeholder="100">
                   </div>
                 </div>
 

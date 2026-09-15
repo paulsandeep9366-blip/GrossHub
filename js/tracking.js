@@ -166,6 +166,7 @@ const Tracking = {
         <div class="address-body">
           <strong>${escapeHTML(order.customer?.name || '')}</strong> (${order.customer?.phone || ''})<br>
           ${escapeHTML(order.customer?.address || '')}
+          ${order.deliveryDistanceLabel ? `<br><span class="text-muted">🛵 Distance Zone: <strong>${escapeHTML(order.deliveryDistanceLabel)}</strong>${order.deliveryDistanceKm ? ` (~${order.deliveryDistanceKm} km)` : ''}</span>` : ''}
           ${order.customer?.notes ? `<br><em>Note: ${escapeHTML(order.customer.notes)}</em>` : ''}
         </div>
       </div>
@@ -175,7 +176,7 @@ const Tracking = {
         <div class="track-items-list">${itemsHTML}</div>
         <div class="track-summary-totals">
           <div class="row"><span>Item Subtotal:</span> <span>₹${order.summary?.subtotal || 0}</span></div>
-          <div class="row"><span>Delivery Fee:</span> <span>${order.summary?.deliveryCharge === 0 ? '<strong class="text-success">FREE</strong>' : `₹${order.summary?.deliveryCharge}`}</span></div>
+          <div class="row"><span>Delivery Fee:</span> <span>${order.summary?.deliveryCharge === 0 ? '<strong class="text-success">FREE</strong>' : `₹${order.summary?.deliveryCharge}`}${order.deliveryDistanceKm ? ` <small class="text-muted">(${order.deliveryDistanceKm} km)</small>` : ''}</span></div>
           ${order.summary?.couponDiscount ? `<div class="row text-success"><span>Promo (${order.summary.couponCode}):</span> <span>-₹${order.summary.couponDiscount}</span></div>` : ''}
           <div class="row grand-total"><span>Final Total:</span> <span>₹${order.summary?.grandTotal || 0}</span></div>
         </div>

@@ -19,7 +19,20 @@ const DEFAULT_SHOP_CONFIG = {
   adminPassword: "grosshub123",
   upiId: "9862272399@upi",
   serviceStatus: "open", // 'open' or 'closed'
-  estimatedDeliveryTime: "30-45 mins"
+  estimatedDeliveryTime: "30-45 mins",
+  storeLocation: {
+    name: "Bhattapukur, Agartala",
+    address: "Bhattapukur, Agartala, Tripura - 799003",
+    lat: 23.8188,
+    lng: 91.2725
+  },
+  distanceTiers: [
+    { id: "tier_1", maxKm: 2, fee: 15, label: "0 - 2 km (Local)", desc: "Bhattapukur, Badharghat, Arundhutinagar" },
+    { id: "tier_2", maxKm: 5, fee: 30, label: "2 - 5 km (City Core)", desc: "Melarmath, Banamalipur, Ramnagar, Math Chowmuhani" },
+    { id: "tier_3", maxKm: 8, fee: 50, label: "5 - 8 km (Extended City)", desc: "Kunjaban, GB Hospital, Indranagar, Amtali" },
+    { id: "tier_4", maxKm: 12, fee: 75, label: "8 - 12 km (Suburbs)", desc: "Khayerpur, Ranirbazar, New Capital Complex" },
+    { id: "tier_5", maxKm: 999, fee: 100, label: "12+ km (Outskirts)", desc: "Jirania, Sekerkote, Airport Zone" }
+  ]
 };
 
 const CATEGORIES = [

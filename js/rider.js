@@ -101,6 +101,7 @@ const RiderPanel = {
             <div class="cust-info">
               <div class="cust-name">👤 ${escapeHTML(order.customer?.name || 'Customer')}</div>
               <div class="cust-addr">📍 ${escapeHTML(order.customer?.address || '')}</div>
+              ${order.deliveryDistanceLabel ? `<div style="font-size:0.8rem; color:#047857; margin-top:2px;">🛵 Distance: <strong>${escapeHTML(order.deliveryDistanceLabel)}</strong>${order.deliveryDistanceKm ? ` (~${order.deliveryDistanceKm} km)` : ''}</div>` : ''}
               ${order.customer?.notes ? `<div class="cust-note">⚠️ Note: ${escapeHTML(order.customer.notes)}</div>` : ''}
             </div>
             <div class="cust-quick-actions">

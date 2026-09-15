@@ -428,6 +428,12 @@ const AdminPanel = {
     set('adminSetFreeThreshold', config.freeDeliveryThreshold);
     set('adminSetUpiId', config.upiId);
 
+    // Populate distance tier fee inputs
+    const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
+    tiers.forEach(tier => {
+      set(`adminTierFee_${tier.id}`, tier.fee);
+    });
+
     const statusToggle = document.getElementById('adminSetStoreStatus');
     if (statusToggle) {
       statusToggle.checked = config.serviceStatus !== 'closed';
@@ -436,6 +442,16 @@ const AdminPanel = {
 
   handleSaveSettings() {
     const get = id => document.getElementById(id)?.value.trim();
+
+    const config = Store.getConfig();
+    const currentTiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
+    const updatedTiers = currentTiers.map(tier => {
+      const val = document.getElementById(`adminTierFee_${tier.id}`)?.value;
+      return {
+        ...tier,
+        fee: (val !== undefined && val !== '') ? (Number(val) || 0) : tier.fee
+      };
+    });
 
     const updated = {
       shopName: get('adminSetShopName') || 'GrossHub',
@@ -447,6 +463,7 @@ const AdminPanel = {
       deliveryCharge: Number(get('adminSetDeliveryFee')) || 30,
       freeDeliveryThreshold: Number(get('adminSetFreeThreshold')) || 499,
       upiId: get('adminSetUpiId') || '9862272399@upi',
+      distanceTiers: updatedTiers,
       serviceStatus: document.getElementById('adminSetStoreStatus')?.checked ? 'open' : 'closed'
     };
 

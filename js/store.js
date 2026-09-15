@@ -19,11 +19,69 @@ const Store = {
   getConfig() {
     try {
       const saved = localStorage.getItem(this.KEYS.CONFIG);
-      if (saved) return { ...DEFAULT_SHOP_CONFIG, ...JSON.parse(saved) };
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_SHOP_CONFIG,
+          ...parsed,
+          storeLocation: parsed.storeLocation || DEFAULT_SHOP_CONFIG.storeLocation,
+          distanceTiers: (parsed.distanceTiers && parsed.distanceTiers.length) ? parsed.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers
+        };
+      }
     } catch (e) {
       console.error('Error reading config:', e);
     }
     return { ...DEFAULT_SHOP_CONFIG };
+  },
+
+  // Distance-based delivery fee calculation
+  calculateDeliveryFee(distanceKm = 1.5, subtotal = 0, coupon = null) {
+    const config = this.getConfig();
+    const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
+    const threshold = config.freeDeliveryThreshold || 499;
+
+    const km = Math.max(0.1, Number(distanceKm) || 1.5);
+    let matchedTier = tiers[0];
+    for (const tier of tiers) {
+      if (km <= tier.maxKm) {
+        matchedTier = tier;
+        break;
+      }
+      matchedTier = tier;
+    }
+
+    const originalFee = Number(matchedTier.fee) || 0;
+    let finalFee = originalFee;
+    let isFree = false;
+    let isDiscounted = false;
+    let discountAmount = 0;
+
+    if (coupon && coupon.type === 'free_delivery') {
+      finalFee = 0;
+      isFree = true;
+      discountAmount = originalFee;
+    } else if (subtotal >= threshold) {
+      if (km <= 5) {
+        finalFee = 0;
+        isFree = true;
+        discountAmount = originalFee;
+      } else {
+        discountAmount = Math.min(originalFee, 30);
+        finalFee = Math.max(0, originalFee - discountAmount);
+        isDiscounted = true;
+      }
+    }
+
+    return {
+      fee: finalFee,
+      originalFee,
+      isFree: finalFee === 0,
+      isDiscounted,
+      discountAmount,
+      distanceKm: km,
+      tier: matchedTier,
+      tierLabel: matchedTier.label
+    };
   },
 
   saveConfig(newConfig) {
@@ -154,8 +212,10 @@ const Store = {
         notes: orderPayload.customer.notes || ''
       },
       deliverySlot: orderPayload.deliverySlot || 'Instant Delivery (30-45 mins)',
+      deliveryDistanceKm: orderPayload.deliveryDistanceKm !== undefined ? orderPayload.deliveryDistanceKm : 1.5,
+      deliveryDistanceLabel: orderPayload.deliveryDistanceLabel || '0 - 2 km (Local)',
       paymentMethod: orderPayload.paymentMethod || 'Cash on Delivery',
-      paymentStatus: orderPayload.paymentMethod.includes('UPI') ? 'Paid Online' : 'Pending COD Collection',
+      paymentStatus: (orderPayload.paymentMethod && orderPayload.paymentMethod.includes('UPI')) ? 'Paid Online' : 'Pending COD Collection',
       rider: 'Pending Assignment',
       riderPhone: '',
       items: orderPayload.items || [],
@@ -163,6 +223,8 @@ const Store = {
         itemCount: orderPayload.items.reduce((acc, item) => acc + item.qty, 0),
         subtotal: orderPayload.subtotal,
         deliveryCharge: orderPayload.deliveryCharge,
+        deliveryDistanceKm: orderPayload.deliveryDistanceKm !== undefined ? orderPayload.deliveryDistanceKm : 1.5,
+        deliveryDistanceLabel: orderPayload.deliveryDistanceLabel || '0 - 2 km (Local)',
         couponDiscount: orderPayload.couponDiscount || 0,
         couponCode: orderPayload.couponCode || '',
         grandTotal: orderPayload.grandTotal

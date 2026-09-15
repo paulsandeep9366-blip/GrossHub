@@ -10,6 +10,8 @@ let currentSort = 'featured';
 let activeCoupon = null; // { code, discount, ... }
 let selectedPaymentMethod = 'Cash on Delivery';
 let selectedDeliverySlot = 'Instant Delivery (30-45 mins)';
+let selectedDistanceKm = 1.5;
+let selectedDistanceTierId = 'tier_1';
 
 // Document Ready Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -34,6 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
     set('checkoutPhone', savedCust.phone);
     set('checkoutAddress', savedCust.address);
     set('checkoutLandmark', savedCust.landmark);
+    if (savedCust.distanceKm) {
+      selectedDistanceKm = Number(savedCust.distanceKm) || 1.5;
+    }
+    if (savedCust.distanceTierId) {
+      selectedDistanceTierId = savedCust.distanceTierId;
+    }
   }
 });
 
@@ -323,11 +331,10 @@ function updateCartBadgeAndDrawer() {
   if (drawerItems) drawerItems.style.display = 'block';
   if (footerEl) footerEl.style.display = 'block';
 
-  // Free delivery progress meter
+  // Distance-aware free delivery progress meter
   const threshold = config.freeDeliveryThreshold || 499;
-  const standardFee = config.deliveryCharge || 30;
-  const isFreeDelivery = subtotal >= threshold || (activeCoupon && activeCoupon.type === 'free_delivery');
-  const deliveryCharge = isFreeDelivery ? 0 : standardFee;
+  const feeInfo = Store.calculateDeliveryFee(selectedDistanceKm, subtotal, activeCoupon);
+  const deliveryCharge = feeInfo.fee;
   const amountNeededForFree = Math.max(0, threshold - subtotal);
   const percentFilled = Math.min(100, Math.round((subtotal / threshold) * 100));
 
@@ -336,8 +343,10 @@ function updateCartBadgeAndDrawer() {
 
   if (progressFill) progressFill.style.width = `${percentFilled}%`;
   if (progressText) {
-    if (isFreeDelivery) {
-      progressText.innerHTML = `🎉 <strong>FREE Delivery Unlocked!</strong> You saved ₹${standardFee}.`;
+    if (feeInfo.isFree) {
+      progressText.innerHTML = `🎉 <strong>FREE Delivery Unlocked!</strong> You saved ₹${feeInfo.originalFee}.`;
+    } else if (feeInfo.isDiscounted) {
+      progressText.innerHTML = `🎉 <strong>₹${feeInfo.discountAmount} Distance Subsidy Applied!</strong> (Orders over ₹${threshold})`;
     } else {
       progressText.innerHTML = `Add <strong>₹${amountNeededForFree}</strong> more to unlock <strong>FREE Delivery!</strong>`;
     }
@@ -437,6 +446,166 @@ function removeCoupon() {
   updateCartBadgeAndDrawer();
 }
 
+// Distance Engine & GPS Calculation (Agartala, Bhattapukur)
+function calculateHaversineDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round((R * c) * 10) / 10;
+}
+
+function handleAutoDetectLocation() {
+  const btn = document.getElementById('btnGpsDetect');
+  const icon = document.getElementById('gpsDetectIcon');
+  const text = document.getElementById('gpsDetectText');
+  const msgEl = document.getElementById('gpsStatusMessage');
+
+  if (!navigator.geolocation) {
+    showToast('Geolocation is not supported by your browser.', 'warning');
+    return;
+  }
+
+  if (btn) btn.classList.add('loading');
+  if (icon) icon.textContent = '⏳';
+  if (text) text.textContent = 'Detecting...';
+  if (msgEl) {
+    msgEl.className = 'gps-status-msg';
+    msgEl.style.display = 'flex';
+    msgEl.innerHTML = '<span>📡</span> <span>Accessing your location in Agartala...</span>';
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      if (btn) btn.classList.remove('loading');
+      if (icon) icon.textContent = '✅';
+      if (text) text.textContent = 'Detected!';
+
+      const userLat = position.coords.latitude;
+      const userLng = position.coords.longitude;
+
+      const config = Store.getConfig();
+      const storeLoc = config.storeLocation || DEFAULT_SHOP_CONFIG.storeLocation;
+      const storeLat = (storeLoc && storeLoc.lat) ? storeLoc.lat : 23.8188;
+      const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : 91.2725;
+
+      const distanceKm = calculateHaversineDistanceKm(storeLat, storeLng, userLat, userLng);
+      selectedDistanceKm = distanceKm;
+
+      const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
+      let matched = tiers[0];
+      for (const t of tiers) {
+        if (distanceKm <= t.maxKm) {
+          matched = t;
+          break;
+        }
+        matched = t;
+      }
+      selectedDistanceTierId = matched.id;
+
+      if (msgEl) {
+        msgEl.className = 'gps-status-msg';
+        msgEl.style.display = 'flex';
+        msgEl.innerHTML = `<span>📍</span> <span><strong>${distanceKm} km</strong> from GrossHub Hub (${storeLoc.name || 'Bhattapukur'}). Tier: <strong>${matched.label}</strong></span>`;
+      }
+
+      showToast(`Location detected: ~${distanceKm} km from Bhattapukur store! 🛵`, 'success');
+      renderDistanceTierCards();
+      updateCheckoutTotals();
+    },
+    (err) => {
+      if (btn) btn.classList.remove('loading');
+      if (icon) icon.textContent = '🎯';
+      if (text) text.textContent = 'Auto-Detect (GPS)';
+      if (msgEl) {
+        msgEl.className = 'gps-status-msg error';
+        msgEl.style.display = 'flex';
+        let errMsg = 'Location access denied or unavailable.';
+        if (err.code === 1) errMsg = 'Location permission denied. Please tap your distance zone below.';
+        msgEl.innerHTML = `<span>⚠️</span> <span>${errMsg}</span>`;
+      }
+      showToast('Could not get GPS location. Please choose your distance zone below.', 'info');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+}
+
+function renderDistanceTierCards() {
+  const container = document.getElementById('distanceTiersContainer');
+  if (!container) return;
+
+  const config = Store.getConfig();
+  const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
+  const cart = Store.getCart();
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+  container.innerHTML = tiers.map(tier => {
+    const isSelected = (tier.id === selectedDistanceTierId);
+    const approxKm = tier.maxKm === 999 ? 15 : (tier.maxKm - 0.5);
+    const feeInfo = Store.calculateDeliveryFee(approxKm, subtotal, activeCoupon);
+    const displayFee = feeInfo.isFree ? 'FREE' : `₹${tier.fee}`;
+
+    return `
+      <div class="distance-tier-card ${isSelected ? 'selected' : ''}" 
+           onclick="selectDistanceTier('${tier.id}', ${approxKm})">
+        <div class="dtc-left">
+          <div class="dtc-radio-dot"></div>
+          <div>
+            <div class="dtc-info-title">${escapeHTML(tier.label)}</div>
+            <div class="dtc-info-desc">${escapeHTML(tier.desc)}</div>
+          </div>
+        </div>
+        <div class="dtc-fee-badge ${feeInfo.isFree ? 'free' : ''}">
+          ${displayFee}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectDistanceTier(tierId, approxKm) {
+  selectedDistanceTierId = tierId;
+  selectedDistanceKm = approxKm;
+  const hiddenInput = document.getElementById('checkoutSelectedDistance');
+  if (hiddenInput) hiddenInput.value = approxKm;
+  renderDistanceTierCards();
+  updateCheckoutTotals();
+  updateCartBadgeAndDrawer();
+}
+
+function updateCheckoutTotals() {
+  const cart = Store.getCart();
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const feeInfo = Store.calculateDeliveryFee(selectedDistanceKm, subtotal, activeCoupon);
+
+  let couponDiscount = 0;
+  if (activeCoupon) {
+    const valResult = Store.validateCoupon(activeCoupon.code, subtotal);
+    if (valResult.valid) couponDiscount = valResult.discount;
+  }
+
+  const grandTotal = Math.max(0, subtotal + feeInfo.fee - couponDiscount);
+
+  const setTxt = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+
+  setTxt('checkoutSubtotal', `₹${subtotal}`);
+  setTxt('checkoutDelivery', feeInfo.isFree ? 'FREE' : `₹${feeInfo.fee}`);
+  setTxt('checkoutDiscount', `-₹${couponDiscount}`);
+  setTxt('checkoutGrandTotal', `₹${grandTotal}`);
+
+  const discRow = document.getElementById('checkoutDiscountRow');
+  if (discRow) discRow.style.display = couponDiscount > 0 ? 'flex' : 'none';
+
+  return { subtotal, deliveryCharge: feeInfo.fee, couponDiscount, grandTotal, feeInfo };
+}
+
 // 7. WhatsApp Order Dispatch (Phase 2)
 function proceedToWhatsAppOrder(chosenNumber = null) {
   const cart = Store.getCart();
@@ -446,7 +615,9 @@ function proceedToWhatsAppOrder(chosenNumber = null) {
   }
 
   const config = Store.getConfig();
-  const totals = updateCartBadgeAndDrawer();
+  const totals = updateCheckoutTotals();
+  const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
+  const matchedTier = tiers.find(t => t.id === selectedDistanceTierId) || tiers[0];
 
   // If customer details not filled, ask or prefill
   const savedCust = Store.getCustomer() || {};
@@ -463,9 +634,13 @@ function proceedToWhatsAppOrder(chosenNumber = null) {
       name: customerName,
       phone: customerPhone,
       address: customerAddress,
+      distanceKm: selectedDistanceKm,
+      distanceTierId: selectedDistanceTierId,
       notes: 'Ordered via WhatsApp Direct'
     },
     deliverySlot: selectedDeliverySlot,
+    deliveryDistanceKm: selectedDistanceKm,
+    deliveryDistanceLabel: matchedTier.label,
     paymentMethod: 'WhatsApp Order (Cash on Delivery)',
     items: cart,
     subtotal: totals.subtotal,
@@ -477,18 +652,19 @@ function proceedToWhatsAppOrder(chosenNumber = null) {
 
   // Build clean formatted message
   const itemsText = cart.map(i => `• ${i.name} × ${i.qty} (${i.unit}) — ₹${i.price * i.qty}`).join('\n');
-  const deliveryText = totals.deliveryCharge === 0 ? 'FREE' : `₹${totals.deliveryCharge}`;
+  const deliveryText = totals.deliveryCharge === 0 ? 'FREE' : `₹${totals.deliveryCharge} (${matchedTier.label})`;
   const couponText = totals.couponDiscount > 0 ? `\n🏷️ *Promo Code:* ${activeCoupon.code} (-₹${totals.couponDiscount})` : '';
 
   const message = 
 `🛒 *NEW GROCERY ORDER — GROSSHUB*
 *Order ID:* ${order.id}
-*Store:* Bhattapukur, Agartala
+*Store Base:* Bhattapukur, Agartala
 
 👤 *Customer Details:*
 • *Name:* ${customerName}
 • *Phone:* ${customerPhone}
 • *Delivery Address:* ${customerAddress}
+• *Distance Zone:* ${matchedTier.label} (~${selectedDistanceKm} km)
 • *Preferred Slot:* ${selectedDeliverySlot}
 
 📦 *Items Ordered:*
@@ -527,7 +703,8 @@ function openCheckoutModal() {
   }
 
   closeCartDrawer();
-  const totals = updateCartBadgeAndDrawer();
+  renderDistanceTierCards();
+  const totals = updateCheckoutTotals();
 
   const sumItems = document.getElementById('checkoutSummaryItems');
   if (sumItems) {
@@ -623,12 +800,25 @@ function handleCheckoutSubmit(e) {
   }
 
   const cart = Store.getCart();
-  const totals = updateCartBadgeAndDrawer();
+  const totals = updateCheckoutTotals();
+  const config = Store.getConfig();
+  const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
+  const matchedTier = tiers.find(t => t.id === selectedDistanceTierId) || tiers[0];
 
   // Create order
   const order = Store.createOrder({
-    customer: { name, phone: cleanPhone, address, landmark, notes },
+    customer: { 
+      name, 
+      phone: cleanPhone, 
+      address, 
+      landmark, 
+      notes,
+      distanceKm: selectedDistanceKm,
+      distanceTierId: selectedDistanceTierId
+    },
     deliverySlot: slot,
+    deliveryDistanceKm: selectedDistanceKm,
+    deliveryDistanceLabel: matchedTier.label,
     paymentMethod: selectedPaymentMethod,
     items: cart,
     subtotal: totals.subtotal,
