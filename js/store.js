@@ -12,7 +12,10 @@ const Store = {
     CART: 'grosshub_cart',
     COUPONS: 'grosshub_coupons',
     CUSTOMER: 'grosshub_customer',
-    ADMIN_PWD: 'grosshub_admin_password'
+    ADMIN_PWD: 'grosshub_admin_password',
+    RIDER_SESSION: 'grosshub_rider_session',
+    RIDER_PIN: 'grosshub_rider_pin',
+    CUSTOMER_SESSION: 'grosshub_customer_session'
   },
 
   // 1. Store Configuration
@@ -25,7 +28,9 @@ const Store = {
           ...DEFAULT_SHOP_CONFIG,
           ...parsed,
           storeLocation: parsed.storeLocation || DEFAULT_SHOP_CONFIG.storeLocation,
-          distanceTiers: (parsed.distanceTiers && parsed.distanceTiers.length) ? parsed.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers
+          distanceTiers: (parsed.distanceTiers && parsed.distanceTiers.length) ? parsed.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers,
+          riderPin: parsed.riderPin || DEFAULT_SHOP_CONFIG.riderPin,
+          riders: (parsed.riders && parsed.riders.length) ? parsed.riders : DEFAULT_SHOP_CONFIG.riders
         };
       }
     } catch (e) {
@@ -354,5 +359,56 @@ const Store = {
       return true;
     }
     return false;
+  },
+
+  // 8. Rider Authentication & Session
+  getRiderPin() {
+    return localStorage.getItem(this.KEYS.RIDER_PIN) || this.getConfig().riderPin || "1234";
+  },
+
+  setRiderPin(pin) {
+    if (pin && String(pin).trim().length >= 4) {
+      localStorage.setItem(this.KEYS.RIDER_PIN, String(pin).trim());
+      return true;
+    }
+    return false;
+  },
+
+  getRiders() {
+    return this.getConfig().riders || DEFAULT_SHOP_CONFIG.riders;
+  },
+
+  getRiderSession() {
+    try {
+      const s = localStorage.getItem(this.KEYS.RIDER_SESSION);
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return null;
+  },
+
+  setRiderSession(rider) {
+    localStorage.setItem(this.KEYS.RIDER_SESSION, JSON.stringify(rider));
+  },
+
+  clearRiderSession() {
+    localStorage.removeItem(this.KEYS.RIDER_SESSION);
+  },
+
+  // 9. Customer Authentication & Session
+  getCustomerSession() {
+    try {
+      const s = localStorage.getItem(this.KEYS.CUSTOMER_SESSION);
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return null;
+  },
+
+  setCustomerSession(customer) {
+    localStorage.setItem(this.KEYS.CUSTOMER_SESSION, JSON.stringify(customer));
+    this.saveCustomer(customer);
+  },
+
+  clearCustomerSession() {
+    localStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
   }
 };

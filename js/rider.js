@@ -5,18 +5,97 @@
  */
 
 const RiderPanel = {
-  activeRider: 'Rider Bikash',
-  activeTab: 'active', // 'active' or 'completed'
+  isAuthenticated: false,
+  activeRider: "Rider Bikash",
+  activeTab: "active", // "active" or "completed"
 
   init() {
+    this.checkSession();
     this.setupEventListeners();
   },
 
+  checkSession() {
+    const session = Store.getRiderSession();
+    if (session && session.name) {
+      this.isAuthenticated = true;
+      this.activeRider = session.name;
+      this.showDashboard();
+    } else {
+      this.showLogin();
+    }
+  },
+
+  showDashboard() {
+    const loginView = document.getElementById("riderLoginView");
+    const dashView = document.getElementById("riderDashboardView");
+    const badge = document.getElementById("riderActiveBadge");
+    const logoutBtn = document.getElementById("btnRiderLogout");
+
+    if (loginView) loginView.style.display = "none";
+    if (dashView) dashView.style.display = "block";
+    if (badge) badge.textContent = this.activeRider;
+    if (logoutBtn) logoutBtn.style.display = "inline-flex";
+
+    this.renderOrders();
+  },
+
+  showLogin() {
+    const loginView = document.getElementById("riderLoginView");
+    const dashView = document.getElementById("riderDashboardView");
+    const logoutBtn = document.getElementById("btnRiderLogout");
+
+    if (loginView) loginView.style.display = "block";
+    if (dashView) dashView.style.display = "none";
+    if (logoutBtn) logoutBtn.style.display = "none";
+  },
+
+  handleLogin(name, pin) {
+    const correctPin = Store.getRiderPin();
+    if (String(pin).trim() === String(correctPin).trim()) {
+      this.isAuthenticated = true;
+      this.activeRider = name;
+      Store.setRiderSession({ name, loginTime: new Date().toISOString() });
+      const errEl = document.getElementById("riderLoginError");
+      if (errEl) errEl.style.display = "none";
+      const pinInput = document.getElementById("riderPinInput");
+      if (pinInput) pinInput.value = "";
+      this.showDashboard();
+      showToast(`Welcome back, ${name}! 🛵`, "success");
+    } else {
+      const errEl = document.getElementById("riderLoginError");
+      if (errEl) {
+        errEl.style.display = "block";
+        errEl.textContent = "Incorrect Security PIN. Default is 1234.";
+      }
+      showToast("Incorrect Security PIN.", "error");
+    }
+  },
+
+  handleLogout() {
+    this.isAuthenticated = false;
+    Store.clearRiderSession();
+    this.showLogin();
+    showToast("Logged out of Rider Portal.", "info");
+  },
+
   setupEventListeners() {
-    const riderSelect = document.getElementById('riderSelectProfile');
+    const loginForm = document.getElementById("riderLoginForm");
+    if (loginForm) {
+      loginForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const select = document.getElementById("riderLoginSelect");
+        const pinInput = document.getElementById("riderPinInput");
+        this.handleLogin(select?.value || "Rider Bikash", pinInput?.value || "");
+      });
+    }
+
+    const riderSelect = document.getElementById("riderSelectProfile");
     if (riderSelect) {
-      riderSelect.addEventListener('change', (e) => {
+      riderSelect.addEventListener("change", (e) => {
         this.activeRider = e.target.value;
+        Store.setRiderSession({ name: e.target.value, loginTime: new Date().toISOString() });
+        const badge = document.getElementById("riderActiveBadge");
+        if (badge) badge.textContent = this.activeRider;
         this.renderOrders();
       });
     }

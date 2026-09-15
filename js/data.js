@@ -17,6 +17,12 @@ const DEFAULT_SHOP_CONFIG = {
   freeDeliveryThreshold: 499,
   currency: "₹",
   adminPassword: "grosshub123",
+  riderPin: "1234",
+  riders: [
+    { id: "rider_1", name: "Rider Bikash", phone: "9862272399", vehicle: "Honda Activa" },
+    { id: "rider_2", name: "Rider Rahul", phone: "6009430922", vehicle: "Hero Splendor" },
+    { id: "rider_3", name: "Rider Samir", phone: "9876543210", vehicle: "TVS Jupiter" }
+  ],
   upiId: "9862272399@upi",
   serviceStatus: "open", // 'open' or 'closed'
   estimatedDeliveryTime: "30-45 mins",

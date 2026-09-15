@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rider Dispatch Portal — GrossHub Agartala</title>
-  <meta name="description" content="GrossHub Delivery Partner & Rider Operations Portal: Real-time orders, customer calling, and Google Maps routing.">
+  <meta name="description" content="GrossHub Delivery Partner & Rider Operations Portal: Secure rider authentication, live orders dispatch, and navigation.">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -126,6 +126,16 @@
       70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
       100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
+    .rider-login-card {
+      max-width: 420px;
+      margin: 50px auto;
+      background: var(--white);
+      padding: 36px 28px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -135,21 +145,16 @@
     <a href="rider.html" class="rph-brand">
       <div class="logo-icon">🛵</div>
       <div>
-        <h1>GrossHub <span class="badge-rider">Rider Operations</span></h1>
+        <h1>GrossHub <span class="badge-rider">Rider Portal</span></h1>
         <small style="color:var(--slate-400); display:block; font-size:0.75rem;">Bhattapukur Store, Agartala</small>
       </div>
     </a>
 
     <div class="rph-controls">
-      <!-- Active Rider Profile Selector -->
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:0.8rem; color:var(--slate-300); font-weight:600;">Active Partner:</span>
-        <select id="riderSelectProfile" class="rider-profile-select">
-          <option value="Rider Bikash">Rider Bikash</option>
-          <option value="Rider Rahul">Rider Rahul</option>
-          <option value="Rider Samir">Rider Samir</option>
-        </select>
-      </div>
+      <!-- Active Rider Profile Badge (shown when logged in) -->
+      <span class="live-pulse-badge" id="riderActiveBadge" style="display:none; font-size:0.8rem; padding:5px 12px;">
+        Rider Bikash
+      </span>
 
       <a href="index.html" class="rph-link-btn" title="View Customer Storefront">
         🛒 View Store
@@ -157,41 +162,82 @@
       <a href="admin.html" class="rph-link-btn" title="Merchant Admin Dashboard">
         ⚙️ Admin
       </a>
+      <button class="rph-link-btn" id="btnRiderLogout" style="background:#ef4444; color:#fff; border:none; cursor:pointer; display:none;" onclick="RiderPanel.handleLogout()">
+        🚪 Logout
+      </button>
     </div>
   </header>
 
-  <!-- Main Content Wrapper -->
+  <!-- Main Content Area -->
   <main class="rider-standalone-container">
     
-    <!-- Top Status Bar -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-      <div class="live-pulse-badge">
-        <span class="live-pulse-dot"></span> Live Dispatch Feed
-      </div>
-      <button class="btn-xs btn-outline" onclick="RiderPanel.renderOrders(); showToast('Orders refreshed! 🔄', 'info');">
-        🔄 Refresh Now
-      </button>
+    <!-- Rider Authentication View -->
+    <div id="riderLoginView" class="rider-login-card">
+      <div style="font-size:3.5rem; margin-bottom:12px;">🛵</div>
+      <h2 style="font-size:1.35rem; margin-bottom:6px; color:var(--slate-900);">Delivery Partner Login</h2>
+      <p style="color:var(--slate-500); font-size:0.88rem; margin-bottom:24px;">Please select your rider profile and enter your 4-digit PIN to access orders.</p>
+
+      <form id="riderLoginForm">
+        <div class="form-group" style="text-align:left; margin-bottom:16px;">
+          <label class="form-label" for="riderLoginSelect">Select Rider Profile</label>
+          <select id="riderLoginSelect" class="form-select" required>
+            <option value="Rider Bikash">Rider Bikash (Honda Activa)</option>
+            <option value="Rider Rahul">Rider Rahul (Hero Splendor)</option>
+            <option value="Rider Samir">Rider Samir (TVS Jupiter)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="text-align:left; margin-bottom:18px;">
+          <label class="form-label" for="riderPinInput">4-Digit Security PIN</label>
+          <input type="password" id="riderPinInput" class="form-input" placeholder="Enter PIN (default: 1234)" maxlength="6" required>
+          <div id="riderLoginError" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:6px;"></div>
+        </div>
+
+        <button type="submit" class="btn-hero-primary" style="width:100%; padding:12px; font-size:0.95rem;">
+          Unlock Dispatch Dashboard ➔
+        </button>
+      </form>
     </div>
 
-    <div class="rider-card-wrapper">
-      
-      <!-- Tab Navigation -->
-      <div class="rider-tab-nav" style="border-radius:0;">
-        <button class="rider-tab-btn active" data-tab="active" onclick="RiderPanel.switchTab('active')">
-          🛵 Active Deliveries
-        </button>
-        <button class="rider-tab-btn" data-tab="completed" onclick="RiderPanel.switchTab('completed')">
-          ✅ Completed Today
-        </button>
+    <!-- Authenticated Rider Dashboard View -->
+    <div id="riderDashboardView" style="display: none;">
+      <!-- Top Status Bar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div class="live-pulse-badge">
+          <span class="live-pulse-dot"></span> Live Dispatch Feed
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <select id="riderSelectProfile" class="rider-profile-select" style="padding:4px 8px; font-size:0.8rem;">
+            <option value="Rider Bikash">Switch: Bikash</option>
+            <option value="Rider Rahul">Switch: Rahul</option>
+            <option value="Rider Samir">Switch: Samir</option>
+          </select>
+          <button class="btn-xs btn-outline" onclick="RiderPanel.renderOrders(); showToast('Orders refreshed! 🔄', 'info');">
+            🔄 Refresh
+          </button>
+        </div>
       </div>
 
-      <!-- Orders List -->
-      <div style="padding: 16px; background:#f8fafc; min-height:60vh;">
-        <div class="rider-orders-list" id="riderOrdersContainer">
-          <!-- Rendered dynamically by js/rider.js -->
+      <div class="rider-card-wrapper">
+        <!-- Tab Navigation -->
+        <div class="rider-tab-nav" style="border-radius:0;">
+          <button class="rider-tab-btn active" data-tab="active" onclick="RiderPanel.switchTab('active')">
+            🛵 Active Deliveries
+          </button>
+          <button class="rider-tab-btn" data-tab="completed" onclick="RiderPanel.switchTab('completed')">
+            ✅ Completed Today
+          </button>
+        </div>
+
+        <!-- Orders List -->
+        <div style="padding: 16px; background:#f8fafc; min-height:60vh;">
+          <div class="rider-orders-list" id="riderOrdersContainer">
+            <!-- Rendered dynamically by js/rider.js -->
+          </div>
         </div>
       </div>
     </div>
+
   </main>
 
   <!-- Global Toast Notification Container -->
@@ -209,7 +255,7 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/\x27/g, "&#039;");
     }
 
     function showToast(message, type = "info") {
@@ -227,11 +273,12 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       RiderPanel.init();
-      RiderPanel.renderOrders();
 
       // Auto-poll for new assigned orders every 15 seconds
       setInterval(() => {
-        RiderPanel.renderOrders();
+        if (RiderPanel.isAuthenticated) {
+          RiderPanel.renderOrders();
+        }
       }, 15000);
     });
   </script>

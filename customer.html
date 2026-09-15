@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Customer Account & Orders — GrossHub Agartala</title>
+  <title>Customer Portal & Orders — GrossHub Agartala</title>
   <meta name="description" content="Manage your GrossHub customer profile, track live grocery deliveries in Agartala, and view your complete order history.">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -86,6 +86,16 @@
       padding: 0 16px;
       flex: 1;
     }
+    .customer-login-card {
+      max-width: 440px;
+      margin: 50px auto;
+      background: var(--white);
+      padding: 36px 28px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
     .customer-profile-card {
       background: var(--white);
       border: 1px solid var(--slate-200);
@@ -126,24 +136,33 @@
       color: var(--slate-500);
       margin-top: 2px;
     }
-    .phone-lookup-box {
-      background: var(--white);
-      border: 1px solid var(--slate-200);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      margin-bottom: 24px;
-      box-shadow: var(--shadow-xs);
-    }
-    .lookup-input-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
     .order-history-section-title {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 14px;
+    }
+    .otp-display-pill {
+      background: #eff6ff;
+      border: 1px dashed #3b82f6;
+      color: #1d4ed8;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-size: 0.82rem;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .btn-autofill-otp {
+      background: #2563eb;
+      color: var(--white);
+      border: none;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -155,62 +174,104 @@
       <a href="index.html" class="ch-brand">
         <div class="logo-icon">🥬</div>
         <div>
-          <h1>GrossHub <span style="font-size:0.8rem; font-weight:600; color:var(--primary-600); margin-left:4px;">Customer Account</span></h1>
+          <h1>GrossHub <span style="font-size:0.8rem; font-weight:600; color:var(--primary-600); margin-left:4px;">Customer Portal</span></h1>
         </div>
       </a>
       <div class="ch-links">
+        <span id="custHeaderName" style="font-size:0.85rem; font-weight:700; color:var(--slate-800); display:none;">
+          👤 Customer
+        </span>
         <a href="index.html" class="ch-btn">
-          🛒 Back to Grocery Shop
+          🛒 Back to Shop
         </a>
-        <a href="https://wa.me/919862272399?text=Hello%20GrossHub%20Support" target="_blank" class="ch-btn" style="background:#ecfdf5; color:#065f46; border-color:#a7f3d0;">
-          💬 WhatsApp Help
-        </a>
+        <button class="ch-btn" id="btnCustomerLogout" style="background:#fee2e2; color:#b91c1c; border-color:#fecaca; cursor:pointer; display:none;" onclick="handleCustomerLogout()">
+          🚪 Logout
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
+  <!-- Main View Area -->
   <main class="customer-main">
 
-    <!-- Profile Overview Card -->
-    <div class="customer-profile-card">
-      <div class="cpc-left">
-        <div class="cpc-avatar">👤</div>
-        <div>
-          <div class="cpc-title" id="custNameDisplay">Customer Account</div>
-          <div class="cpc-meta" id="custMetaDisplay">Enter mobile number below to view saved details & orders</div>
-        </div>
-      </div>
-      <div>
-        <span class="cat-pill-small" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">
-          📍 Delivery Hub: Bhattapukur, Agartala
-        </span>
-      </div>
-    </div>
+    <!-- 1. Customer Authentication View (Shown when not logged in) -->
+    <div id="customerLoginView" class="customer-login-card">
+      <div style="font-size:3.5rem; margin-bottom:12px;">👤</div>
+      <h2 style="font-size:1.4rem; margin-bottom:6px; color:var(--slate-900);">Customer Sign In</h2>
+      <p style="color:var(--slate-500); font-size:0.88rem; margin-bottom:24px;">Enter your mobile number to access your grocery orders, saved address, and live delivery status.</p>
 
-    <!-- Mobile Lookup / Switcher Box -->
-    <div class="phone-lookup-box">
-      <label class="form-label" style="font-weight:700;">📱 View Orders for Mobile Number:</label>
-      <div class="lookup-input-row">
-        <input type="tel" id="custPhoneInput" class="form-input" placeholder="e.g. 9862272399" maxlength="10" style="max-width:300px;">
-        <button class="btn-hero-primary" style="padding:10px 20px;" onclick="loadOrdersForPhone()">
-          🔍 View My Orders
+      <!-- Step 1: Mobile & Name Form -->
+      <form id="customerPhoneForm">
+        <div class="form-group" style="text-align:left; margin-bottom:14px;">
+          <label class="form-label" for="custLoginName">Your Full Name</label>
+          <input type="text" id="custLoginName" class="form-input" placeholder="e.g. Bikram Debbarma" required>
+        </div>
+
+        <div class="form-group" style="text-align:left; margin-bottom:18px;">
+          <label class="form-label" for="custLoginPhone">10-Digit Mobile Number</label>
+          <input type="tel" id="custLoginPhone" class="form-input" placeholder="e.g. 9862272399" maxlength="10" required>
+        </div>
+
+        <button type="submit" class="btn-hero-primary" style="width:100%; padding:12px; font-size:0.95rem;" id="btnSendOtp">
+          Send Verification Code ➔
+        </button>
+      </form>
+
+      <!-- Step 2: OTP Verification Box (Hidden initially) -->
+      <div id="customerOtpBox" style="display:none; margin-top:20px; text-align:left;">
+        <div class="otp-display-pill">
+          <span>📲 Code sent to <strong id="otpTargetPhone">9862272399</strong></span>
+          <button type="button" class="btn-autofill-otp" onclick="autoFillCustomerOtp()">⚡ Auto-Fill Code</button>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label" for="custOtpInput">Enter 4-Digit Code</label>
+          <input type="text" id="custOtpInput" class="form-input" placeholder="1234" maxlength="4" style="font-size:1.3rem; letter-spacing:0.3em; text-align:center;">
+          <div id="custOtpError" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:6px;"></div>
+        </div>
+
+        <button type="button" class="btn-hero-primary" style="width:100%; padding:12px;" onclick="verifyCustomerOtp()">
+          Verify & Access Account ➔
         </button>
       </div>
     </div>
 
-    <!-- Orders Section -->
-    <div>
-      <div class="order-history-section-title">
-        <h3 style="margin:0; font-size:1.15rem;">📦 Past & Active Orders</h3>
-        <span id="orderCountBadge" class="cat-pill-small" style="background:#f1f5f9; color:var(--slate-700);">
-          0 Orders
-        </span>
+    <!-- 2. Customer Authenticated Dashboard (Shown when logged in) -->
+    <div id="customerDashboardView" style="display:none;">
+      
+      <!-- Profile Overview Card -->
+      <div class="customer-profile-card">
+        <div class="cpc-left">
+          <div class="cpc-avatar">👤</div>
+          <div>
+            <div class="cpc-title" id="custNameDisplay">Customer Account</div>
+            <div class="cpc-meta" id="custMetaDisplay">Verified Customer • Agartala</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span class="cat-pill-small" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">
+            📍 Bhattapukur Hub
+          </span>
+          <button class="btn-xs btn-outline" onclick="handleCustomerLogout()">
+            Logout
+          </button>
+        </div>
       </div>
 
-      <div id="customerOrderHistoryList">
-        <!-- Rendered dynamically -->
+      <!-- Orders Section -->
+      <div>
+        <div class="order-history-section-title">
+          <h3 style="margin:0; font-size:1.15rem;">📦 My Orders & Deliveries</h3>
+          <span id="orderCountBadge" class="cat-pill-small" style="background:#f1f5f9; color:var(--slate-700);">
+            0 Orders
+          </span>
+        </div>
+
+        <div id="customerOrderHistoryList">
+          <!-- Rendered dynamically -->
+        </div>
       </div>
+
     </div>
 
   </main>
@@ -236,6 +297,9 @@
   <script src="js/store.js"></script>
   <script src="js/tracking.js"></script>
   <script>
+    let generatedOtp = "1234";
+    let pendingLoginCustomer = null;
+
     function openModal(id) {
       const el = document.getElementById(id);
       if (el) el.classList.add("active");
@@ -251,7 +315,7 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/\x27/g, "&#039;");
     }
     function showToast(message, type = "info") {
       const c = document.getElementById("toastContainer");
@@ -266,47 +330,131 @@
       }, 3500);
     }
 
-    function loadOrdersForPhone() {
-      const input = document.getElementById("custPhoneInput");
-      const phone = input?.value.trim().replace(/\D/g, "");
+    // Customer Login & OTP Flow
+    function setupCustomerAuth() {
+      const form = document.getElementById("customerPhoneForm");
+      if (form) {
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const nameInput = document.getElementById("custLoginName");
+          const phoneInput = document.getElementById("custLoginPhone");
 
-      if (!phone || phone.length < 10) {
-        showToast("Please enter a valid 10-digit mobile number.", "warning");
-        return;
+          const name = nameInput?.value.trim();
+          const phone = phoneInput?.value.trim().replace(/\D/g, "");
+
+          if (!name || name.length < 2) {
+            showToast("Please enter your name.", "warning");
+            return;
+          }
+          if (!phone || phone.length < 10) {
+            showToast("Please enter a valid 10-digit mobile number.", "warning");
+            return;
+          }
+
+          // Generate simulated 4-digit code (e.g. 1234 or random)
+          generatedOtp = "1234";
+          pendingLoginCustomer = { name, phone };
+
+          // Show OTP box
+          const otpBox = document.getElementById("customerOtpBox");
+          const targetEl = document.getElementById("otpTargetPhone");
+          if (targetEl) targetEl.textContent = phone;
+          if (otpBox) otpBox.style.display = "block";
+
+          showToast(`Verification code sent to +91 ${phone}! 📲 (Test code: 1234)`, "success");
+        });
       }
-
-      // Save customer phone into Store customer cache
-      const saved = Store.getCustomer() || {};
-      Store.saveCustomer({ ...saved, phone });
-
-      renderPortalOrders(phone);
     }
 
-    function renderPortalOrders(phone) {
-      const listContainer = document.getElementById("customerOrderHistoryList");
-      const countBadge = document.getElementById("orderCountBadge");
+    function autoFillCustomerOtp() {
+      const input = document.getElementById("custOtpInput");
+      if (input) {
+        input.value = generatedOtp;
+        showToast("Code 1234 auto-filled! Click Verify.", "info");
+      }
+    }
+
+    function verifyCustomerOtp() {
+      const input = document.getElementById("custOtpInput");
+      const errEl = document.getElementById("custOtpError");
+      const entered = input?.value.trim();
+
+      if (entered === generatedOtp || entered === "1234") {
+        if (errEl) errEl.style.display = "none";
+        
+        // Save session
+        const customerData = pendingLoginCustomer || {
+          name: "Valued Customer",
+          phone: document.getElementById("custLoginPhone")?.value || "9862272399"
+        };
+        
+        // Retrieve any saved customer address
+        const saved = Store.getCustomer() || {};
+        const merged = { ...saved, ...customerData };
+        Store.setCustomerSession(merged);
+
+        showToast(`Signed in successfully as ${merged.name}! 🎉`, "success");
+        checkCustomerSession();
+      } else {
+        if (errEl) {
+          errEl.style.display = "block";
+          errEl.textContent = "Invalid code. Please enter 1234.";
+        }
+        showToast("Invalid verification code. Please enter 1234.", "error");
+      }
+    }
+
+    function checkCustomerSession() {
+      const session = Store.getCustomerSession();
+      const loginView = document.getElementById("customerLoginView");
+      const dashView = document.getElementById("customerDashboardView");
+      const headerName = document.getElementById("custHeaderName");
+      const logoutBtn = document.getElementById("btnCustomerLogout");
+
+      if (session && session.phone) {
+        if (loginView) loginView.style.display = "none";
+        if (dashView) dashView.style.display = "block";
+        if (headerName) {
+          headerName.style.display = "inline-block";
+          headerName.textContent = `👤 ${session.name || "Customer"}`;
+        }
+        if (logoutBtn) logoutBtn.style.display = "inline-flex";
+
+        renderDashboardDetails(session);
+      } else {
+        if (loginView) loginView.style.display = "block";
+        if (dashView) dashView.style.display = "none";
+        if (headerName) headerName.style.display = "none";
+        if (logoutBtn) logoutBtn.style.display = "none";
+      }
+    }
+
+    function handleCustomerLogout() {
+      Store.clearCustomerSession();
+      showToast("Signed out of customer account.", "info");
+      const otpBox = document.getElementById("customerOtpBox");
+      if (otpBox) otpBox.style.display = "none";
+      checkCustomerSession();
+    }
+
+    function renderDashboardDetails(cust) {
       const nameDisp = document.getElementById("custNameDisplay");
       const metaDisp = document.getElementById("custMetaDisplay");
+      const listContainer = document.getElementById("customerOrderHistoryList");
+      const countBadge = document.getElementById("orderCountBadge");
 
-      const orders = Store.getOrdersByPhone(phone);
+      if (nameDisp) nameDisp.textContent = cust.name || "Customer Account";
+      if (metaDisp) metaDisp.textContent = `📞 ${cust.phone} • 📍 ${cust.address || "Agartala, Tripura"}`;
+
+      const orders = Store.getOrdersByPhone(cust.phone);
       if (countBadge) countBadge.textContent = `${orders.length} Order${orders.length === 1 ? "" : "s"}`;
-
-      if (orders.length > 0) {
-        const latest = orders[0];
-        if (nameDisp) nameDisp.textContent = latest.customer?.name || "Valued Customer";
-        if (metaDisp) metaDisp.textContent = `📞 ${phone} • 📍 ${latest.customer?.address || "Agartala"}`;
-      } else {
-        const saved = Store.getCustomer();
-        if (nameDisp) nameDisp.textContent = saved?.name || "Customer Account";
-        if (metaDisp) metaDisp.textContent = `📞 ${phone}`;
-      }
 
       if (orders.length === 0) {
         listContainer.innerHTML = `
           <div class="empty-history-box" style="background:var(--white); padding:40px 20px; text-align:center; border-radius:var(--radius-lg); border:1px dashed var(--slate-300);">
             <span style="font-size:3rem; display:block; margin-bottom:12px;">🛍️</span>
-            <h4 style="margin-bottom:6px;">No orders found for ${phone}</h4>
-            <p style="color:var(--slate-500); font-size:0.9rem; margin-bottom:16px;">You haven't placed any orders with this number yet.</p>
+            <h4 style="margin-bottom:6px;">No orders found yet for ${cust.phone}</h4>
+            <p style="color:var(--slate-500); font-size:0.9rem; margin-bottom:16px;">Fresh vegetables, groceries, and daily essentials are just 30 mins away!</p>
             <a href="index.html" class="btn-hero-primary" style="display:inline-block; text-decoration:none;">
               Start Shopping Groceries ➔
             </a>
@@ -375,35 +523,18 @@
         showToast("Could not find items to reorder.", "error");
         return;
       }
-      // Add all items from order to cart
       order.items.forEach(item => {
         Store.addToCart(item, item.qty);
       });
-      showToast("Items added to your grocery basket! Redirecting to shop...", "success");
+      showToast("Items added to basket! Redirecting to shop...", "success");
       setTimeout(() => {
         window.location.href = "index.html";
       }, 800);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      // Check saved customer phone
-      const saved = Store.getCustomer();
-      if (saved && saved.phone) {
-        const input = document.getElementById("custPhoneInput");
-        if (input) input.value = saved.phone;
-        renderPortalOrders(saved.phone);
-      } else {
-        // Render all local orders if only one customer on device
-        const allOrders = Store.getOrders();
-        if (allOrders.length > 0 && allOrders[0].customer?.phone) {
-          const defaultPhone = allOrders[0].customer.phone;
-          const input = document.getElementById("custPhoneInput");
-          if (input) input.value = defaultPhone;
-          renderPortalOrders(defaultPhone);
-        } else {
-          renderPortalOrders("");
-        }
-      }
+      setupCustomerAuth();
+      checkCustomerSession();
     });
   </script>
 </body>

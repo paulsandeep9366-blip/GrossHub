@@ -433,6 +433,7 @@ const AdminPanel = {
     set('adminSetDeliveryFee', config.deliveryCharge);
     set('adminSetFreeThreshold', config.freeDeliveryThreshold);
     set('adminSetUpiId', config.upiId);
+    set('adminSetRiderPin', Store.getRiderPin());
 
     // Populate distance tier fee inputs
     const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
@@ -472,6 +473,12 @@ const AdminPanel = {
       distanceTiers: updatedTiers,
       serviceStatus: document.getElementById('adminSetStoreStatus')?.checked ? 'open' : 'closed'
     };
+
+    // Check if new rider PIN was entered
+    const riderPinVal = document.getElementById('adminSetRiderPin')?.value.trim();
+    if (riderPinVal && riderPinVal.length >= 4) {
+      Store.setRiderPin(riderPinVal);
+    }
 
     // Check if new password was entered
     const newPwd = document.getElementById('adminSetNewPassword')?.value.trim();
