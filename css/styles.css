@@ -1721,7 +1721,11 @@ button {
     flex-wrap: wrap;
   }
   .top-bar-links {
-    display: none;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 0.75rem;
   }
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1913,4 +1917,71 @@ button {
 
 .distance-hint-row {
   margin-top: 8px;
+}
+
+
+/* Mobile Bottom Navigation Bar & Header Account Button */
+.header-btn.btn-account {
+  background: var(--white);
+  color: var(--slate-800);
+  border: 1px solid var(--slate-200);
+  text-decoration: none;
+}
+
+.header-btn.btn-account:hover {
+  background: var(--slate-100);
+  color: var(--primary-700);
+  border-color: var(--primary-300);
+}
+
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-top: 1px solid var(--slate-200);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+  z-index: 95;
+  padding: 6px 10px;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.mbn-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: var(--slate-600);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.mbn-item:hover, .mbn-item.active {
+  color: var(--primary-600);
+}
+
+.mbn-icon {
+  font-size: 1.25rem;
+  margin-bottom: 2px;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  body {
+    padding-bottom: 64px;
+  }
+  .floating-cart-bar {
+    bottom: 68px;
+  }
 }

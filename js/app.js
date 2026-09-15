@@ -28,9 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Update top bar with logged-in customer name
   const custSession = Store.getCustomerSession();
   const custLink = document.getElementById("topNavCustomerLink");
-  if (custSession && custSession.name && custLink) {
+  const headerAccountLabel = document.getElementById("headerAccountLabel");
+  if (custSession && custSession.name) {
     const firstName = custSession.name.split(" ")[0];
-    custLink.innerHTML = `👤 Hi, ${escapeHTML(firstName)}`;
+    if (custLink) custLink.innerHTML = `👤 Hi, ${escapeHTML(firstName)}`;
+    if (headerAccountLabel) headerAccountLabel.textContent = firstName;
   }
 
   // Auto-fill customer details in checkout if available

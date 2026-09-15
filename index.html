@@ -63,6 +63,9 @@
 
       <!-- Quick Action Buttons -->
       <div class="header-actions">
+        <a href="customer.html" class="header-btn btn-account" id="headerBtnAccount" title="Customer Account & Orders">
+          👤 <span id="headerAccountLabel">Sign In</span>
+        </a>
         <button class="header-btn btn-track" onclick="openModal('trackingModal')" title="Track live order status">
           📍 <span>Track Order</span>
         </button>
@@ -560,5 +563,29 @@
       });
     }
   </script>
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-bottom-nav">
+    <a href="index.html" class="mbn-item active">
+      <span class="mbn-icon">🛒</span>
+      <span class="mbn-text">Store</span>
+    </a>
+    <a href="customer.html" class="mbn-item">
+      <span class="mbn-icon">👤</span>
+      <span class="mbn-text">Account</span>
+    </a>
+    <a href="rider.html" class="mbn-item">
+      <span class="mbn-icon">🛵</span>
+      <span class="mbn-text">Rider</span>
+    </a>
+    <a href="admin.html" class="mbn-item">
+      <span class="mbn-icon">⚙️</span>
+      <span class="mbn-text">Admin</span>
+    </a>
+    <button class="mbn-item" onclick="openCartDrawer()" style="cursor:pointer;">
+      <span class="mbn-icon">🛍️</span>
+      <span class="mbn-text">Cart</span>
+    </button>
+  </nav>
+
 </body>
 </html>
