@@ -33,7 +33,7 @@
   <div class="top-announcement-bar">
     <span>⚡ <strong>30-45 Min Express Delivery</strong> in Agartala • Free Delivery above <span id="bannerFreeThreshold">₹499</span>!</span>
     <div class="top-bar-links">
-      <a href="customer.html" id="topNavCustomerLink">👤 My Account & Orders</a>
+      <a href="javascript:void(0)" onclick="handleAccountClick()" id="topNavCustomerLink">👤 Sign In / Account</a>
       <a href="https://wa.me/919862272399?text=Hello%20GrossHub%20Support" target="_blank">💬 WhatsApp Help</a>
       <a href="tel:9862272399">📞 Call: 9862272399</a>
     </div>
@@ -63,9 +63,9 @@
 
       <!-- Quick Action Buttons -->
       <div class="header-actions">
-        <a href="customer.html" class="header-btn btn-account" id="headerBtnAccount" title="Customer Account & Orders">
+        <button type="button" class="header-btn btn-account" id="headerBtnAccount" onclick="handleAccountClick()" title="Customer Account & Orders">
           👤 <span id="headerAccountLabel">Sign In</span>
-        </a>
+        </button>
         <button class="header-btn btn-track" onclick="openModal('trackingModal')" title="Track live order status">
           📍 <span>Track Order</span>
         </button>
@@ -459,6 +459,95 @@
     </div>
   </div>
 
+  <!-- Integrated Customer Auth Modal (Phone Number + OTP Verification) -->
+  <div class="modal-overlay" id="customerAuthModal">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>👤 Customer Sign In</h3>
+        <button class="btn-modal-close" onclick="closeModal('customerAuthModal')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 3rem; margin-bottom: 8px;">🛍️</div>
+          <h4 style="margin: 0; font-size: 1.25rem;">Welcome to GrossHub</h4>
+          <p style="color: var(--slate-500); font-size: 0.85rem; margin-top: 4px;">Sign in with your mobile number to view orders, track deliveries, and unlock 1-click checkout.</p>
+        </div>
+
+        <!-- Step 1: Phone & Name Form -->
+        <form id="storeCustomerPhoneForm" onsubmit="handleSendCustomerOtp(event)">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="storeCustNameInput">Full Name *</label>
+            <input type="text" id="storeCustNameInput" class="form-input" placeholder="e.g. Bikram Debbarma" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="storeCustPhoneInput">10-Digit Mobile Number *</label>
+            <input type="tel" id="storeCustPhoneInput" class="form-input" placeholder="e.g. 9862272399" maxlength="10" required>
+          </div>
+          <button type="submit" class="btn-hero-primary" style="width: 100%; padding: 12px;">
+            Send Verification Code ➔
+          </button>
+        </form>
+
+        <!-- Step 2: OTP Verification Section -->
+        <div id="storeCustomerOtpSection" style="display: none; margin-top: 20px;">
+          <div class="otp-display-pill">
+            <span>📲 Code sent to <strong id="storeOtpTargetPhone">9862272399</strong></span>
+            <button type="button" class="btn-autofill-otp" onclick="autoFillCustomerOtp()">⚡ Auto-Fill Code</button>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="storeCustOtpInput">Enter 4-Digit Code</label>
+            <input type="text" id="storeCustOtpInput" class="form-input" placeholder="1234" maxlength="4" style="font-size: 1.3rem; letter-spacing: 0.3em; text-align: center;">
+            <div id="storeCustOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px;"></div>
+          </div>
+
+          <button type="button" class="btn-hero-primary" style="width: 100%; padding: 12px;" onclick="verifyCustomerOtp()">
+            Verify & Sign In ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Integrated Customer Account & Orders Modal -->
+  <div class="modal-overlay" id="customerAccountModal">
+    <div class="modal-container" style="max-width: 660px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">👤</span>
+          <h3 id="accountModalTitle" style="margin:0;">My Account & Orders</h3>
+        </div>
+        <button class="btn-modal-close" onclick="closeModal('customerAccountModal')">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px; overflow-y: auto; flex: 1;">
+        <!-- Profile Banner -->
+        <div class="customer-profile-card" style="margin-bottom: 20px;">
+          <div class="cpc-left">
+            <div class="cpc-avatar">👤</div>
+            <div>
+              <div class="cpc-title" id="unifiedCustName">Customer Account</div>
+              <div class="cpc-meta" id="unifiedCustMeta">Verified Customer • Agartala</div>
+            </div>
+          </div>
+          <button type="button" class="btn-xs btn-outline" style="background: #fee2e2; color: #b91c1c; border-color: #fecaca; cursor: pointer;" onclick="handleCustomerLogout()">
+            🚪 Sign Out
+          </button>
+        </div>
+
+        <!-- Orders Section -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="margin: 0; font-size: 1.05rem;">📦 Past & Active Orders</h4>
+          <span class="cat-pill-small" id="unifiedOrderCountBadge" style="background: #f1f5f9; color: var(--slate-700);">0 Orders</span>
+        </div>
+
+        <div id="unifiedOrderHistoryList">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Trust & Value Proposition -->
   <section style="background:var(--white); border-top:1px solid var(--slate-200); border-bottom:1px solid var(--slate-200); padding:40px 20px;">
     <div style="max-width:1280px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:24px;">
@@ -524,7 +613,7 @@
         <h4>Customer Care</h4>
         <ul>
           <li><a href="javascript:void(0)" onclick="openModal('trackingModal')">Live Order Tracking</a></li>
-          <li><a href="customer.html">Customer Account & Orders</a></li>
+          <li><a href="javascript:void(0)" onclick="handleAccountClick()">My Account & Past Orders</a></li>
           <li><a href="javascript:void(0)" onclick="proceedToWhatsAppOrder()">WhatsApp Support</a></li>
           <li><a href="tel:9862272399">Call Store Support</a></li>
         </ul>
@@ -577,10 +666,10 @@
       <span class="mbn-icon">📍</span>
       <span class="mbn-text">Track</span>
     </button>
-    <a href="customer.html" class="mbn-item">
+    <button type="button" class="mbn-item" onclick="handleAccountClick()" style="cursor:pointer;">
       <span class="mbn-icon">👤</span>
       <span class="mbn-text">Account</span>
-    </a>
+    </button>
     <button class="mbn-item" onclick="openCartDrawer()" style="cursor:pointer;">
       <span class="mbn-icon">🛍️</span>
       <span class="mbn-text">Basket</span>

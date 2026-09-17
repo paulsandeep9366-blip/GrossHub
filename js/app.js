@@ -25,14 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof AdminPanel !== 'undefined') AdminPanel.init();
   if (typeof RiderPanel !== 'undefined') RiderPanel.init();
 
-  // Update top bar with logged-in customer name
-  const custSession = Store.getCustomerSession();
-  const custLink = document.getElementById("topNavCustomerLink");
-  const headerAccountLabel = document.getElementById("headerAccountLabel");
-  if (custSession && custSession.name) {
-    const firstName = custSession.name.split(" ")[0];
-    if (custLink) custLink.innerHTML = `👤 Hi, ${escapeHTML(firstName)}`;
-    if (headerAccountLabel) headerAccountLabel.textContent = firstName;
+  // Update storefront customer session display
+  updateStorefrontCustomerUI();
+
+  // Auto open account portal if requested via URL (?view=account or #account)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("view") === "account" || window.location.hash === "#account") {
+    setTimeout(() => {
+      handleAccountClick();
+    }, 150);
   }
 
   // Auto-fill customer details in checkout if available
@@ -844,6 +845,19 @@ function handleCheckoutSubmit(e) {
   updateCartBadgeAndDrawer();
   closeModal('checkoutModal');
 
+  // Seamless customer account session linkage
+  const currentSession = Store.getCustomerSession();
+  if (!currentSession) {
+    Store.setCustomerSession({
+      name: name,
+      phone: cleanPhone,
+      address: address,
+      landmark: landmark,
+      verifiedAt: new Date().toISOString()
+    });
+    updateStorefrontCustomerUI();
+  }
+
   // Show Confirmation Modal
   showOrderConfirmationModal(order);
   showToast(`Order ${order.id} placed successfully! 🎉`, 'success');
@@ -1015,4 +1029,270 @@ function showToast(message, type = 'info') {
     toast.classList.add('hide');
     setTimeout(() => toast.remove(), 300);
   }, 3200);
+}
+
+
+// =======================================================
+// UNIFIED CUSTOMER AUTHENTICATION & ACCOUNT PORTAL
+// =======================================================
+
+function updateStorefrontCustomerUI() {
+  const session = Store.getCustomerSession();
+  const headerAccountLabel = document.getElementById("headerAccountLabel");
+  const topNavCustomerLink = document.getElementById("topNavCustomerLink");
+
+  if (session && session.name) {
+    const firstName = session.name.split(" ")[0];
+    if (headerAccountLabel) headerAccountLabel.textContent = firstName;
+    if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👤 Hi, ${escapeHTML(firstName)}`;
+  } else {
+    if (headerAccountLabel) headerAccountLabel.textContent = "Sign In";
+    if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👤 Sign In / Account`;
+  }
+}
+
+function handleAccountClick() {
+  const session = Store.getCustomerSession();
+  if (session && session.phone) {
+    openCustomerAccountModal();
+  } else {
+    // Pre-fill phone/name if user had previously entered anything
+    const saved = Store.getCustomer();
+    const nameInput = document.getElementById("storeCustNameInput");
+    const phoneInput = document.getElementById("storeCustPhoneInput");
+    if (nameInput && saved?.name && !nameInput.value) nameInput.value = saved.name;
+    if (phoneInput && saved?.phone && !phoneInput.value) phoneInput.value = saved.phone;
+
+    // Reset OTP step state
+    const otpSection = document.getElementById("storeCustomerOtpSection");
+    const phoneForm = document.getElementById("storeCustomerPhoneForm");
+    const otpInput = document.getElementById("storeCustOtpInput");
+    const otpErr = document.getElementById("storeCustOtpError");
+    if (otpSection) otpSection.style.display = "none";
+    if (phoneForm) phoneForm.style.display = "block";
+    if (otpInput) otpInput.value = "";
+    if (otpErr) { otpErr.style.display = "none"; otpErr.textContent = ""; }
+
+    openModal("customerAuthModal");
+  }
+}
+
+function handleSendCustomerOtp(e) {
+  if (e) e.preventDefault();
+  const nameInput = document.getElementById("storeCustNameInput");
+  const phoneInput = document.getElementById("storeCustPhoneInput");
+
+  const name = nameInput ? nameInput.value.trim() : "";
+  const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
+
+  if (!name) {
+    showToast("Please enter your full name.", "error");
+    if (nameInput) nameInput.focus();
+    return;
+  }
+
+  if (!phone || phone.length < 10) {
+    showToast("Please enter a valid 10-digit mobile number.", "error");
+    if (phoneInput) phoneInput.focus();
+    return;
+  }
+
+  const targetPhoneEl = document.getElementById("storeOtpTargetPhone");
+  if (targetPhoneEl) targetPhoneEl.textContent = `+91 ${phone}`;
+
+  const otpSection = document.getElementById("storeCustomerOtpSection");
+  const phoneForm = document.getElementById("storeCustomerPhoneForm");
+  if (otpSection) otpSection.style.display = "block";
+  if (phoneForm) phoneForm.style.display = "none";
+
+  const otpInput = document.getElementById("storeCustOtpInput");
+  if (otpInput) {
+    otpInput.value = "";
+    otpInput.focus();
+  }
+
+  showToast(`Demo OTP: 1234 sent to +91 ${phone}! Click Auto-Fill Code.`, "info");
+}
+
+function autoFillCustomerOtp() {
+  const otpInput = document.getElementById("storeCustOtpInput");
+  const otpErr = document.getElementById("storeCustOtpError");
+  if (otpInput) {
+    otpInput.value = "1234";
+    otpInput.focus();
+  }
+  if (otpErr) {
+    otpErr.style.display = "none";
+    otpErr.textContent = "";
+  }
+  showToast("Code 1234 auto-filled! Click Verify & Sign In.", "success");
+}
+
+function verifyCustomerOtp() {
+  const otpInput = document.getElementById("storeCustOtpInput");
+  const otpErr = document.getElementById("storeCustOtpError");
+  const nameInput = document.getElementById("storeCustNameInput");
+  const phoneInput = document.getElementById("storeCustPhoneInput");
+
+  const otp = otpInput ? otpInput.value.trim() : "";
+  const name = nameInput ? nameInput.value.trim() : "Valued Customer";
+  const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
+
+  if (otp !== "1234") {
+    if (otpErr) {
+      otpErr.textContent = "Invalid OTP. Please enter 1234 (Demo OTP) or click Auto-Fill Code.";
+      otpErr.style.display = "block";
+    }
+    showToast("Incorrect verification code. Please enter 1234.", "error");
+    return;
+  }
+
+  if (otpErr) otpErr.style.display = "none";
+
+  const session = {
+    name: name,
+    phone: phone,
+    verifiedAt: new Date().toISOString()
+  };
+
+  Store.setCustomerSession(session);
+  Store.setCustomer({ name, phone });
+
+  updateStorefrontCustomerUI();
+  closeModal("customerAuthModal");
+
+  // Pre-fill checkout fields if present
+  const chkName = document.getElementById("checkoutName");
+  const chkPhone = document.getElementById("checkoutPhone");
+  if (chkName && !chkName.value) chkName.value = name;
+  if (chkPhone && !chkPhone.value) chkPhone.value = phone;
+
+  showToast(`Welcome, ${name}! Signed in successfully.`, "success");
+
+  // Open the unified account modal immediately
+  openCustomerAccountModal();
+}
+
+function openCustomerAccountModal() {
+  const session = Store.getCustomerSession();
+  if (!session) {
+    handleAccountClick();
+    return;
+  }
+
+  const nameEl = document.getElementById("unifiedCustName");
+  const metaEl = document.getElementById("unifiedCustMeta");
+  if (nameEl) nameEl.textContent = session.name || "Valued Customer";
+  if (metaEl) metaEl.textContent = `+91 ${session.phone || ""} • Verified Customer • Agartala`;
+
+  renderUnifiedCustomerOrders(session.phone);
+  openModal("customerAccountModal");
+}
+
+function renderUnifiedCustomerOrders(phone) {
+  const container = document.getElementById("unifiedOrderHistoryList");
+  const countBadge = document.getElementById("unifiedOrderCountBadge");
+  if (!container) return;
+
+  if (!phone) {
+    container.innerHTML = `<p style="color:var(--slate-500); text-align:center; padding:20px;">No phone number associated with account.</p>`;
+    return;
+  }
+
+  const orders = Store.getOrdersByPhone(phone) || [];
+  orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  if (countBadge) {
+    countBadge.textContent = `${orders.length} Order${orders.length === 1 ? "" : "s"}`;
+  }
+
+  if (orders.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 36px 16px; background: var(--slate-50); border-radius: var(--radius-lg); border: 1px dashed var(--slate-300);">
+        <div style="font-size: 2.8rem; margin-bottom: 8px;">🛍️</div>
+        <h4 style="margin: 0 0 6px 0; font-size: 1.1rem; color: var(--slate-800);">No orders placed yet</h4>
+        <p style="color: var(--slate-500); font-size: 0.88rem; max-width: 360px; margin: 0 auto 16px auto;">
+          Explore our fresh local vegetables, dairy, pantry staples, and get fast delivery in Agartala!
+        </p>
+        <button type="button" class="btn-hero-primary" style="padding: 10px 20px; cursor: pointer;" onclick="closeModal('customerAccountModal'); const ps = document.getElementById('productsSection'); if (ps) ps.scrollIntoView({behavior:'smooth'});">
+          Explore Groceries ➔
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const statusMap = {
+    "placed": { label: "Order Placed", color: "#3b82f6", bg: "#eff6ff" },
+    "confirmed": { label: "Confirmed", color: "#8b5cf6", bg: "#f5f3ff" },
+    "preparing": { label: "Packing Items", color: "#f59e0b", bg: "#fffbeb" },
+    "out_for_delivery": { label: "Out for Delivery 🛵", color: "#0ea5e9", bg: "#f0f9ff" },
+    "delivered": { label: "Delivered 🎉", color: "#10b981", bg: "#ecfdf5" },
+    "cancelled": { label: "Cancelled", color: "#ef4444", bg: "#fef2f2" }
+  };
+
+  container.innerHTML = orders.map(order => {
+    const st = statusMap[order.status] || { label: order.status, color: "#64748b", bg: "#f8fafc" };
+    const dateFormatted = new Date(order.createdAt).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    const itemsSummary = (order.items || []).map(i => `${escapeHTML(i.name)} × ${i.qty}`).join(", ");
+
+    return `
+      <div class="history-order-card" style="background:var(--white); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div style="font-weight:700; font-size:1.02rem; color:var(--slate-800);">${escapeHTML(order.id)}</div>
+            <div style="font-size:0.8rem; color:var(--slate-500);">${dateFormatted}</div>
+          </div>
+          <span style="font-size:0.8rem; font-weight:600; padding:4px 10px; border-radius:20px; background:${st.bg}; color:${st.color}; border:1px solid ${st.color}33;">
+            ${st.label}
+          </span>
+        </div>
+
+        <div style="font-size:0.88rem; color:var(--slate-600); margin-bottom:12px; line-height:1.4; background:var(--slate-50); padding:10px 12px; border-radius:var(--radius-sm);">
+          <strong>Items:</strong> ${itemsSummary || "Standard grocery package"}
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-top:1px solid var(--slate-100); padding-top:10px;">
+          <div style="font-size:0.95rem;">
+            Total: <strong style="color:var(--emerald-700); font-size:1.1rem;">₹${order.summary?.grandTotal || order.grandTotal || 0}</strong>
+            <span style="font-size:0.75rem; color:var(--slate-500); margin-left:6px;">(${escapeHTML(order.paymentMethod ? order.paymentMethod.toUpperCase() : "COD")})</span>
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn-xs btn-outline" style="padding:6px 12px; cursor:pointer;" onclick="closeModal('customerAccountModal'); openModal('trackingModal'); Tracking.trackOrder('${order.id}');">
+              📍 Track Live
+            </button>
+            <button type="button" class="btn-xs btn-hero-primary" style="padding:6px 12px; cursor:pointer;" onclick="reorderCustomerOrder('${order.id}')">
+              🔁 Reorder
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function reorderCustomerOrder(orderId) {
+  if (typeof Tracking !== "undefined" && Tracking.reorderItems) {
+    Tracking.reorderItems(orderId);
+    updateCartBadgeAndDrawer();
+    closeModal("customerAccountModal");
+    openCartDrawer();
+  } else {
+    showToast("Reorder service unavailable.", "error");
+  }
+}
+
+function handleCustomerLogout() {
+  Store.clearCustomerSession();
+  updateStorefrontCustomerUI();
+  closeModal("customerAccountModal");
+  showToast("You have been signed out.", "info");
 }

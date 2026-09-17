@@ -1985,3 +1985,78 @@ button {
     bottom: 68px;
   }
 }
+
+
+/* Customer Auth & Account Modal Styles */
+.otp-display-pill {
+  background: #eff6ff;
+  border: 1px dashed #3b82f6;
+  color: #1d4ed8;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-autofill-otp {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-autofill-otp:hover {
+  background: #1d4ed8;
+}
+
+.customer-profile-card {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cpc-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cpc-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  color: var(--primary-700);
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #a7f3d0;
+}
+
+.cpc-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--slate-900);
+}
+
+.cpc-meta {
+  font-size: 0.82rem;
+  color: var(--slate-500);
+  margin-top: 1px;
+}
