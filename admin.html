@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/styles.css?v=2.1">
+  <link rel="stylesheet" href="css/admin.css?v=2.1">
   <style>
     body {
       background: #f1f5f9;
@@ -182,7 +182,7 @@
       <nav class="admin-nav-tabs">
         <button class="admin-nav-item active" data-tab="overview" onclick="AdminPanel.switchTab('overview')">📊 Overview</button>
         <button class="admin-nav-item" data-tab="orders" onclick="AdminPanel.switchTab('orders')">📦 Orders Management</button>
-        <button class="admin-nav-item" data-tab="products" onclick="AdminPanel.switchTab('products')">🥬 Product Catalog</button>
+        <button class="admin-nav-item" data-tab="products" onclick="AdminPanel.switchTab('products')">🛒 Product Catalog</button>
         <button class="admin-nav-item" data-tab="riders" onclick="AdminPanel.switchTab('riders')">🛵 Fleet & Dispatches</button>
         <button class="admin-nav-item" data-tab="customers" onclick="AdminPanel.switchTab('customers')">👥 Customer Directory</button>
         <button class="admin-nav-item" data-tab="settings" onclick="AdminPanel.switchTab('settings')">⚙️ Store Settings & Distance Fees</button>
@@ -277,7 +277,8 @@
             <table class="admin-table">
               <thead>
                 <tr>
-                  <th>Product</th>
+                  <th class="admin-table-img-col">Image</th>
+                  <th>Product Name</th>
                   <th>Category</th>
                   <th>Pack Size</th>
                   <th>Price / MRP</th>
@@ -521,20 +522,35 @@
             </div>
           </div>
 
+          <!-- Custom Product Image Upload & Selection -->
           <div class="form-group">
-            <label class="form-label">Product Image Path / URL</label>
-            <input type="text" id="prodImage" class="form-input" placeholder="images/products/miniket-rice.jpg">
+            <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+              <span>Custom Product Image</span>
+              <small class="text-muted" style="font-weight:normal;">Upload photo or enter URL</small>
+            </label>
+            <div class="admin-image-upload-wrapper">
+              <div class="admin-img-preview-box">
+                <img id="prodImagePreview" src="images/hero-basket.jpg" alt="Preview" onerror="this.src='images/hero-basket.jpg';">
+              </div>
+              <div class="admin-img-controls">
+                <div class="admin-file-btn-wrapper">
+                  <label class="btn-file-upload">
+                    📸 Upload Custom Photo
+                    <input type="file" id="prodImageFile" accept="image/*" onchange="AdminPanel.handleImageFileUpload(event)">
+                  </label>
+                  <button type="button" class="btn-reset-img" onclick="AdminPanel.resetProductImage()" title="Reset to default placeholder">
+                    Reset
+                  </button>
+                </div>
+                <input type="text" id="prodImage" class="form-input" placeholder="images/products/miniket-rice.jpg or https://..." oninput="AdminPanel.handleImageUrlInput(this.value)">
+              </div>
+            </div>
           </div>
 
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label">Emoji Icon (Fallback)</label>
-              <input type="text" id="prodEmoji" class="form-input" placeholder="🫗">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Badge Tag</label>
-              <input type="text" id="prodBadge" class="form-input" placeholder="Bestseller / New">
-            </div>
+          <div class="form-group">
+            <label class="form-label">Badge Tag (Optional)</label>
+            <input type="text" id="prodBadge" class="form-input" placeholder="e.g. Bestseller / New / 10% OFF">
+            <input type="hidden" id="prodEmoji" value="🛒">
           </div>
 
           <div class="form-group">
@@ -562,9 +578,9 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/data.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="js/data.js?v=2.1"></script>
+  <script src="js/store.js?v=2.1"></script>
+  <script src="js/admin.js?v=2.1"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {

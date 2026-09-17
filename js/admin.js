@@ -298,20 +298,16 @@ const AdminPanel = {
 
     container.innerHTML = products.map(p => {
       const discount = p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
+      const imgSrc = p.image || 'images/hero-basket.jpg';
       return `
         <tr>
+          <td class="admin-table-img-col">
+            <img src="${escapeHTML(imgSrc)}" class="admin-prod-img" alt="${escapeHTML(p.name)}" onerror="this.src='images/hero-basket.jpg';" loading="lazy">
+          </td>
           <td>
-            <div class="admin-prod-cell">
-              ${p.image ? `
-                <img src="${escapeHTML(p.image)}" class="admin-prod-thumb" alt="${escapeHTML(p.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-                <span class="admin-prod-emoji" style="display:none;">${p.emoji || '🛒'}</span>
-              ` : `
-                <span class="admin-prod-emoji">${p.emoji || '🛒'}</span>
-              `}
-              <div>
-                <strong>${escapeHTML(p.name)}</strong>
-                ${p.badge ? `<span class="admin-badge-tag">${escapeHTML(p.badge)}</span>` : ''}
-              </div>
+            <div class="admin-prod-info-cell">
+              <span class="admin-prod-name">${escapeHTML(p.name)}</span>
+              ${p.badge ? `<div><span class="admin-badge-tag">${escapeHTML(p.badge)}</span></div>` : ''}
             </div>
           </td>
           <td><span class="cat-pill-small">${p.categoryName || p.category}</span></td>
@@ -354,6 +350,15 @@ const AdminPanel = {
     if (form) form.reset();
     document.getElementById('modalProductTitle').textContent = 'Add New Grocery Product';
     document.getElementById('prodInStock').checked = true;
+
+    // Reset image preview & input fields
+    const preview = document.getElementById('prodImagePreview');
+    if (preview) preview.src = 'images/hero-basket.jpg';
+    const prodImgInput = document.getElementById('prodImage');
+    if (prodImgInput) prodImgInput.value = '';
+    const fileInput = document.getElementById('prodImageFile');
+    if (fileInput) fileInput.value = '';
+
     openModal('adminProductModal');
   },
 
@@ -369,14 +374,65 @@ const AdminPanel = {
     document.getElementById('prodUnit').value = product.unit;
     document.getElementById('prodPrice').value = product.price;
     document.getElementById('prodMrp').value = product.mrp || product.price;
+
     const prodImgInput = document.getElementById('prodImage');
-    if (prodImgInput) prodImgInput.value = product.image || '';
-    document.getElementById('prodEmoji').value = product.emoji || '🛒';
+    const imageVal = product.image || '';
+    if (prodImgInput) prodImgInput.value = imageVal;
+
+    const preview = document.getElementById('prodImagePreview');
+    if (preview) {
+      preview.src = imageVal || 'images/hero-basket.jpg';
+    }
+
+    const fileInput = document.getElementById('prodImageFile');
+    if (fileInput) fileInput.value = '';
+
+    const emojiInput = document.getElementById('prodEmoji');
+    if (emojiInput) emojiInput.value = product.emoji || '🛒';
+
     document.getElementById('prodBadge').value = product.badge || '';
     document.getElementById('prodDesc').value = product.description || '';
     document.getElementById('prodInStock').checked = product.inStock !== false;
 
     openModal('adminProductModal');
+  },
+
+  handleImageFileUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      showToast('Image file size is too large (max 3MB)', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      const preview = document.getElementById('prodImagePreview');
+      if (preview) preview.src = dataUrl;
+      const imgInput = document.getElementById('prodImage');
+      if (imgInput) imgInput.value = dataUrl;
+      showToast('Custom image loaded! Click Save to apply.', 'success');
+    };
+    reader.readAsDataURL(file);
+  },
+
+  handleImageUrlInput(url) {
+    const preview = document.getElementById('prodImagePreview');
+    if (preview) {
+      preview.src = (url && url.trim()) ? url.trim() : 'images/hero-basket.jpg';
+    }
+  },
+
+  resetProductImage() {
+    const preview = document.getElementById('prodImagePreview');
+    if (preview) preview.src = 'images/hero-basket.jpg';
+    const imgInput = document.getElementById('prodImage');
+    if (imgInput) imgInput.value = '';
+    const fileInput = document.getElementById('prodImageFile');
+    if (fileInput) fileInput.value = '';
+    showToast('Image reset to default placeholder', 'info');
   },
 
   handleSaveProduct() {
@@ -400,16 +456,18 @@ const AdminPanel = {
       return;
     }
 
+    const finalImage = image || 'images/hero-basket.jpg';
+
     if (this.editingProductId) {
       Store.updateProduct(this.editingProductId, {
-        name, category, categoryName, unit, price, mrp, image, emoji, badge, description, inStock
+        name, category, categoryName, unit, price, mrp, image: finalImage, emoji, badge, description, inStock
       });
-      showToast(`Updated "${name}" successfully.`, 'success');
+      showToast(`Updated "${name}" with custom image successfully!`, 'success');
     } else {
       Store.addProduct({
-        name, category, categoryName, unit, price, mrp, image, emoji, badge, description, inStock
+        name, category, categoryName, unit, price, mrp, image: finalImage, emoji, badge, description, inStock
       });
-      showToast(`Added "${name}" to store catalog!`, 'success');
+      showToast(`Added "${name}" with custom image to store catalog!`, 'success');
     }
 
     closeModal('adminProductModal');
