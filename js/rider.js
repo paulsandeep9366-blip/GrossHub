@@ -37,7 +37,7 @@ const RiderPanel = {
 
   enterAsAdmin() {
     this.isAuthenticated = true;
-    this.activeRider = "Fleet Supervisor (Admin)";
+    this.activeRider = "🏪 Fleet Supervisor (Admin)";
     this.showDashboard();
     showToast("Entered Rider Portal with Admin Privileges.", "success");
   },

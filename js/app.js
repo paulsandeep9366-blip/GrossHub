@@ -1022,7 +1022,7 @@ function updateStorefrontCustomerUI() {
     if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👤 Hi, ${escapeHTML(firstName)}`;
   } else if (isAdmin) {
     if (headerAccountLabel) headerAccountLabel.textContent = "Admin";
-    if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👑 Admin Mode`;
+    if (topNavCustomerLink) topNavCustomerLink.innerHTML = `🏪 Admin Mode`;
   } else {
     if (headerAccountLabel) headerAccountLabel.textContent = "Sign In";
     if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👤 Sign In / Account`;
