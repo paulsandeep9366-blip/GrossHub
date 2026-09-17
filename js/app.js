@@ -450,65 +450,150 @@ function calculateHaversineDistanceKm(lat1, lon1, lat2, lon2) {
   return Math.round((R * c) * 10) / 10;
 }
 
+let lastCustomerGps = null;
+
 function handleAutoDetectLocation() {
   const btn = document.getElementById('btnGpsDetect');
   const icon = document.getElementById('gpsDetectIcon');
   const text = document.getElementById('gpsDetectText');
+  const chipBtn = document.getElementById('btnGpsAddressChip');
   const msgEl = document.getElementById('gpsStatusMessage');
 
   if (!navigator.geolocation) {
-    showToast('Geolocation is not supported by your browser.', 'warning');
+    showToast('GPS Geolocation is not supported on this device/browser.', 'warning');
     return;
   }
 
+  // Set loading states
   if (btn) btn.classList.add('loading');
+  if (chipBtn) chipBtn.classList.add('loading');
   if (icon) icon.textContent = '⏳';
-  if (text) text.textContent = 'Detecting...';
+  if (text) text.textContent = 'Tracking GPS...';
+  if (chipBtn) chipBtn.innerHTML = '<span class="gps-chip-icon">⏳</span> <span>Tracking GPS...</span>';
+
   if (msgEl) {
     msgEl.className = 'gps-status-msg';
     msgEl.style.display = 'flex';
-    msgEl.innerHTML = '<span>📡</span> <span>Accessing your location in Agartala...</span>';
+    msgEl.innerHTML = '<span>📡</span> <span>Tracking live GPS coordinates in Agartala...</span>';
   }
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
       if (btn) btn.classList.remove('loading');
+      if (chipBtn) chipBtn.classList.remove('loading');
       if (icon) icon.textContent = '✅';
-      if (text) text.textContent = 'Detected!';
+      if (text) text.textContent = 'GPS Locked';
+      if (chipBtn) chipBtn.innerHTML = '<span class="gps-chip-icon">✅</span> <span>GPS Locked</span>';
 
       const userLat = position.coords.latitude;
       const userLng = position.coords.longitude;
+      const accuracy = Math.round(position.coords.accuracy || 0);
 
       const config = Store.getConfig();
       const storeLoc = config.storeLocation || DEFAULT_SHOP_CONFIG.storeLocation;
       const storeLat = (storeLoc && storeLoc.lat) ? storeLoc.lat : 23.8188;
       const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : 91.2725;
 
-      const distanceKm = calculateHaversineDistanceKm(storeLat, storeLng, userLat, userLng);
-      setCustomerDistance(distanceKm, 'gps');
+      const straightDistanceKm = calculateHaversineDistanceKm(storeLat, storeLng, userLat, userLng);
+      
+      // Calculate realistic Agartala road driving distance (~1.25x straight-line)
+      let roadDistanceKm = straightDistanceKm < 1 ? Math.round(straightDistanceKm * 1.1 * 10) / 10 : Math.round(straightDistanceKm * 1.25 * 10) / 10;
+      roadDistanceKm = Math.max(0.5, roadDistanceKm);
+
+      let effectiveKm = roadDistanceKm;
+      let isOutOfTown = false;
+
+      // Handle testing or access from outside Agartala / Tripura (> 30 km)
+      if (roadDistanceKm > 30) {
+        isOutOfTown = true;
+        effectiveKm = 3.5; // fallback to standard Agartala City Core zone
+      }
+
+      lastCustomerGps = {
+        lat: userLat,
+        lng: userLng,
+        accuracy: accuracy,
+        calculatedKm: roadDistanceKm,
+        effectiveKm: effectiveKm,
+        timestamp: new Date().toISOString()
+      };
+
+      setCustomerDistance(effectiveKm, 'gps');
+
+      // Auto reverse-geocode address if address field is blank
+      const addrInput = document.getElementById('checkoutAddress');
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&zoom=18&addressdetails=1`, {
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.address) {
+          const a = data.address;
+          const parts = [];
+          if (a.road || a.pedestrian || a.suburb) parts.push(a.road || a.pedestrian || a.suburb);
+          if (a.neighbourhood || a.residential) parts.push(a.neighbourhood || a.residential);
+          if (a.city || a.town || a.county) parts.push(a.city || a.town || a.county);
+          if (a.state && a.state !== (a.city || a.town)) parts.push(a.state);
+          
+          if (parts.length > 0 && addrInput && (!addrInput.value || addrInput.value.trim() === '')) {
+            addrInput.value = parts.join(', ');
+            showToast(`Address detected from GPS: ${parts[0]} 📍`, 'info');
+          }
+        }
+      })
+      .catch(() => {});
 
       if (msgEl) {
         msgEl.className = 'gps-status-msg';
         msgEl.style.display = 'flex';
-        msgEl.innerHTML = `<span>📍</span> <span><strong>${distanceKm} km</strong> from GrossHub Hub (${storeLoc.name || 'Bhattapukur'}).</span>`;
+        if (isOutOfTown) {
+          msgEl.innerHTML = `
+            <span>📍</span>
+            <div>
+              <strong>GPS Location Detected:</strong> ~${Math.round(roadDistanceKm)} km away (Outside Agartala).<br>
+              <small>Delivery fee set to standard Agartala City Zone (3.5 km - ₹30). You can adjust distance manually below.</small>
+            </div>
+          `;
+        } else {
+          msgEl.innerHTML = `
+            <span>📍</span>
+            <div>
+              <strong>GPS Locked: ~${effectiveKm} km</strong> from GrossHub Hub (${storeLoc.name || 'Bhattapukur'}) ${accuracy ? `(±${accuracy}m)` : ''}.<br>
+              <small>Delivery fee automatically calculated & applied to total bill!</small>
+            </div>
+          `;
+        }
       }
 
-      showToast(`Location detected: ~${distanceKm} km from Bhattapukur store! 🛵`, 'success');
+      const feeEl = document.getElementById('dlfAmount');
+      const currentFee = feeEl ? feeEl.textContent : '';
+      showToast(`GPS Tracked: ${effectiveKm} km • Delivery Fee: ${currentFee} 🛵`, 'success');
     },
     (err) => {
       if (btn) btn.classList.remove('loading');
+      if (chipBtn) chipBtn.classList.remove('loading');
       if (icon) icon.textContent = '🎯';
-      if (text) text.textContent = 'Auto-Detect (GPS)';
+      if (text) text.textContent = 'Track with GPS';
+      if (chipBtn) chipBtn.innerHTML = '<span class="gps-chip-icon">🎯</span> <span>Track with GPS</span>';
+
+      let msg = 'Could not access GPS. Please check location permissions.';
+      if (err.code === 1) {
+        msg = 'Location permission denied. Please allow GPS access in your browser or select your locality below.';
+      } else if (err.code === 2) {
+        msg = 'GPS signal unavailable. Please select your locality or enter distance below.';
+      } else if (err.code === 3) {
+        msg = 'GPS request timed out. Please try again or select your locality below.';
+      }
+
       if (msgEl) {
         msgEl.className = 'gps-status-msg error';
         msgEl.style.display = 'flex';
-        let errMsg = 'Location access denied or unavailable.';
-        if (err.code === 1) errMsg = 'Location permission denied. Please enter or adjust distance below.';
-        msgEl.innerHTML = `<span>⚠️</span> <span>${errMsg}</span>`;
+        msgEl.innerHTML = `<span>⚠️</span> <span>${msg}</span>`;
       }
-      showToast('Could not get GPS location. Please enter distance below.', 'info');
+
+      showToast(msg, 'warning');
     },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
   );
 }
 
@@ -941,11 +1026,13 @@ function handleCheckoutSubmit(e) {
       landmark, 
       notes,
       distanceKm: selectedDistanceKm,
-      distanceTierId: selectedDistanceTierId
+      distanceTierId: selectedDistanceTierId,
+      gpsCoords: lastCustomerGps
     },
     deliverySlot: slot,
     deliveryDistanceKm: selectedDistanceKm,
     deliveryDistanceLabel: matchedTier.label,
+    gpsCoords: lastCustomerGps,
     paymentMethod: selectedPaymentMethod,
     items: cart,
     subtotal: totals.subtotal,

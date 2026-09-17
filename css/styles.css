@@ -1799,11 +1799,34 @@ button {
 .btn-gps-detect {
   background: #eff6ff;
   color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-  padding: 6px 12px;
+  border: 1.5px solid #bfdbfe;
+  padding: 6px 14px;
   border-radius: var(--radius-full);
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.1);
+}
+
+.btn-gps-detect:hover {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  color: #1e40af;
+  transform: translateY(-1px);
+}
+
+.btn-gps-chip {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1.5px solid #bbf7d0;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1811,14 +1834,43 @@ button {
   transition: all 0.2s ease;
 }
 
-.btn-gps-detect:hover {
+.btn-gps-chip:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+  transform: translateY(-1px);
+}
+
+.btn-xs-gps {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-xs-gps:hover {
   background: #dbeafe;
+  color: #1d4ed8;
   border-color: #93c5fd;
 }
 
-.btn-gps-detect.loading {
-  opacity: 0.7;
-  cursor: wait;
+.btn-gps-detect.loading, .btn-gps-chip.loading {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+  cursor: wait !important;
+  animation: gpsPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes gpsPulse {
+  0% { opacity: 0.7; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0.7; transform: scale(0.98); }
 }
 
 .gps-status-msg {

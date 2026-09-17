@@ -24,7 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/styles.css?v=2.2">
+  <link rel="stylesheet" href="css/styles.css?v=2.3">
 </head>
 <body>
 
@@ -313,7 +313,10 @@
           <strong id="drawerSubtotal">₹0</strong>
         </div>
         <div class="bill-row">
-          <span>Delivery Charge:</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span>Delivery Charge:</span>
+            <button type="button" class="btn-xs-gps" onclick="openCheckoutModal(); setTimeout(handleAutoDetectLocation, 350);" title="Track with GPS for delivery fee">📍 GPS</button>
+          </div>
           <strong id="drawerDeliveryFee">₹30</strong>
         </div>
         <div class="bill-row text-success" id="drawerDiscountRow" style="display: none;">
@@ -373,7 +376,12 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="checkoutAddress">Delivery Address (Agartala, Tripura) *</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
+              <label class="form-label" for="checkoutAddress" style="margin-bottom: 0;">Delivery Address (Agartala, Tripura) *</label>
+              <button type="button" class="btn-gps-chip" id="btnGpsAddressChip" onclick="handleAutoDetectLocation()" title="Detect my address and calculate delivery fee via GPS">
+                <span class="gps-chip-icon">🎯</span> <span>Track with GPS</span>
+              </button>
+            </div>
             <input type="text" id="checkoutAddress" class="form-input" placeholder="House/Flat No, Lane, Area (e.g. Bhattapukur, Ramnagar, Melarmath)" required oninput="handleAddressDistanceDetection(this.value)">
             <div id="addressDetectedNotice" class="address-detected-notice" style="display: none;"></div>
           </div>
@@ -402,8 +410,8 @@
           <div class="form-group distance-selector-section">
             <div class="distance-header-row">
               <label class="form-label" style="margin-bottom:0; font-weight:600;">📍 Delivery Distance & Automatic Fee</label>
-              <button type="button" class="btn-gps-detect" id="btnGpsDetect" onclick="handleAutoDetectLocation()">
-                <span id="gpsDetectIcon">🎯</span> <span id="gpsDetectText">Auto-Detect (GPS)</span>
+              <button type="button" class="btn-gps-detect" id="btnGpsDetect" onclick="handleAutoDetectLocation()" title="Calculate exact distance & fee with GPS">
+                <span id="gpsDetectIcon">🎯</span> <span id="gpsDetectText">Track with GPS</span>
               </button>
             </div>
             <div id="gpsStatusMessage" class="gps-status-msg" style="display: none;"></div>
@@ -826,7 +834,7 @@
   <script src="js/data.js?v=2.1"></script>
   <script src="js/store.js?v=2.1"></script>
   <script src="js/tracking.js?v=2.2"></script>
-  <script src="js/app.js?v=2.2"></script>
+  <script src="js/app.js?v=2.3"></script>
 
   <!-- PWA Service Worker Registration -->
   <script>
