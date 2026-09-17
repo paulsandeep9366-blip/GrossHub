@@ -2245,3 +2245,120 @@ button {
   background: var(--slate-100);
   flex-shrink: 0;
 }
+
+/* Real-time Distance & Fee Controls */
+.distance-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--white);
+  border: 1.5px solid var(--emerald-300);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.08);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dir-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dir-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+.dir-stepper-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-dist-step {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-xs);
+  border: 1.5px solid var(--slate-200);
+  background: var(--slate-100);
+  color: var(--slate-800);
+  font-weight: 800;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-dist-step:hover {
+  background: var(--primary-600);
+  color: var(--white);
+  border-color: var(--primary-600);
+}
+
+.dist-input {
+  width: 76px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--primary-700);
+  padding: 5px 6px;
+  border: 1.5px solid var(--emerald-400);
+  border-radius: var(--radius-xs);
+  background: #f0fdf4;
+}
+
+.dist-unit {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--slate-600);
+}
+
+.dir-fee-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.dlf-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--slate-500);
+  text-transform: uppercase;
+}
+
+.dlf-amount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--emerald-600);
+}
+
+.free-pill {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.address-detected-notice {
+  margin-top: 6px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: fadeIn 0.25s ease;
+}

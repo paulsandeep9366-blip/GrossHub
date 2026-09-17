@@ -374,7 +374,8 @@
 
           <div class="form-group">
             <label class="form-label" for="checkoutAddress">Delivery Address (Agartala, Tripura) *</label>
-            <input type="text" id="checkoutAddress" class="form-input" placeholder="House/Flat No, Lane, Bhattapukur / Area" required>
+            <input type="text" id="checkoutAddress" class="form-input" placeholder="House/Flat No, Lane, Area (e.g. Bhattapukur, Ramnagar, Melarmath)" required oninput="handleAddressDistanceDetection(this.value)">
+            <div id="addressDetectedNotice" class="address-detected-notice" style="display: none;"></div>
           </div>
 
           <div class="form-row-2">
@@ -397,22 +398,51 @@
             <input type="text" id="checkoutNotes" class="form-input" placeholder="e.g. Please ring bell twice or call upon arrival">
           </div>
 
-          <!-- Distance-Based Delivery Zone & GPS Detection -->
+          <!-- Distance-Based Delivery Zone & Automatic Fee Calculation -->
           <div class="form-group distance-selector-section">
             <div class="distance-header-row">
-              <label class="form-label" style="margin-bottom:0; font-weight:600;">📍 Delivery Distance & Fee</label>
+              <label class="form-label" style="margin-bottom:0; font-weight:600;">📍 Delivery Distance & Automatic Fee</label>
               <button type="button" class="btn-gps-detect" id="btnGpsDetect" onclick="handleAutoDetectLocation()">
                 <span id="gpsDetectIcon">🎯</span> <span id="gpsDetectText">Auto-Detect (GPS)</span>
               </button>
             </div>
             <div id="gpsStatusMessage" class="gps-status-msg" style="display: none;"></div>
 
+            <!-- Real-time Distance Stepper & Live Fee Badge -->
+            <div class="distance-input-row">
+              <div class="dir-left">
+                <span class="dir-label">Distance from Bhattapukur Hub:</span>
+                <div class="dir-stepper-box">
+                  <button type="button" class="btn-dist-step" onclick="changeCustomerDistance(-0.5)" title="Decrease distance">−</button>
+                  <input type="number" id="checkoutCustomDistance" class="form-input dist-input" min="0.1" max="50" step="0.5" value="1.5" oninput="handleCustomerDistanceInput(this.value)">
+                  <span class="dist-unit">km</span>
+                  <button type="button" class="btn-dist-step" onclick="changeCustomerDistance(0.5)" title="Increase distance">+</button>
+                </div>
+              </div>
+              <div class="dir-fee-display" id="distanceLiveFeeDisplay">
+                <span class="dlf-label">Delivery Fee</span>
+                <span class="dlf-amount" id="dlfAmount">₹15</span>
+              </div>
+            </div>
+
+            <!-- Quick Locality Selector Dropdown -->
+            <div style="margin-bottom: 10px;">
+              <select id="checkoutAreaSelect" class="form-select" onchange="handleCustomerAreaSelect(this.value)" style="font-size: 0.85rem;">
+                <option value="">-- Or select your Agartala locality --</option>
+                <option value="1.5">Bhattapukur, Badharghat, AD Nagar, Pratapgarh (~1.5 km - ₹15)</option>
+                <option value="3.5">Melarmath, Banamalipur, Ramnagar, Battala (~3.5 km - ₹30)</option>
+                <option value="6.5">Kunjaban, GB Hospital, Indranagar, Amtali (~6.5 km - ₹50)</option>
+                <option value="10.0">Khayerpur, Ranirbazar, New Capital Complex (~10 km - ₹75)</option>
+                <option value="15.0">Jirania, Sekerkote, Airport Zone (~15 km - ₹100)</option>
+              </select>
+            </div>
+
             <div class="distance-tiers-list" id="distanceTiersContainer">
               <!-- Rendered dynamically by app.js -->
             </div>
             <input type="hidden" id="checkoutSelectedDistance" value="1.5">
             <div class="distance-hint-row">
-              <small class="text-muted">🛵 Calculated from GrossHub Hub, Bhattapukur. Free delivery above ₹499 within 5 km!</small>
+              <small class="text-muted">🛵 Calculated automatically from GrossHub Hub, Bhattapukur. Free delivery above ₹499 within 5 km!</small>
             </div>
           </div>
 

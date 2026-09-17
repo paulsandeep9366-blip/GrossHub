@@ -485,28 +485,15 @@ function handleAutoDetectLocation() {
       const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : 91.2725;
 
       const distanceKm = calculateHaversineDistanceKm(storeLat, storeLng, userLat, userLng);
-      selectedDistanceKm = distanceKm;
-
-      const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
-      let matched = tiers[0];
-      for (const t of tiers) {
-        if (distanceKm <= t.maxKm) {
-          matched = t;
-          break;
-        }
-        matched = t;
-      }
-      selectedDistanceTierId = matched.id;
+      setCustomerDistance(distanceKm, 'gps');
 
       if (msgEl) {
         msgEl.className = 'gps-status-msg';
         msgEl.style.display = 'flex';
-        msgEl.innerHTML = `<span>📍</span> <span><strong>${distanceKm} km</strong> from GrossHub Hub (${storeLoc.name || 'Bhattapukur'}). Tier: <strong>${matched.label}</strong></span>`;
+        msgEl.innerHTML = `<span>📍</span> <span><strong>${distanceKm} km</strong> from GrossHub Hub (${storeLoc.name || 'Bhattapukur'}).</span>`;
       }
 
       showToast(`Location detected: ~${distanceKm} km from Bhattapukur store! 🛵`, 'success');
-      renderDistanceTierCards();
-      updateCheckoutTotals();
     },
     (err) => {
       if (btn) btn.classList.remove('loading');
@@ -516,13 +503,156 @@ function handleAutoDetectLocation() {
         msgEl.className = 'gps-status-msg error';
         msgEl.style.display = 'flex';
         let errMsg = 'Location access denied or unavailable.';
-        if (err.code === 1) errMsg = 'Location permission denied. Please tap your distance zone below.';
+        if (err.code === 1) errMsg = 'Location permission denied. Please enter or adjust distance below.';
         msgEl.innerHTML = `<span>⚠️</span> <span>${errMsg}</span>`;
       }
-      showToast('Could not get GPS location. Please choose your distance zone below.', 'info');
+      showToast('Could not get GPS location. Please enter distance below.', 'info');
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
   );
+}
+
+// Agartala Localities and approximate distance from Bhattapukur Store
+const AGARTALA_LOCALITY_DISTANCES = [
+  // Tier 1: 0 - 2 km (Local - ₹15)
+  { names: ['bhattapukur', 'bhatta pukur', 'badharghat', 'badhar ghat', 'arundhutinagar', 'arundhuti nagar', 'ad nagar', 'a.d. nagar', 'pratapgarh', 'dashamighat', 'bypass road'], km: 1.5, label: 'Bhattapukur / Local' },
+  // Tier 2: 2 - 5 km (City Core - ₹30)
+  { names: ['melarmath', 'melar math', 'banamalipur', 'ramnagar', 'ram nagar', 'battala', 'math chowmuhani', 'post office chowmuhani', 'radhanagar', 'radha nagar', 'city centre', 'city center', 'palace compound', 'dhaleswar', 'shakuntala', 'jagannath bari', 'lake chowmuhani', 'jail road', 'krishnanagar', 'krishna nagar', 'bordowali', 'motor stand'], km: 3.5, label: 'City Core' },
+  // Tier 3: 5 - 8 km (Extended City - ₹50)
+  { names: ['kunjaban', 'gb hospital', 'g.b. hospital', 'gb bazar', 'g.b. bazar', 'indranagar', 'indra nagar', 'amtali', 'heritage park', 'secretariat', 'capital complex', 'abhoynagar', 'abhoy nagar', 'ushabazar', 'usha bazar', 'lichubagan', 'lichu bagan', 'circuit house', 'narshingarh'], km: 6.5, label: 'Extended City' },
+  // Tier 4: 8 - 12 km (Suburbs - ₹75)
+  { names: ['khayerpur', 'khayer pur', 'ranirbazar', 'ranir bazar', 'new capital complex', 'bodhjungnagar', 'hapania', 'tmc hospital', 'tripura medical college', 'airport', 'singerbil', 'agartala airport'], km: 10.0, label: 'Suburbs' },
+  // Tier 5: 12+ km (Outskirts - ₹100)
+  { names: ['jirania', 'sekerkote', 'seker kote', 'bishalgarh', 'lembucherra', 'champaknagar', 'champak nagar', 'kamalasagar'], km: 15.0, label: 'Outskirts' }
+];
+
+function setCustomerDistance(km, source = 'manual') {
+  const numKm = Math.max(0.1, Math.min(50, Math.round(Number(km) * 10) / 10));
+  selectedDistanceKm = numKm;
+
+  // Sync direct input box
+  const customInput = document.getElementById('checkoutCustomDistance');
+  if (customInput && Math.abs(Number(customInput.value) - numKm) > 0.05) {
+    customInput.value = numKm;
+  }
+
+  const hiddenInput = document.getElementById('checkoutSelectedDistance');
+  if (hiddenInput) hiddenInput.value = numKm;
+
+  // Match tier
+  const config = Store.getConfig();
+  const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
+  let matched = tiers[0];
+  for (const t of tiers) {
+    if (numKm <= t.maxKm) {
+      matched = t;
+      break;
+    }
+    matched = t;
+  }
+  selectedDistanceTierId = matched.id;
+
+  // Sync quick area select dropdown if not triggered by it
+  const areaSelect = document.getElementById('checkoutAreaSelect');
+  if (areaSelect && source !== 'area_select') {
+    let closestOpt = '';
+    let minDiff = 999;
+    for (let i = 0; i < areaSelect.options.length; i++) {
+      const opt = areaSelect.options[i];
+      if (opt.value) {
+        const diff = Math.abs(Number(opt.value) - numKm);
+        if (diff < minDiff && diff <= 1.8) {
+          minDiff = diff;
+          closestOpt = opt.value;
+        }
+      }
+    }
+    areaSelect.value = closestOpt;
+  }
+
+  // Update totals and UI
+  const totals = updateCheckoutTotals();
+
+  // Update live fee display badge in the distance box
+  const feeDisplay = document.getElementById('dlfAmount');
+  if (feeDisplay) {
+    if (totals.feeInfo && totals.feeInfo.isFree) {
+      feeDisplay.innerHTML = '<span class="free-pill">FREE</span>';
+    } else {
+      feeDisplay.textContent = `₹${totals.deliveryCharge}`;
+    }
+  }
+
+  renderDistanceTierCards();
+  updateCartBadgeAndDrawer();
+}
+
+function handleCustomerDistanceInput(val) {
+  const parsed = parseFloat(val);
+  if (!isNaN(parsed) && parsed > 0) {
+    setCustomerDistance(parsed, 'distance_input');
+  }
+}
+
+function changeCustomerDistance(delta) {
+  const current = Number(document.getElementById('checkoutCustomDistance')?.value) || selectedDistanceKm || 1.5;
+  setCustomerDistance(Math.max(0.5, Math.round((current + delta) * 10) / 10), 'stepper');
+}
+
+function handleCustomerAreaSelect(val) {
+  if (!val) return;
+  const parsed = parseFloat(val);
+  if (!isNaN(parsed) && parsed > 0) {
+    setCustomerDistance(parsed, 'area_select');
+  }
+}
+
+function handleAddressDistanceDetection(addressText) {
+  if (!addressText) {
+    hideAddressDetectionNotice();
+    return;
+  }
+  const lower = addressText.toLowerCase();
+
+  // 1. Check if customer typed explicit distance (e.g. "3 km" or "2.5km")
+  const kmRegex = /(?:distance|dist|approx|about)?\s*(\d+(?:\.\d+)?)\s*(?:km|kms|kilometer|kilometre)/i;
+  const kmMatch = lower.match(kmRegex);
+  if (kmMatch && kmMatch[1]) {
+    const parsedKm = parseFloat(kmMatch[1]);
+    if (!isNaN(parsedKm) && parsedKm > 0 && parsedKm <= 50) {
+      setCustomerDistance(parsedKm, 'address_text');
+      showAddressDetectionNotice(`📍 Detected ${parsedKm} km from your address • Delivery fee automatically updated!`);
+      return;
+    }
+  }
+
+  // 2. Check known Agartala localities
+  for (const loc of AGARTALA_LOCALITY_DISTANCES) {
+    for (const name of loc.names) {
+      if (lower.includes(name)) {
+        setCustomerDistance(loc.km, 'address_text');
+        const feeInfo = Store.calculateDeliveryFee(loc.km, Store.getCart().reduce((s,i)=>s+i.price*i.qty,0), activeCoupon);
+        const feeText = feeInfo.isFree ? 'FREE' : `₹${feeInfo.fee}`;
+        showAddressDetectionNotice(`📍 Matched "${name.charAt(0).toUpperCase() + name.slice(1)}" (~${loc.km} km) • Delivery fee automatically set to ${feeText}!`);
+        return;
+      }
+    }
+  }
+
+  hideAddressDetectionNotice();
+}
+
+function showAddressDetectionNotice(msg) {
+  const el = document.getElementById('addressDetectedNotice');
+  if (el) {
+    el.innerHTML = `<span>⚡</span> <span>${escapeHTML(msg)}</span>`;
+    el.style.display = 'flex';
+  }
+}
+
+function hideAddressDetectionNotice() {
+  const el = document.getElementById('addressDetectedNotice');
+  if (el) el.style.display = 'none';
 }
 
 function renderDistanceTierCards() {
@@ -559,13 +689,7 @@ function renderDistanceTierCards() {
 }
 
 function selectDistanceTier(tierId, approxKm) {
-  selectedDistanceTierId = tierId;
-  selectedDistanceKm = approxKm;
-  const hiddenInput = document.getElementById('checkoutSelectedDistance');
-  if (hiddenInput) hiddenInput.value = approxKm;
-  renderDistanceTierCards();
-  updateCheckoutTotals();
-  updateCartBadgeAndDrawer();
+  setCustomerDistance(approxKm, 'tier_card');
 }
 
 function updateCheckoutTotals() {
@@ -587,7 +711,16 @@ function updateCheckoutTotals() {
   };
 
   setTxt('checkoutSubtotal', `₹${subtotal}`);
-  setTxt('checkoutDelivery', feeInfo.isFree ? 'FREE' : `₹${feeInfo.fee}`);
+  
+  const delivEl = document.getElementById('checkoutDelivery');
+  if (delivEl) {
+    if (feeInfo.isFree) {
+      delivEl.innerHTML = '<span class="free-pill">FREE</span>';
+    } else {
+      delivEl.innerHTML = `₹${feeInfo.fee} <small class="text-muted">(${selectedDistanceKm} km)</small>`;
+    }
+  }
+  
   setTxt('checkoutDiscount', `-₹${couponDiscount}`);
   setTxt('checkoutGrandTotal', `₹${grandTotal}`);
 
@@ -694,7 +827,7 @@ function openCheckoutModal() {
   }
 
   closeCartDrawer();
-  renderDistanceTierCards();
+  setCustomerDistance(selectedDistanceKm || 1.5, 'modal_open');
   const totals = updateCheckoutTotals();
 
   const sumItems = document.getElementById('checkoutSummaryItems');
