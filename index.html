@@ -33,9 +33,9 @@
   <div class="top-announcement-bar">
     <span>⚡ <strong>30-45 Min Express Delivery</strong> in Agartala • Free Delivery above <span id="bannerFreeThreshold">₹499</span>!</span>
     <div class="top-bar-links">
-      <a href="customer.html" id="topNavCustomerLink">👤 Customer Portal</a>
-      <a href="rider.html">🛵 Rider Portal</a>
-      <a href="admin.html">⚙️ Merchant Admin</a>
+      <a href="customer.html" id="topNavCustomerLink">👤 My Account & Orders</a>
+      <a href="https://wa.me/919862272399?text=Hello%20GrossHub%20Support" target="_blank">💬 WhatsApp Help</a>
+      <a href="tel:9862272399">📞 Call: 9862272399</a>
     </div>
   </div>
 
@@ -531,12 +531,12 @@
       </div>
 
       <div class="footer-col">
-        <h4>Business & Ops</h4>
+        <h4>Delivery & Timings</h4>
         <ul>
-          <li><a href="rider.html">Delivery Partner / Rider Portal</a></li>
-          <li><a href="admin.html">Merchant Admin Dashboard</a></li>
-          <li><span>Standard Delivery: ₹30</span></li>
-          <li><span>Free Delivery: Orders ₹499+</span></li>
+          <li><span>⚡ Express Delivery: 30-45 Mins</span></li>
+          <li><span>🕒 Open Daily: 8:00 AM – 10:00 PM</span></li>
+          <li><span>📍 Hub: Bhattapukur, Agartala</span></li>
+          <li><span>🎉 Free Delivery on orders ₹499+</span></li>
         </ul>
       </div>
     </div>
@@ -569,21 +569,21 @@
       <span class="mbn-icon">🛒</span>
       <span class="mbn-text">Store</span>
     </a>
+    <button class="mbn-item" onclick="document.getElementById('storeSearchInput')?.focus(); window.scrollTo({top: 0, behavior: 'smooth'});" style="cursor:pointer;">
+      <span class="mbn-icon">🔍</span>
+      <span class="mbn-text">Search</span>
+    </button>
+    <button class="mbn-item" onclick="openModal('trackingModal')" style="cursor:pointer;">
+      <span class="mbn-icon">📍</span>
+      <span class="mbn-text">Track</span>
+    </button>
     <a href="customer.html" class="mbn-item">
       <span class="mbn-icon">👤</span>
       <span class="mbn-text">Account</span>
     </a>
-    <a href="rider.html" class="mbn-item">
-      <span class="mbn-icon">🛵</span>
-      <span class="mbn-text">Rider</span>
-    </a>
-    <a href="admin.html" class="mbn-item">
-      <span class="mbn-icon">⚙️</span>
-      <span class="mbn-text">Admin</span>
-    </a>
     <button class="mbn-item" onclick="openCartDrawer()" style="cursor:pointer;">
       <span class="mbn-icon">🛍️</span>
-      <span class="mbn-text">Cart</span>
+      <span class="mbn-text">Basket</span>
     </button>
   </nav>
 
