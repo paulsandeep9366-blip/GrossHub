@@ -394,21 +394,30 @@ const Store = {
     localStorage.removeItem(this.KEYS.RIDER_SESSION);
   },
 
-  // 9. Customer Authentication & Session
+  // 9. Customer Authentication & Session (Session-only: automatically cleared when customer leaves site)
   getCustomerSession() {
     try {
-      const s = localStorage.getItem(this.KEYS.CUSTOMER_SESSION);
+      // Purge any legacy persistent localStorage session
+      if (localStorage.getItem(this.KEYS.CUSTOMER_SESSION)) {
+        localStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
+      }
+      const s = sessionStorage.getItem(this.KEYS.CUSTOMER_SESSION);
       if (s) return JSON.parse(s);
     } catch(e) {}
     return null;
   },
 
   setCustomerSession(customer) {
-    localStorage.setItem(this.KEYS.CUSTOMER_SESSION, JSON.stringify(customer));
+    try {
+      sessionStorage.setItem(this.KEYS.CUSTOMER_SESSION, JSON.stringify(customer));
+    } catch(e) {}
     this.saveCustomer(customer);
   },
 
   clearCustomerSession() {
-    localStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
+    try {
+      sessionStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
+      localStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
+    } catch(e) {}
   }
 };
