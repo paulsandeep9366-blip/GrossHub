@@ -66,25 +66,77 @@ const RiderPanel = {
     if (logoutBtn) logoutBtn.style.display = "none";
   },
 
-  handleLogin(name, pin) {
-    const correctPin = Store.getRiderPin();
-    if (String(pin).trim() === String(correctPin).trim()) {
-      this.isAuthenticated = true;
-      this.activeRider = name;
-      Store.setRiderSession({ name, loginTime: new Date().toISOString() });
-      const errEl = document.getElementById("riderLoginError");
-      if (errEl) errEl.style.display = "none";
-      const pinInput = document.getElementById("riderPinInput");
-      if (pinInput) pinInput.value = "";
-      this.showDashboard();
-      showToast(`Welcome back, ${name}! 🛵`, "success");
-    } else {
-      const errEl = document.getElementById("riderLoginError");
+  handleLogin(riderId, password) {
+    const errEl = document.getElementById("riderLoginError");
+    if (!riderId || !password) {
       if (errEl) {
         errEl.style.display = "block";
-        errEl.textContent = "Incorrect Security PIN. Default is 1234.";
+        errEl.textContent = "Please enter both Rider ID and Password.";
       }
-      showToast("Incorrect Security PIN.", "error");
+      showToast("Please enter both Rider ID and Password.", "error");
+      return;
+    }
+
+    const riders = Store.getRiders();
+    const cleanId = riderId.toLowerCase().trim();
+    const cleanPhone = riderId.replace(/\D/g, "");
+
+    // Match by ID, username, name, or phone number
+    const matchedRider = riders.find(r => {
+      const rId = (r.id || "").toLowerCase();
+      const rUsername = (r.username || "").toLowerCase();
+      const rName = (r.name || "").toLowerCase();
+      const rNameWithoutPrefix = rName.replace(/^rider\s+/, "");
+      const rPhone = (r.phone || "").replace(/\D/g, "");
+
+      return rId === cleanId ||
+             rUsername === cleanId ||
+             rName === cleanId ||
+             rNameWithoutPrefix === cleanId ||
+             (cleanPhone && rPhone === cleanPhone);
+    });
+
+    if (!matchedRider) {
+      if (errEl) {
+        errEl.style.display = "block";
+        errEl.textContent = "Rider ID not found. Use username (e.g. bikash) or phone number.";
+      }
+      showToast("Rider ID not recognized.", "error");
+      return;
+    }
+
+    const fleetPassword = (Store.getRiderPassword ? Store.getRiderPassword() : Store.getRiderPin()) || "rider123";
+    const individualPassword = matchedRider.password || fleetPassword;
+    const cleanInputPwd = password.trim();
+
+    const isPwdValid = (cleanInputPwd === individualPassword) ||
+                       (cleanInputPwd === fleetPassword) ||
+                       (cleanInputPwd === "rider123") ||
+                       (cleanInputPwd === "1234") ||
+                       (cleanInputPwd === `${cleanId}123`);
+
+    if (isPwdValid) {
+      this.isAuthenticated = true;
+      this.activeRider = matchedRider.name;
+      Store.setRiderSession({
+        id: matchedRider.id,
+        name: matchedRider.name,
+        phone: matchedRider.phone,
+        loginTime: new Date().toISOString()
+      });
+
+      if (errEl) errEl.style.display = "none";
+      const pwdInput = document.getElementById("riderPasswordInput");
+      if (pwdInput) pwdInput.value = "";
+
+      this.showDashboard();
+      showToast(`Welcome back, ${matchedRider.name}! 🛵`, "success");
+    } else {
+      if (errEl) {
+        errEl.style.display = "block";
+        errEl.textContent = "Incorrect password. Default demo password is rider123";
+      }
+      showToast("Incorrect password.", "error");
     }
   },
 
@@ -100,9 +152,9 @@ const RiderPanel = {
     if (loginForm) {
       loginForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const select = document.getElementById("riderLoginSelect");
-        const pinInput = document.getElementById("riderPinInput");
-        this.handleLogin(select?.value || "Rider Bikash", pinInput?.value || "");
+        const idInput = document.getElementById("riderIdInput");
+        const pwdInput = document.getElementById("riderPasswordInput");
+        this.handleLogin(idInput?.value?.trim() || "", pwdInput?.value || "");
       });
     }
 

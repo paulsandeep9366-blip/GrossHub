@@ -374,6 +374,18 @@ const Store = {
     return false;
   },
 
+  getRiderPassword() {
+    return localStorage.getItem("grosshub_rider_password") || this.getConfig().riderPassword || this.getRiderPin() || "rider123";
+  },
+
+  setRiderPassword(pwd) {
+    if (pwd && String(pwd).trim().length >= 4) {
+      localStorage.setItem("grosshub_rider_password", String(pwd).trim());
+      return true;
+    }
+    return false;
+  },
+
   getRiders() {
     return this.getConfig().riders || DEFAULT_SHOP_CONFIG.riders;
   },

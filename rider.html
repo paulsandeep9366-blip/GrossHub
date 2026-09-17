@@ -182,27 +182,30 @@
     <div id="riderLoginView" class="rider-login-card">
       <div style="font-size:3.5rem; margin-bottom:12px;">🛵</div>
       <h2 style="font-size:1.35rem; margin-bottom:6px; color:var(--slate-900);">Delivery Partner Login</h2>
-      <p style="color:var(--slate-500); font-size:0.88rem; margin-bottom:24px;">Please select your rider profile and enter your 4-digit PIN to access orders.</p>
+      <p style="color:var(--slate-500); font-size:0.88rem; margin-bottom:24px;">Sign in with your assigned Rider ID and Password to manage deliveries.</p>
 
       <form id="riderLoginForm">
         <div class="form-group" style="text-align:left; margin-bottom:16px;">
-          <label class="form-label" for="riderLoginSelect">Select Rider Profile</label>
-          <select id="riderLoginSelect" class="form-select" required>
-            <option value="Rider Bikash">Rider Bikash (Honda Activa)</option>
-            <option value="Rider Rahul">Rider Rahul (Hero Splendor)</option>
-            <option value="Rider Samir">Rider Samir (TVS Jupiter)</option>
-          </select>
+          <label class="form-label" for="riderIdInput">Rider ID or Registered Phone *</label>
+          <input type="text" id="riderIdInput" class="form-input" placeholder="e.g. bikash, rahul, or 9862272399" required autocomplete="username">
         </div>
 
         <div class="form-group" style="text-align:left; margin-bottom:18px;">
-          <label class="form-label" for="riderPinInput">4-Digit Security PIN</label>
-          <input type="password" id="riderPinInput" class="form-input" placeholder="Enter PIN (default: 1234)" maxlength="6" required>
+          <label class="form-label" for="riderPasswordInput">Rider Password *</label>
+          <input type="password" id="riderPasswordInput" class="form-input" placeholder="Enter password (default: rider123)" required autocomplete="current-password">
           <div id="riderLoginError" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:6px;"></div>
         </div>
 
-        <button type="submit" class="btn-hero-primary" style="width:100%; padding:12px; font-size:0.95rem;">
-          Unlock Dispatch Dashboard ➔
+        <button type="submit" class="btn-hero-primary" style="width:100%; padding:12px; font-size:0.95rem; justify-content:center;">
+          Sign In to Dispatch Dashboard ➔
         </button>
+
+        <div style="margin-top: 14px; padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.78rem; color: var(--slate-600); text-align: left; line-height: 1.5;">
+          💡 <strong>Rider Credentials:</strong><br>
+          • ID: <code>bikash</code> | Password: <code>rider123</code><br>
+          • ID: <code>rahul</code> | Password: <code>rider123</code><br>
+          • ID: <code>samir</code> | Password: <code>rider123</code>
+        </div>
 
         <div id="adminRiderQuickAccess" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--slate-200);">
           <button type="button" class="btn-hero-primary" style="width:100%; padding:10px; font-size:0.88rem; background:#0284c7; justify-content:center;" onclick="RiderPanel.enterAsAdmin()">
