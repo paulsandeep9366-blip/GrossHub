@@ -285,13 +285,7 @@ const AdminPanel = {
   },
 
   viewOrderDetails(orderId) {
-    const order = Store.getOrder(orderId);
-    if (!order) return;
-
-    Tracking.renderOrderTracking(order, document.getElementById('trackingResultCard'));
-    document.getElementById('trackingEmptyState').style.display = 'none';
-    document.getElementById('trackingResultCard').style.display = 'block';
-    openModal('trackingModal');
+    this.openOrderInvoiceModal(orderId);
   },
 
   // 3. Product Inventory CRUD
@@ -639,7 +633,7 @@ const AdminPanel = {
     showToast('Orders exported to CSV! 📊', 'success');
   },
 
-  // 6. Total Bill & Order Invoice PDF Generation
+  // 6. Customer Bill & Order Tax Invoice PDF Generation (Admin Portal)
   openOrderInvoiceModal(orderId) {
     const order = Store.getOrder(orderId);
     if (!order) {
@@ -659,6 +653,7 @@ const AdminPanel = {
 
     const isPaid = order.paymentMethod !== 'COD';
     const items = order.items || [];
+    const gps = order.gpsCoords || order.customer?.gpsCoords;
 
     const html = `
       <div class="invoice-paper" id="grosshubInvoiceDoc">
@@ -669,39 +664,43 @@ const AdminPanel = {
             <p><strong>GrossHub Quick Commerce Private Limited</strong></p>
             <p>Fulfillment Hub: Bhattapukur, Agartala, Tripura West - 799003</p>
             <p>GSTIN: <strong>16AABCG1234F1Z0</strong> • FSSAI Lic: <strong>21623001000452</strong></p>
-            <p>Helpline: <strong>+91 98622 72399</strong> • Email: support@grosshub.in</p>
+            <p>Helpline: <strong>+91 98622 72399</strong> • Email: support@grosshub.in • Web: grosshub.in</p>
           </div>
           <div class="inv-meta">
-            <div class="inv-badge-title">TAX INVOICE & BILL</div>
+            <div class="inv-badge-title">CUSTOMER TAX INVOICE & BILL</div>
             <p style="margin-top: 6px;"><strong>Invoice No:</strong> INV-${order.id}</p>
-            <p><strong>Order Ref:</strong> ${order.id}</p>
-            <p><strong>Date:</strong> ${orderDate}</p>
-            <p><strong>Time:</strong> ${orderTime}</p>
+            <p><strong>Order ID:</strong> ${order.id}</p>
+            <p><strong>Date Placed:</strong> ${orderDate}</p>
+            <p><strong>Time Placed:</strong> ${orderTime}</p>
+            <p><strong>Delivery Slot:</strong> ${escapeHTML(order.deliverySlot || 'Express 30-45 mins')}</p>
             <div style="margin-top: 8px;">
               <span class="inv-stamp" style="${isPaid ? 'border-color: #16a34a; color: #15803d;' : 'border-color: #d97706; color: #b45309;'}">
-                ${isPaid ? 'PAID VIA ONLINE UPI' : 'PAYMENT DUE (CASH ON DELIVERY)'}
+                ${isPaid ? 'PAID VIA ONLINE UPI / QR' : 'PAYMENT DUE (CASH ON DELIVERY)'}
               </span>
             </div>
           </div>
         </div>
 
-        <!-- Customer & Delivery Grid -->
+        <!-- Customer & Delivery Details Grid -->
         <div class="inv-grid-2">
           <div>
-            <div class="inv-block-title">Billed & Delivered To:</div>
-            <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a;">${escapeHTML(order.customer?.name || 'Customer')}</div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;">📞 ${escapeHTML(order.customer?.phone || 'N/A')}</div>
+            <div class="inv-block-title">Customer & Delivery Destination:</div>
+            <div style="font-size: 0.98rem; font-weight: 700; color: #0f172a;">${escapeHTML(order.customer?.name || 'Customer')}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;">📞 +91 ${escapeHTML(order.customer?.phone || 'N/A')}</div>
             <div style="font-size: 0.83rem; color: #475569; margin-top: 3px; line-height: 1.4;">
               📍 ${escapeHTML(order.customer?.address || 'Agartala, Tripura')}
               ${order.customer?.landmark ? `<br><small><strong>Landmark:</strong> ${escapeHTML(order.customer.landmark)}</small>` : ''}
+              ${order.customer?.notes ? `<br><small><strong>Notes / Instructions:</strong> ${escapeHTML(order.customer.notes)}</small>` : ''}
+              ${gps ? `<br><small style="color: #047857; font-weight: 600;">🎯 <strong>GPS Coordinates:</strong> ${gps.lat.toFixed(4)}° N, ${gps.lng.toFixed(4)}° E ${gps.accuracy ? `(±${gps.accuracy}m)` : ''}</small>` : ''}
             </div>
           </div>
           <div>
-            <div class="inv-block-title">Fulfillment & Delivery Details:</div>
-            <div style="font-size: 0.85rem; color: #334155;"><strong>Assigned Fleet Rider:</strong> ${escapeHTML(order.rider || 'Unassigned')}</div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Rider Contact:</strong> ${order.riderPhone || 'GrossHub Agartala Dispatch'}</div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Distance:</strong> ${order.deliveryDistanceKm ? order.deliveryDistanceKm + ' km (Auto-Calculated)' : 'Standard City Delivery'}</div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Status:</strong> <span style="text-transform: capitalize; font-weight: 700; color: #064e3b;">${order.status.replace('_', ' ')}</span></div>
+            <div class="inv-block-title">Fulfillment & Logistics Dispatch:</div>
+            <div style="font-size: 0.85rem; color: #334155;"><strong>Fulfillment Hub:</strong> GrossHub Bhattapukur Hub, Agartala</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Assigned Fleet Rider:</strong> ${escapeHTML(order.rider || 'Unassigned')}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Rider Contact:</strong> ${order.riderPhone ? `📞 ${order.riderPhone}` : 'GrossHub Agartala Dispatch'}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Distance:</strong> ${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km (${order.deliveryDistanceLabel || 'Calculated'})` : 'Standard City Delivery Zone'}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Status:</strong> <span style="text-transform: uppercase; font-weight: 700; color: #064e3b;">${order.status.replace('_', ' ')}</span></div>
             <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Payment Method:</strong> ${escapeHTML(order.paymentMethod || 'COD')}</div>
           </div>
         </div>
@@ -741,12 +740,12 @@ const AdminPanel = {
         <div class="inv-totals-box">
           <table class="inv-totals-table">
             <tr>
-              <td>Items Subtotal:</td>
+              <td>Items Subtotal (${order.summary?.itemCount || items.length} items):</td>
               <td class="num">₹${order.summary?.subtotal || 0}</td>
             </tr>
             <tr>
-              <td>Delivery Fee (${order.deliveryDistanceKm ? order.deliveryDistanceKm + ' km' : 'Standard'}):</td>
-              <td class="num">₹${order.summary?.deliveryCharge || 0}</td>
+              <td>Delivery Fee (${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km` : 'Standard'}):</td>
+              <td class="num">${(order.summary?.deliveryCharge === 0) ? '<strong style="color: #16a34a;">FREE</strong>' : `₹${order.summary?.deliveryCharge || 0}`}</td>
             </tr>
             ${order.summary?.handlingCharge ? `
             <tr>
@@ -759,8 +758,12 @@ const AdminPanel = {
               <td class="num">-₹${order.summary.couponDiscount}</td>
             </tr>` : ''}
             <tr class="grand-total">
-              <td>Total Bill Amount:</td>
+              <td>Total Bill Payable:</td>
               <td class="num">₹${order.summary?.grandTotal || 0}</td>
+            </tr>
+            <tr>
+              <td style="font-size:0.8rem; color:#64748b;">Payment Mode:</td>
+              <td class="num" style="font-size:0.82rem; font-weight:700;">${escapeHTML(order.paymentMethod || 'COD')}</td>
             </tr>
           </table>
         </div>
@@ -768,21 +771,21 @@ const AdminPanel = {
         <!-- Official Footer & Verification -->
         <div class="inv-footer">
           <div>
-            <p style="margin: 0; font-weight: 700; color: #0f172a;">Terms & Conditions:</p>
-            <p style="margin: 2px 0;">1. All grocery, fresh produce & essentials are guaranteed fresh on delivery.</p>
-            <p style="margin: 0;">2. Computer-generated tax invoice issued by GrossHub Quick Commerce.</p>
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">Customer Guarantee & Terms:</p>
+            <p style="margin: 2px 0;">1. All fresh produce & essentials are guaranteed fresh on delivery. 100% replacement guarantee.</p>
+            <p style="margin: 0;">2. Computer-generated official tax invoice issued by GrossHub Quick Commerce.</p>
           </div>
           <div style="text-align: right;">
             <p style="margin: 0; font-weight: 700; color: #0f172a;">GrossHub Fulfillment Hub</p>
-            <div style="font-family: monospace; font-size: 0.78rem; color: #64748b; margin: 3px 0;">[Digitally Signed & Validated]</div>
-            <p style="margin: 0; font-size: 0.72rem; color: #64748b;">Agartala Hub Dispatch Centre</p>
+            <div style="font-family: monospace; font-size: 0.78rem; color: #64748b; margin: 3px 0;">[GROSSHUB-HQ-VALIDATED-INVOICE]</div>
+            <p style="margin: 0; font-size: 0.72rem; color: #64748b;">Bhattapukur, Agartala - 799003</p>
           </div>
         </div>
       </div>
     `;
 
     const titleEl = document.getElementById('modalInvoiceTitle');
-    if (titleEl) titleEl.textContent = `Tax Invoice & Bill — ${order.id}`;
+    if (titleEl) titleEl.textContent = `Customer Bill & Tax Invoice — ${order.id}`;
 
     const container = document.getElementById('invoicePrintContainer');
     if (container) container.innerHTML = html;
@@ -1114,14 +1117,167 @@ const AdminPanel = {
         <td><span class="cat-pill-small">${c.ordersCount} Orders</span></td>
         <td><strong style="color:var(--emerald-700);">₹${c.totalSpent}</strong></td>
         <td>
-          <div style="display:flex; gap:6px;">
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
             <a href="tel:${c.phone}" class="btn-xs btn-outline" title="Call Customer">📞</a>
             <a href="https://wa.me/91${c.phone.replace(/\D/g, "")}" target="_blank" class="btn-xs btn-outline" style="color:#15803d;" title="WhatsApp Customer">💬</a>
+            <button class="btn-xs btn-hero-primary" onclick="AdminPanel.printCustomerStatementPDF('${c.phone}')" title="Print / Download Complete Customer Statement PDF">🧾 Customer Bill PDF</button>
             <button class="btn-xs btn-secondary" onclick="AdminPanel.filterByCustomerPhone('${c.phone}')" title="View customer orders in Orders tab">📦 Orders</button>
           </div>
         </td>
       </tr>
     `).join("");
+  },
+
+  printCustomerStatementPDF(phone) {
+    const allOrders = Store.getOrders();
+    const cleanPhone = String(phone).replace(/\D/g, '').slice(-10);
+    const customerOrders = allOrders.filter(o => {
+      const oPhone = String(o.customer?.phone || '').replace(/\D/g, '').slice(-10);
+      return oPhone === cleanPhone;
+    });
+
+    if (customerOrders.length === 0) {
+      showToast('No orders found for this customer.', 'warning');
+      return;
+    }
+
+    customerOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const firstOrder = customerOrders[0];
+    const customerName = firstOrder.customer?.name || 'Customer';
+    const customerAddress = firstOrder.customer?.address || 'Agartala, Tripura';
+    const customerLandmark = firstOrder.customer?.landmark || '';
+
+    const totalOrders = customerOrders.length;
+    const totalSpent = customerOrders.reduce((sum, o) => sum + (o.summary?.grandTotal || o.grandTotal || 0), 0);
+    const totalDeliveryFees = customerOrders.reduce((sum, o) => sum + (o.summary?.deliveryCharge || 0), 0);
+    const totalDiscounts = customerOrders.reduce((sum, o) => sum + (o.summary?.couponDiscount || 0), 0);
+
+    const generatedDate = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+    const html = `
+      <div class="invoice-paper" id="grosshubInvoiceDoc" style="max-width: 820px;">
+        <!-- Header -->
+        <div class="inv-header">
+          <div class="inv-brand">
+            <h2>🥬 GrossHub</h2>
+            <p><strong>GrossHub Customer Accounts & Billing Statement</strong></p>
+            <p>Fulfillment Hub: Bhattapukur, Agartala, Tripura West - 799003</p>
+            <p>GSTIN: 16AABCG1234F1Z0 • Helpline: +91 98622 72399</p>
+          </div>
+          <div class="inv-meta">
+            <div class="inv-badge-title">CUSTOMER BILLING STATEMENT</div>
+            <p style="margin-top: 6px;"><strong>Customer Phone:</strong> +91 ${cleanPhone}</p>
+            <p><strong>Statement Date:</strong> ${generatedDate}</p>
+            <div style="margin-top: 8px;">
+              <span class="inv-stamp">VERIFIED CUSTOMER ACCOUNT</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Summary KPI -->
+        <div class="report-kpi-row">
+          <div class="report-kpi-box">
+            <div class="report-kpi-label">Customer Name</div>
+            <div class="report-kpi-val" style="font-size: 1rem;">${escapeHTML(customerName)}</div>
+            <small style="color: #64748b; font-size: 0.72rem;">+91 ${cleanPhone}</small>
+          </div>
+          <div class="report-kpi-box">
+            <div class="report-kpi-label">Lifetime Orders</div>
+            <div class="report-kpi-val">${totalOrders}</div>
+            <small style="color: #64748b; font-size: 0.72rem;">Orders logged</small>
+          </div>
+          <div class="report-kpi-box">
+            <div class="report-kpi-label">Total Amount Billed</div>
+            <div class="report-kpi-val" style="color: #064e3b;">₹${totalSpent.toLocaleString('en-IN')}</div>
+            <small style="color: #64748b; font-size: 0.72rem;">Lifetime purchases</small>
+          </div>
+          <div class="report-kpi-box">
+            <div class="report-kpi-label">Delivery Fees Paid</div>
+            <div class="report-kpi-val" style="color: #0284c7;">₹${totalDeliveryFees}</div>
+            <small style="color: #16a34a; font-size: 0.72rem;">Saved ₹${totalDiscounts} promos</small>
+          </div>
+        </div>
+
+        <!-- Primary Address -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.85rem;">
+          <strong>Registered Delivery Address:</strong> ${escapeHTML(customerAddress)} ${customerLandmark ? `(Landmark: ${escapeHTML(customerLandmark)})` : ''}
+        </div>
+
+        <!-- Orders Table -->
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th style="width: 85px;">Order ID</th>
+              <th style="width: 110px;">Date & Time</th>
+              <th>Items Summary</th>
+              <th style="width: 90px;">Payment</th>
+              <th class="num" style="width: 70px;">Deliv Fee</th>
+              <th class="num" style="width: 70px;">Discount</th>
+              <th class="num" style="width: 85px;">Total Bill</th>
+              <th style="width: 80px; text-align: center;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${customerOrders.map(o => `
+              <tr>
+                <td><strong>${o.id}</strong></td>
+                <td style="font-size: 0.76rem;">
+                  ${new Date(o.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}<br>
+                  <span style="color: #64748b;">${new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </td>
+                <td style="font-size: 0.8rem;">
+                  ${(o.items || []).map(i => `${escapeHTML(i.name)} × ${i.qty}`).join(', ') || 'Grocery Package'}
+                </td>
+                <td style="font-size: 0.78rem;">
+                  <span style="font-weight: 600; color: ${o.paymentMethod === 'COD' ? '#b45309' : '#047857'};">
+                    ${escapeHTML(o.paymentMethod || 'COD')}
+                  </span>
+                </td>
+                <td class="num">₹${o.summary?.deliveryCharge || 0}</td>
+                <td class="num" style="color: ${(o.summary?.couponDiscount || 0) > 0 ? '#16a34a' : 'inherit'};">
+                  ${(o.summary?.couponDiscount || 0) > 0 ? `-₹${o.summary.couponDiscount}` : '₹0'}
+                </td>
+                <td class="num"><strong>₹${o.summary?.grandTotal || 0}</strong></td>
+                <td style="text-align: center;">
+                  <button type="button" class="btn-xs btn-outline" style="padding: 2px 6px; font-size: 0.72rem; cursor: pointer;" onclick="AdminPanel.openOrderInvoiceModal('${o.id}')">
+                    🧾 PDF
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr style="background: #f1f5f9; font-weight: 800; border-top: 2px solid #0f172a; border-bottom: 2px solid #0f172a;">
+              <td colspan="4">LIFETIME CONSOLIDATED TOTALS (${customerOrders.length} ORDERS)</td>
+              <td class="num">₹${totalDeliveryFees}</td>
+              <td class="num" style="color: #16a34a;">-₹${totalDiscounts}</td>
+              <td class="num" style="color: #064e3b; font-size: 1.05rem;">₹${totalSpent}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- Footer -->
+        <div class="inv-footer" style="margin-top: 20px;">
+          <div>
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">GrossHub Administration Portal</p>
+            <p style="margin: 2px 0;">Official customer billing statement for customer accounts & tax reconciliation.</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">GrossHub Customer Accounts</p>
+            <div style="font-family: monospace; font-size: 0.78rem; color: #64748b; margin: 3px 0;">[GROSSHUB-ACCOUNTS-AGARTALA]</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const titleEl = document.getElementById('modalInvoiceTitle');
+    if (titleEl) titleEl.textContent = `Customer Billing Statement — ${customerName} (+91 ${cleanPhone})`;
+
+    const container = document.getElementById('invoicePrintContainer');
+    if (container) container.innerHTML = html;
+
+    openModal('adminInvoiceModal');
   },
 
   filterByCustomerPhone(phone) {
