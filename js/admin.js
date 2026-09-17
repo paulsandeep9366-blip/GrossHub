@@ -249,9 +249,14 @@ const AdminPanel = {
           </select>
         </td>
         <td>
-          <button class="btn-xs btn-outline" onclick="AdminPanel.viewOrderDetails('${order.id}')">
-            View
-          </button>
+          <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            <button class="btn-xs btn-outline" onclick="AdminPanel.viewOrderDetails('${order.id}')" title="View details">
+              👁️ View
+            </button>
+            <button class="btn-xs btn-hero-primary" onclick="AdminPanel.openOrderInvoiceModal('${order.id}')" title="Print / Download PDF Bill">
+              🧾 PDF Bill
+            </button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -632,6 +637,338 @@ const AdminPanel = {
     link.click();
     document.body.removeChild(link);
     showToast('Orders exported to CSV! 📊', 'success');
+  },
+
+  // 6. Total Bill & Order Invoice PDF Generation
+  openOrderInvoiceModal(orderId) {
+    const order = Store.getOrder(orderId);
+    if (!order) {
+      showToast('Order not found.', 'danger');
+      return;
+    }
+
+    const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+    const orderTime = new Date(order.createdAt).toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const isPaid = order.paymentMethod !== 'COD';
+    const items = order.items || [];
+
+    const html = `
+      <div class="invoice-paper" id="grosshubInvoiceDoc">
+        <!-- Top Invoice Header -->
+        <div class="inv-header">
+          <div class="inv-brand">
+            <h2>🥬 GrossHub</h2>
+            <p><strong>GrossHub Quick Commerce Private Limited</strong></p>
+            <p>Fulfillment Hub: Bhattapukur, Agartala, Tripura West - 799003</p>
+            <p>GSTIN: <strong>16AABCG1234F1Z0</strong> • FSSAI Lic: <strong>21623001000452</strong></p>
+            <p>Helpline: <strong>+91 98622 72399</strong> • Email: support@grosshub.in</p>
+          </div>
+          <div class="inv-meta">
+            <div class="inv-badge-title">TAX INVOICE & BILL</div>
+            <p style="margin-top: 6px;"><strong>Invoice No:</strong> INV-${order.id}</p>
+            <p><strong>Order Ref:</strong> ${order.id}</p>
+            <p><strong>Date:</strong> ${orderDate}</p>
+            <p><strong>Time:</strong> ${orderTime}</p>
+            <div style="margin-top: 8px;">
+              <span class="inv-stamp" style="${isPaid ? 'border-color: #16a34a; color: #15803d;' : 'border-color: #d97706; color: #b45309;'}">
+                ${isPaid ? 'PAID VIA ONLINE UPI' : 'PAYMENT DUE (CASH ON DELIVERY)'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer & Delivery Grid -->
+        <div class="inv-grid-2">
+          <div>
+            <div class="inv-block-title">Billed & Delivered To:</div>
+            <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a;">${escapeHTML(order.customer?.name || 'Customer')}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;">📞 ${escapeHTML(order.customer?.phone || 'N/A')}</div>
+            <div style="font-size: 0.83rem; color: #475569; margin-top: 3px; line-height: 1.4;">
+              📍 ${escapeHTML(order.customer?.address || 'Agartala, Tripura')}
+              ${order.customer?.landmark ? `<br><small><strong>Landmark:</strong> ${escapeHTML(order.customer.landmark)}</small>` : ''}
+            </div>
+          </div>
+          <div>
+            <div class="inv-block-title">Fulfillment & Delivery Details:</div>
+            <div style="font-size: 0.85rem; color: #334155;"><strong>Assigned Fleet Rider:</strong> ${escapeHTML(order.rider || 'Unassigned')}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Rider Contact:</strong> ${order.riderPhone || 'GrossHub Agartala Dispatch'}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Distance:</strong> ${order.deliveryDistanceKm ? order.deliveryDistanceKm + ' km (Auto-Calculated)' : 'Standard City Delivery'}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Status:</strong> <span style="text-transform: capitalize; font-weight: 700; color: #064e3b;">${order.status.replace('_', ' ')}</span></div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Payment Method:</strong> ${escapeHTML(order.paymentMethod || 'COD')}</div>
+          </div>
+        </div>
+
+        <!-- Itemized Products Table -->
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th style="width: 38px;">#</th>
+              <th>Item Description</th>
+              <th style="width: 80px;">Unit</th>
+              <th class="num" style="width: 75px;">MRP</th>
+              <th class="num" style="width: 75px;">Rate</th>
+              <th class="num" style="width: 50px;">Qty</th>
+              <th class="num" style="width: 90px;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map((it, idx) => {
+              const itemTotal = (it.price || 0) * (it.qty || 1);
+              return `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td><strong>${escapeHTML(it.name)}</strong></td>
+                  <td>${escapeHTML(it.unit || '1 pc')}</td>
+                  <td class="num text-muted"><del>₹${it.mrp || it.price}</del></td>
+                  <td class="num">₹${it.price}</td>
+                  <td class="num"><strong>${it.qty}</strong></td>
+                  <td class="num"><strong>₹${itemTotal}</strong></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <!-- Totals Summary Box -->
+        <div class="inv-totals-box">
+          <table class="inv-totals-table">
+            <tr>
+              <td>Items Subtotal:</td>
+              <td class="num">₹${order.summary?.subtotal || 0}</td>
+            </tr>
+            <tr>
+              <td>Delivery Fee (${order.deliveryDistanceKm ? order.deliveryDistanceKm + ' km' : 'Standard'}):</td>
+              <td class="num">₹${order.summary?.deliveryCharge || 0}</td>
+            </tr>
+            ${order.summary?.handlingCharge ? `
+            <tr>
+              <td>Handling / Platform Fee:</td>
+              <td class="num">₹${order.summary.handlingCharge}</td>
+            </tr>` : ''}
+            ${(order.summary?.couponDiscount || 0) > 0 ? `
+            <tr style="color: #16a34a; font-weight: 600;">
+              <td>Discount Applied (${escapeHTML(order.couponCode || 'PROMO')}):</td>
+              <td class="num">-₹${order.summary.couponDiscount}</td>
+            </tr>` : ''}
+            <tr class="grand-total">
+              <td>Total Bill Amount:</td>
+              <td class="num">₹${order.summary?.grandTotal || 0}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Official Footer & Verification -->
+        <div class="inv-footer">
+          <div>
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">Terms & Conditions:</p>
+            <p style="margin: 2px 0;">1. All grocery, fresh produce & essentials are guaranteed fresh on delivery.</p>
+            <p style="margin: 0;">2. Computer-generated tax invoice issued by GrossHub Quick Commerce.</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">GrossHub Fulfillment Hub</p>
+            <div style="font-family: monospace; font-size: 0.78rem; color: #64748b; margin: 3px 0;">[Digitally Signed & Validated]</div>
+            <p style="margin: 0; font-size: 0.72rem; color: #64748b;">Agartala Hub Dispatch Centre</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const titleEl = document.getElementById('modalInvoiceTitle');
+    if (titleEl) titleEl.textContent = `Tax Invoice & Bill — ${order.id}`;
+
+    const container = document.getElementById('invoicePrintContainer');
+    if (container) container.innerHTML = html;
+
+    openModal('adminInvoiceModal');
+  },
+
+  printTotalBillReport() {
+    const allOrders = Store.getOrders();
+    if (allOrders.length === 0) {
+      showToast('No orders found to generate bill statement.', 'warning');
+      return;
+    }
+
+    // Determine orders to include (filtered or all)
+    let orders = allOrders;
+    let filterLabel = 'All Orders Master Report';
+    if (this.orderStatusFilter && this.orderStatusFilter !== 'all') {
+      orders = allOrders.filter(o => o.status === this.orderStatusFilter);
+      filterLabel = `Filtered by Status: ${this.orderStatusFilter.toUpperCase()}`;
+    }
+
+    if (this.searchQuery) {
+      const q = this.searchQuery;
+      orders = orders.filter(o => 
+        o.id.toLowerCase().includes(q) ||
+        (o.customer?.name || '').toLowerCase().includes(q) ||
+        (o.customer?.phone || '').includes(q) ||
+        (o.rider || '').toLowerCase().includes(q)
+      );
+      filterLabel += ` (Search: "${q}")`;
+    }
+
+    if (orders.length === 0) {
+      showToast('No orders match current filter for Total Bill.', 'warning');
+      return;
+    }
+
+    // Calculations
+    const totalOrdersCount = orders.length;
+    const totalRevenue = orders.reduce((sum, o) => sum + (o.summary?.grandTotal || 0), 0);
+    const totalSubtotal = orders.reduce((sum, o) => sum + (o.summary?.subtotal || 0), 0);
+    const totalDeliveryFee = orders.reduce((sum, o) => sum + (o.summary?.deliveryCharge || 0), 0);
+    const totalDiscounts = orders.reduce((sum, o) => sum + (o.summary?.couponDiscount || 0), 0);
+    const totalItems = orders.reduce((sum, o) => sum + (o.summary?.itemCount || (o.items || []).length), 0);
+
+    const deliveredCount = orders.filter(o => o.status === 'delivered').length;
+    const upiOrders = orders.filter(o => o.paymentMethod !== 'COD');
+    const codOrders = orders.filter(o => o.paymentMethod === 'COD');
+    const upiTotal = upiOrders.reduce((sum, o) => sum + (o.summary?.grandTotal || 0), 0);
+    const codTotal = codOrders.reduce((sum, o) => sum + (o.summary?.grandTotal || 0), 0);
+
+    const nowStr = new Date().toLocaleString('en-IN', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+
+    const html = `
+      <div class="invoice-paper" id="grosshubInvoiceDoc" style="max-width: 820px;">
+        <!-- Header -->
+        <div class="inv-header">
+          <div class="inv-brand">
+            <h2>🥬 GrossHub</h2>
+            <p><strong>GrossHub Administration & Operations Management</strong></p>
+            <p>Fulfillment Centre: Bhattapukur, Agartala, Tripura West - 799003</p>
+            <p>Helpline: +91 98622 72399 • GSTIN: 16AABCG1234F1Z0</p>
+          </div>
+          <div class="inv-meta">
+            <div class="inv-badge-title">TOTAL BILL & SALES STATEMENT</div>
+            <p style="margin-top: 6px;"><strong>Statement Generated:</strong> ${nowStr}</p>
+            <p><strong>Scope:</strong> ${filterLabel}</p>
+            <div style="margin-top: 8px;">
+              <span class="inv-stamp">OFFICIAL STORE RECONCILIATION</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Executive Summary Row -->
+        <div class="report-kpi-row">
+          <div class="report-kpi-box">
+            <div class="report-kpi-label">Orders Count</div>
+            <div class="report-kpi-val">${totalOrdersCount}</div>
+            <small style="color: #64748b; font-size: 0.75rem;">${deliveredCount} Delivered</small>
+          </div>
+          <div class="report-kpi-box">
+            <div class="report-kpi-label">Total Bill Revenue</div>
+            <div class="report-kpi-val" style="color: #064e3b;">₹${totalRevenue.toLocaleString('en-IN')}</div>
+            <small style="color: #64748b; font-size: 0.75rem;">Gross Collections</small>
+          </div>
+          <div class="report-kpi-box">
+            <div class="report-kpi-label">Total Delivery Fees</div>
+            <div class="report-kpi-val" style="color: #0284c7;">₹${totalDeliveryFee.toLocaleString('en-IN')}</div>
+            <small style="color: #64748b; font-size: 0.75rem;">Fleet Revenue</small>
+          </div>
+          <div class="report-kpi-box">
+            <div class="report-kpi-label">Payment Modes</div>
+            <div class="report-kpi-val" style="font-size: 0.95rem; color: #4338ca;">UPI: ₹${upiTotal} | COD: ₹${codTotal}</div>
+            <small style="color: #64748b; font-size: 0.75rem;">${upiOrders.length} Online / ${codOrders.length} Cash</small>
+          </div>
+        </div>
+
+        <!-- Detailed Breakdown Master Table -->
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th style="width: 80px;">Order ID</th>
+              <th style="width: 105px;">Date & Time</th>
+              <th>Customer & Phone</th>
+              <th style="width: 95px;">Rider</th>
+              <th style="width: 95px;">Payment</th>
+              <th class="num" style="width: 55px;">Items</th>
+              <th class="num" style="width: 70px;">Deliv Fee</th>
+              <th class="num" style="width: 70px;">Discount</th>
+              <th class="num" style="width: 85px;">Total Bill</th>
+              <th style="width: 80px; text-align: center;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${orders.map(o => `
+              <tr>
+                <td><strong>${o.id}</strong></td>
+                <td style="font-size: 0.76rem;">
+                  ${new Date(o.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}<br>
+                  <span style="color: #64748b;">${new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </td>
+                <td>
+                  <strong>${escapeHTML(o.customer?.name || 'Customer')}</strong><br>
+                  <span style="font-size: 0.76rem; color: #64748b;">📞 ${escapeHTML(o.customer?.phone || '')}</span>
+                </td>
+                <td style="font-size: 0.78rem;">${escapeHTML(o.rider || 'Unassigned')}</td>
+                <td style="font-size: 0.78rem;">
+                  <span style="font-weight: 600; color: ${o.paymentMethod === 'COD' ? '#b45309' : '#047857'};">
+                    ${escapeHTML(o.paymentMethod || 'COD')}
+                  </span>
+                </td>
+                <td class="num">${o.summary?.itemCount || (o.items || []).length}</td>
+                <td class="num">₹${o.summary?.deliveryCharge || 0}</td>
+                <td class="num" style="color: ${(o.summary?.couponDiscount || 0) > 0 ? '#16a34a' : 'inherit'};">
+                  ${(o.summary?.couponDiscount || 0) > 0 ? `-₹${o.summary.couponDiscount}` : '₹0'}
+                </td>
+                <td class="num"><strong>₹${o.summary?.grandTotal || 0}</strong></td>
+                <td style="text-align: center;">
+                  <span style="display:inline-block; padding: 2px 6px; font-size: 0.7rem; font-weight: 700; border-radius: 4px; text-transform: uppercase; background: #e2e8f0; color: #334155;">
+                    ${o.status.replace('_', ' ')}
+                  </span>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr style="background: #f1f5f9; font-weight: 800; border-top: 2px solid #0f172a; border-bottom: 2px solid #0f172a;">
+              <td colspan="5">CONSOLIDATED TOTALS (${orders.length} ORDERS)</td>
+              <td class="num">${totalItems}</td>
+              <td class="num">₹${totalDeliveryFee}</td>
+              <td class="num" style="color: #16a34a;">-₹${totalDiscounts}</td>
+              <td class="num" style="color: #064e3b; font-size: 1.05rem;">₹${totalRevenue}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- Footer -->
+        <div class="inv-footer" style="margin-top: 24px;">
+          <div>
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">GrossHub Administration Portal</p>
+            <p style="margin: 2px 0;">Official total billing and revenue statement generated for store operations and audit.</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">Verified By Store Admin</p>
+            <div style="font-family: monospace; font-size: 0.78rem; color: #64748b; margin: 3px 0;">[GROSSHUB-FINANCE-AGARTALA]</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const titleEl = document.getElementById('modalInvoiceTitle');
+    if (titleEl) titleEl.textContent = 'Master Total Bill & Sales Statement';
+
+    const container = document.getElementById('invoicePrintContainer');
+    if (container) container.innerHTML = html;
+
+    openModal('adminInvoiceModal');
+  },
+
+  printActiveInvoice() {
+    window.print();
   },
 
   // 5. Fleet & Riders Management Tab

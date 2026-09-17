@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css?v=2.1">
-  <link rel="stylesheet" href="css/admin.css?v=2.1">
+  <link rel="stylesheet" href="css/admin.css?v=2.2">
   <style>
     body {
       background: #f1f5f9;
@@ -168,9 +168,12 @@
       <!-- Top Bar Inside Dashboard -->
       <div class="admin-top-bar">
         <h3>🏪 GrossHub Admin Control Center</h3>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-xs btn-hero-primary" onclick="AdminPanel.printTotalBillReport()">
+            📄 Total Bill PDF
+          </button>
           <button class="btn-xs btn-outline" style="background:#334155; color:#fff;" onclick="AdminPanel.exportOrdersToCSV()">
-            📥 Export Orders CSV
+            📥 Export CSV
           </button>
           <button class="btn-xs" style="background:#ef4444; color:#fff; border:none; cursor:pointer;" onclick="AdminPanel.handleLogout()">
             Logout
@@ -239,9 +242,14 @@
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
-            <button class="btn-secondary" onclick="AdminPanel.exportOrdersToCSV()">
-              📊 Download CSV Report
-            </button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-hero-primary" style="font-size: 0.85rem; padding: 7px 14px;" onclick="AdminPanel.printTotalBillReport()">
+                📄 Export Total Bill (PDF)
+              </button>
+              <button class="btn-secondary" onclick="AdminPanel.exportOrdersToCSV()">
+                📊 Download CSV Report
+              </button>
+            </div>
           </div>
 
           <div class="table-responsive">
@@ -574,13 +582,36 @@
     </div>
   </div>
 
+    <!-- Admin Invoice / Bill PDF Preview Modal -->
+  <div class="modal-overlay" id="adminInvoiceModal">
+    <div class="modal-container" style="max-width: 800px; max-height: 94vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="background: var(--slate-900); color: var(--white); border-bottom: none; padding: 12px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">🧾</span>
+          <h3 id="modalInvoiceTitle" style="color: var(--white); margin: 0; font-size: 1.1rem;">Official Delivery Bill & Tax Invoice</h3>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" class="btn-hero-primary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="AdminPanel.printActiveInvoice()">
+            🖨️ Print / Save as PDF
+          </button>
+          <button class="btn-modal-close" onclick="closeModal('adminInvoiceModal')" style="color: var(--white);">✕</button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding: 12px; overflow-y: auto; background: #e2e8f0;">
+        <div id="invoicePrintContainer">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Global Toast Notification Container -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
   <script src="js/data.js?v=2.1"></script>
   <script src="js/store.js?v=2.1"></script>
-  <script src="js/admin.js?v=2.1"></script>
+  <script src="js/admin.js?v=2.2"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {
