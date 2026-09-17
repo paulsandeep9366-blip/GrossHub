@@ -24,7 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/styles.css?v=2.1">
+  <link rel="stylesheet" href="css/styles.css?v=2.2">
 </head>
 <body>
 
@@ -551,15 +551,15 @@
           </div>
         </div>
 
-        <div class="track-actions-footer" style="justify-content: center; margin-top: 20px;">
+        <div class="track-actions-footer" style="justify-content: center; margin-top: 20px; flex-wrap: wrap; gap: 8px;">
           <button class="btn-hero-primary" id="btnTrackConfirmedOrder">
             📍 Track Live Status
           </button>
+          <button class="btn-secondary" id="btnDownloadInvoiceSuccess">
+            🧾 Download PDF Bill
+          </button>
           <button class="btn-hero-wa" id="btnSendReceiptWhatsApp">
             💬 Send Slip on WhatsApp
-          </button>
-          <button class="btn-secondary" onclick="window.print()">
-            🖨️ Print Receipt
           </button>
         </div>
       </div>
@@ -686,6 +686,29 @@
     </div>
   </div>
 
+  <!-- Official Customer Tax Invoice & Bill PDF Modal -->
+  <div class="modal-overlay" id="customerInvoiceModal">
+    <div class="modal-container" style="max-width: 780px; max-height: 94vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="background: var(--slate-900); color: var(--white); border-bottom: none; padding: 12px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">🧾</span>
+          <h3 id="customerModalInvoiceTitle" style="color: var(--white); margin: 0; font-size: 1.1rem;">Official Delivery Bill & Tax Invoice</h3>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" class="btn-hero-primary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="CustomerInvoice.downloadPDF()">
+            🖨️ Download / Save PDF
+          </button>
+          <button class="btn-modal-close" onclick="closeModal('customerInvoiceModal')" style="color: var(--white);">✕</button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding: 12px; overflow-y: auto; background: #e2e8f0;">
+        <div id="customerInvoicePrintContainer">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Trust & Value Proposition -->
   <section style="background:var(--white); border-top:1px solid var(--slate-200); border-bottom:1px solid var(--slate-200); padding:40px 20px;">
     <div style="max-width:1280px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:24px;">
@@ -802,8 +825,8 @@
   <!-- Scripts -->
   <script src="js/data.js?v=2.1"></script>
   <script src="js/store.js?v=2.1"></script>
-  <script src="js/tracking.js?v=2.1"></script>
-  <script src="js/app.js?v=2.1"></script>
+  <script src="js/tracking.js?v=2.2"></script>
+  <script src="js/app.js?v=2.2"></script>
 
   <!-- PWA Service Worker Registration -->
   <script>

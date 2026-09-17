@@ -185,7 +185,10 @@ const Tracking = {
         </div>
       </div>
 
-      <div class="track-actions-footer">
+      <div class="track-actions-footer" style="flex-wrap: wrap; gap: 8px;">
+        <button class="btn-hero-primary" onclick="CustomerInvoice.openCustomerInvoiceModal('${order.id}')" title="Download Official Tax Invoice PDF">
+          🧾 Download PDF Bill
+        </button>
         <button class="btn-secondary" onclick="Tracking.reorderItems('${order.id}')">
           🔁 Reorder These Items
         </button>
@@ -318,3 +321,176 @@ function escapeHTML(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+
+// Customer Tax Invoice & Bill PDF Generator
+const CustomerInvoice = {
+  openCustomerInvoiceModal(orderId) {
+    if (!orderId) {
+      showToast('Order ID is missing.', 'warning');
+      return;
+    }
+
+    const order = Store.getOrder(orderId);
+    if (!order) {
+      showToast('Order details not found.', 'warning');
+      return;
+    }
+
+    const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+    const orderTime = new Date(order.createdAt).toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const isPaid = order.paymentMethod !== 'COD';
+    const items = order.items || [];
+
+    const html = `
+      <div class="invoice-paper" id="customerInvoiceDoc">
+        <!-- Top Invoice Header -->
+        <div class="inv-header">
+          <div class="inv-brand">
+            <h2>🥬 GrossHub</h2>
+            <p><strong>GrossHub Quick Commerce Private Limited</strong></p>
+            <p>Fulfillment Hub: Bhattapukur, Agartala, Tripura West - 799003</p>
+            <p>GSTIN: <strong>16AABCG1234F1Z0</strong> • FSSAI Lic: <strong>21623001000452</strong></p>
+            <p>Helpline: <strong>+91 98622 72399</strong> • Email: support@grosshub.in</p>
+          </div>
+          <div class="inv-meta">
+            <div class="inv-badge-title">TAX INVOICE & BILL</div>
+            <p style="margin-top: 6px;"><strong>Invoice No:</strong> INV-${order.id}</p>
+            <p><strong>Order ID:</strong> ${order.id}</p>
+            <p><strong>Date:</strong> ${orderDate}</p>
+            <p><strong>Time:</strong> ${orderTime}</p>
+            <p><strong>Delivery Slot:</strong> ${escapeHTML(order.deliverySlot || 'Express 30-45 mins')}</p>
+            <div style="margin-top: 8px;">
+              <span class="inv-stamp" style="${isPaid ? 'border-color: #16a34a; color: #15803d;' : 'border-color: #d97706; color: #b45309;'}">
+                ${isPaid ? 'PAID VIA ONLINE UPI' : 'CASH ON DELIVERY (DUE ON ARRIVAL)'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer & Delivery Details Grid -->
+        <div class="inv-grid-2">
+          <div>
+            <div class="inv-block-title">Delivered To:</div>
+            <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a;">${escapeHTML(order.customer?.name || 'Customer')}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;">📞 +91 ${escapeHTML(order.customer?.phone || 'N/A')}</div>
+            <div style="font-size: 0.83rem; color: #475569; margin-top: 3px; line-height: 1.4;">
+              📍 ${escapeHTML(order.customer?.address || 'Agartala, Tripura')}
+              ${order.customer?.landmark ? `<br><small><strong>Landmark:</strong> ${escapeHTML(order.customer.landmark)}</small>` : ''}
+              ${order.customer?.notes ? `<br><small><strong>Note:</strong> ${escapeHTML(order.customer.notes)}</small>` : ''}
+            </div>
+          </div>
+          <div>
+            <div class="inv-block-title">Delivery & Dispatch Details:</div>
+            <div style="font-size: 0.85rem; color: #334155;"><strong>Fulfillment Hub:</strong> Bhattapukur Main Store, Agartala</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Assigned Rider:</strong> ${escapeHTML(order.rider || 'GrossHub Fleet Partner')}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Rider Contact:</strong> ${order.riderPhone ? `📞 ${order.riderPhone}` : 'Assigned on Dispatch'}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Distance:</strong> ${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km (${order.deliveryDistanceLabel || 'Calculated'})` : 'Standard City Delivery Zone'}</div>
+            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Current Status:</strong> <span style="text-transform: capitalize; font-weight: 700; color: #064e3b;">${order.status.replace('_', ' ')}</span></div>
+          </div>
+        </div>
+
+        <!-- Itemized Products Table -->
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th style="width: 38px;">#</th>
+              <th>Item Description</th>
+              <th style="width: 80px;">Unit</th>
+              <th class="num" style="width: 75px;">MRP</th>
+              <th class="num" style="width: 75px;">Rate</th>
+              <th class="num" style="width: 50px;">Qty</th>
+              <th class="num" style="width: 90px;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map((it, idx) => {
+              const itemTotal = (it.price || 0) * (it.qty || 1);
+              return `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td><strong>${escapeHTML(it.name)}</strong></td>
+                  <td>${escapeHTML(it.unit || '1 pc')}</td>
+                  <td class="num text-muted"><del>₹${it.mrp || it.price}</del></td>
+                  <td class="num">₹${it.price}</td>
+                  <td class="num"><strong>${it.qty}</strong></td>
+                  <td class="num"><strong>₹${itemTotal}</strong></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <!-- Totals Summary Box -->
+        <div class="inv-totals-box">
+          <table class="inv-totals-table">
+            <tr>
+              <td>Items Subtotal (${order.summary?.itemCount || items.length} items):</td>
+              <td class="num">₹${order.summary?.subtotal || 0}</td>
+            </tr>
+            <tr>
+              <td>Delivery Charge (${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km` : 'Standard'}):</td>
+              <td class="num">${(order.summary?.deliveryCharge === 0) ? '<strong style="color:#16a34a;">FREE</strong>' : `₹${order.summary?.deliveryCharge || 0}`}</td>
+            </tr>
+            ${order.summary?.handlingCharge ? `
+            <tr>
+              <td>Handling & Packaging Fee:</td>
+              <td class="num">₹${order.summary.handlingCharge}</td>
+            </tr>` : ''}
+            ${(order.summary?.couponDiscount || 0) > 0 ? `
+            <tr style="color: #16a34a; font-weight: 600;">
+              <td>Discount Applied (${escapeHTML(order.couponCode || order.summary?.couponCode || 'PROMO')}):</td>
+              <td class="num">-₹${order.summary.couponDiscount}</td>
+            </tr>` : ''}
+            <tr class="grand-total">
+              <td>Total Bill Amount:</td>
+              <td class="num">₹${order.summary?.grandTotal || 0}</td>
+            </tr>
+            <tr>
+              <td style="font-size:0.8rem; color:#64748b;">Payment Mode:</td>
+              <td class="num" style="font-size:0.82rem; font-weight:700;">${escapeHTML(order.paymentMethod || 'COD')}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Customer Protection, Guarantee & Terms Footer -->
+        <div class="inv-footer">
+          <div>
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">GrossHub Fresh Guarantee & Terms:</p>
+            <p style="margin: 2px 0;">1. All fresh produce & dairy are guaranteed fresh. 100% replacement if reported within 2 hours of delivery.</p>
+            <p style="margin: 0;">2. Computer-generated tax invoice issued by GrossHub Quick Commerce. No signature required.</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="margin: 0; font-weight: 700; color: #0f172a;">GrossHub Fulfillment Centre</p>
+            <div style="font-family: monospace; font-size: 0.78rem; color: #64748b; margin: 3px 0;">[VERIFIED-CUSTOMER-INVOICE]</div>
+            <p style="margin: 0; font-size: 0.72rem; color: #64748b;">Bhattapukur, Agartala - 799003</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const titleEl = document.getElementById('customerModalInvoiceTitle');
+    if (titleEl) titleEl.textContent = `Tax Invoice & Bill — ${order.id}`;
+
+    const container = document.getElementById('customerInvoicePrintContainer');
+    if (container) container.innerHTML = html;
+
+    if (typeof openModal === 'function') {
+      openModal('customerInvoiceModal');
+    }
+  },
+
+  downloadPDF() {
+    window.print();
+  }
+};
+
+window.CustomerInvoice = CustomerInvoice;

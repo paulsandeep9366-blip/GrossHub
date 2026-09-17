@@ -1026,6 +1026,13 @@ function showOrderConfirmationModal(order) {
     };
   }
 
+  const downloadBillBtn = document.getElementById('btnDownloadInvoiceSuccess');
+  if (downloadBillBtn) {
+    downloadBillBtn.onclick = () => {
+      CustomerInvoice.openCustomerInvoiceModal(order.id);
+    };
+  }
+
   openModal('orderSuccessModal');
 }
 
@@ -1399,11 +1406,14 @@ function renderUnifiedCustomerOrders(phone) {
             <span style="font-size:0.75rem; color:var(--slate-500); margin-left:6px;">(${escapeHTML(order.paymentMethod ? order.paymentMethod.toUpperCase() : "COD")})</span>
           </div>
 
-          <div style="display:flex; gap:8px;">
-            <button type="button" class="btn-xs btn-outline" style="padding:6px 12px; cursor:pointer;" onclick="closeModal('customerAccountModal'); openModal('trackingModal'); Tracking.trackOrder('${order.id}');">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-xs btn-outline" style="padding:6px 12px; cursor:pointer;" onclick="closeModal('customerAccountModal'); openModal('trackingModal'); Tracking.trackOrder('${order.id}');" title="Track live delivery">
               📍 Track Live
             </button>
-            <button type="button" class="btn-xs btn-hero-primary" style="padding:6px 12px; cursor:pointer;" onclick="reorderCustomerOrder('${order.id}')">
+            <button type="button" class="btn-xs btn-hero-primary" style="padding:6px 12px; cursor:pointer;" onclick="CustomerInvoice.openCustomerInvoiceModal('${order.id}')" title="Download Official Tax Invoice PDF">
+              🧾 PDF Bill
+            </button>
+            <button type="button" class="btn-xs btn-secondary" style="padding:6px 12px; cursor:pointer;" onclick="reorderCustomerOrder('${order.id}')" title="Reorder items">
               🔁 Reorder
             </button>
           </div>
