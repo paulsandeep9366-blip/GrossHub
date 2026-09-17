@@ -1083,18 +1083,24 @@ function handleSendCustomerOtp(e) {
   showToast(`Demo OTP: 1234 sent to +91 ${phone}! Click Auto-Fill Code.`, "info");
 }
 
+function handleStoreCustOtpInput(input) {
+  if (input && input.value.trim().length === 4) {
+    verifyCustomerOtp();
+  }
+}
+
 function autoFillCustomerOtp() {
   const otpInput = document.getElementById("storeCustOtpInput");
   const otpErr = document.getElementById("storeCustOtpError");
   if (otpInput) {
     otpInput.value = "1234";
-    otpInput.focus();
   }
   if (otpErr) {
     otpErr.style.display = "none";
     otpErr.textContent = "";
   }
-  showToast("Code 1234 auto-filled! Click Verify & Sign In.", "success");
+  // Auto-verify and enter immediately
+  verifyCustomerOtp();
 }
 
 function verifyCustomerOtp() {
@@ -1347,18 +1353,24 @@ function handleGateSendOtp(e) {
   showToast(`Demo OTP: 1234 sent to +91 ${phone}! Click Auto-Fill Code.`, "info");
 }
 
+function handleGateOtpInput(input) {
+  if (input && input.value.trim().length === 4) {
+    verifyGateOtp();
+  }
+}
+
 function autoFillGateOtp() {
   const otpInput = document.getElementById("gateOtpInput");
   const otpErr = document.getElementById("gateOtpError");
   if (otpInput) {
     otpInput.value = "1234";
-    otpInput.focus();
   }
   if (otpErr) {
     otpErr.style.display = "none";
     otpErr.textContent = "";
   }
-  showToast("Code 1234 auto-filled! Click Verify & Enter Store.", "success");
+  // Auto-verify and enter immediately
+  verifyGateOtp();
 }
 
 function backToGatePhoneStep() {

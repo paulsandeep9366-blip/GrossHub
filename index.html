@@ -73,7 +73,7 @@
 
           <div class="form-group" style="margin-bottom: 16px; text-align: left;">
             <label class="form-label" for="gateOtpInput" style="text-align: center; display: block;">Enter 4-Digit Verification Code</label>
-            <input type="text" id="gateOtpInput" class="form-input" placeholder="1234" maxlength="4" style="font-size: 1.4rem; letter-spacing: 0.35em; text-align: center; font-weight: 800;" autocomplete="one-time-code">
+            <input type="text" id="gateOtpInput" class="form-input" placeholder="1234" maxlength="4" style="font-size: 1.4rem; letter-spacing: 0.35em; text-align: center; font-weight: 800;" autocomplete="one-time-code" oninput="handleGateOtpInput(this)">
             <div id="gateOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px; text-align: center;"></div>
           </div>
 
@@ -586,7 +586,7 @@
 
           <div class="form-group" style="margin-bottom: 16px;">
             <label class="form-label" for="storeCustOtpInput">Enter 4-Digit Code</label>
-            <input type="text" id="storeCustOtpInput" class="form-input" placeholder="1234" maxlength="4" style="font-size: 1.3rem; letter-spacing: 0.3em; text-align: center;">
+            <input type="text" id="storeCustOtpInput" class="form-input" placeholder="1234" maxlength="4" style="font-size: 1.3rem; letter-spacing: 0.3em; text-align: center;" oninput="handleStoreCustOtpInput(this)">
             <div id="storeCustOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px;"></div>
           </div>
 
