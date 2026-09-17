@@ -419,5 +419,14 @@ const Store = {
       sessionStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
       localStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
     } catch(e) {}
+  },
+
+  // 10. Admin Authentication Status
+  isAdminLoggedIn() {
+    try {
+      return sessionStorage.getItem("grosshub_admin_logged_in") === "true";
+    } catch(e) {
+      return false;
+    }
   }
 };

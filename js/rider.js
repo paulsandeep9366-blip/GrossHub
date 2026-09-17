@@ -15,14 +15,31 @@ const RiderPanel = {
   },
 
   checkSession() {
+    const isAdmin = (sessionStorage.getItem("grosshub_admin_logged_in") === "true");
+    const adminBar = document.getElementById("riderAdminBar");
+    if (adminBar) adminBar.style.display = isAdmin ? "flex" : "none";
+
+    const adminQuickAccess = document.getElementById("adminRiderQuickAccess");
+    if (adminQuickAccess) adminQuickAccess.style.display = isAdmin ? "block" : "none";
+
     const session = Store.getRiderSession();
     if (session && session.name) {
       this.isAuthenticated = true;
       this.activeRider = session.name;
       this.showDashboard();
+    } else if (isAdmin) {
+      // Auto-unlock in Admin Supervisor mode
+      this.enterAsAdmin();
     } else {
       this.showLogin();
     }
+  },
+
+  enterAsAdmin() {
+    this.isAuthenticated = true;
+    this.activeRider = "Fleet Supervisor (Admin)";
+    this.showDashboard();
+    showToast("Entered Rider Portal with Admin Privileges.", "success");
   },
 
   showDashboard() {
@@ -114,7 +131,17 @@ const RiderPanel = {
     if (!container) return;
 
     const allOrders = Store.getOrders();
+    const isAdmin = (this.activeRider && this.activeRider.includes("Admin"));
     const filtered = allOrders.filter(order => {
+      // If Admin supervisor, view all fleet orders
+      if (isAdmin) {
+        if (this.activeTab === 'active') {
+          return order.status !== 'delivered' && order.status !== 'cancelled';
+        } else {
+          return order.status === 'delivered';
+        }
+      }
+
       // Check rider match or unassigned
       const isAssigned = (order.rider === this.activeRider) || (!order.rider || order.rider === 'Pending Assignment');
       

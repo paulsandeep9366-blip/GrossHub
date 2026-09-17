@@ -183,6 +183,8 @@
         <button class="admin-nav-item active" data-tab="overview" onclick="AdminPanel.switchTab('overview')">📊 Overview</button>
         <button class="admin-nav-item" data-tab="orders" onclick="AdminPanel.switchTab('orders')">📦 Orders Management</button>
         <button class="admin-nav-item" data-tab="products" onclick="AdminPanel.switchTab('products')">🥬 Product Catalog</button>
+        <button class="admin-nav-item" data-tab="riders" onclick="AdminPanel.switchTab('riders')">🛵 Fleet & Dispatches</button>
+        <button class="admin-nav-item" data-tab="customers" onclick="AdminPanel.switchTab('customers')">👥 Customer Directory</button>
         <button class="admin-nav-item" data-tab="settings" onclick="AdminPanel.switchTab('settings')">⚙️ Store Settings & Distance Fees</button>
       </nav>
 
@@ -401,6 +403,72 @@
                 💾 Save Store Settings
               </button>
             </form>
+          </div>
+        </div>
+
+        <!-- 5. Rider Fleet Tab -->
+        <div id="adminPanel-riders" style="display: none;">
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
+            <div class="kpi-card orders">
+              <span class="kpi-label">Active Fleet Size</span>
+              <span class="kpi-value" id="kpiFleetTotal">3</span>
+            </div>
+            <div class="kpi-card pending">
+              <span class="kpi-label">On-Road Deliveries</span>
+              <span class="kpi-value" id="kpiFleetActive">0</span>
+            </div>
+            <div class="kpi-card products">
+              <span class="kpi-label">Master Fleet Security PIN</span>
+              <span class="kpi-value" id="adminDisplayRiderPin" style="font-family: monospace; letter-spacing: 0.1em;">1234</span>
+            </div>
+          </div>
+
+          <div class="admin-table-controls">
+            <h4 style="margin: 0;">🛵 Registered Delivery Fleet & Live Status</h4>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn-xs btn-outline" onclick="AdminPanel.handleUpdateRiderPin()">🔑 Update Fleet PIN</button>
+              <button class="btn-xs btn-hero-primary" onclick="AdminPanel.handleAddNewRider()">➕ Add New Rider</button>
+            </div>
+          </div>
+
+          <div id="adminRidersContainer">
+            <!-- Rendered by admin.js -->
+          </div>
+        </div>
+
+        <!-- 6. Customers Tab -->
+        <div id="adminPanel-customers" style="display: none;">
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
+            <div class="kpi-card revenue">
+              <span class="kpi-label">Total Customer Revenue</span>
+              <span class="kpi-value" id="kpiTotalCustomerRevenue">₹0</span>
+            </div>
+            <div class="kpi-card orders">
+              <span class="kpi-label">Unique Customers</span>
+              <span class="kpi-value" id="kpiTotalCustomers">0</span>
+            </div>
+          </div>
+
+          <div class="admin-table-controls">
+            <h4 style="margin: 0;">👥 Customer Profiles & Order History</h4>
+          </div>
+
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Customer Name</th>
+                  <th>Mobile Number</th>
+                  <th>Delivery Address</th>
+                  <th>Total Orders</th>
+                  <th>Lifetime Value</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminCustomersList">
+                <!-- Rendered by admin.js -->
+              </tbody>
+            </table>
           </div>
         </div>
 

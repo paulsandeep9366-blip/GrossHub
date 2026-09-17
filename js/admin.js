@@ -118,7 +118,7 @@ const AdminPanel = {
       el.classList.toggle('active', el.dataset.tab === tabName);
     });
 
-    const panels = ['overview', 'orders', 'products', 'settings', 'reports'];
+    const panels = ['overview', 'orders', 'products', 'riders', 'customers', 'settings', 'reports'];
     panels.forEach(p => {
       const panel = document.getElementById(`adminPanel-${p}`);
       if (panel) panel.style.display = (p === tabName ? 'block' : 'none');
@@ -127,6 +127,8 @@ const AdminPanel = {
     if (tabName === 'overview') this.renderMetrics();
     if (tabName === 'orders') this.renderOrders();
     if (tabName === 'products') this.renderProducts();
+    if (tabName === 'riders') this.renderRidersTab();
+    if (tabName === 'customers') this.renderCustomersTab();
     if (tabName === 'settings') this.loadSettingsForm();
   },
 
@@ -559,5 +561,168 @@ const AdminPanel = {
     link.click();
     document.body.removeChild(link);
     showToast('Orders exported to CSV! 📊', 'success');
+  },
+
+  // 5. Fleet & Riders Management Tab
+  renderRidersTab() {
+    const container = document.getElementById("adminRidersContainer");
+    if (!container) return;
+
+    const riders = Store.getRiders();
+    const orders = Store.getOrders();
+    const activeDeliveries = orders.filter(o => o.status === "out_for_delivery" || o.status === "preparing");
+    const currentPin = Store.getRiderPin();
+
+    const pinEl = document.getElementById("adminDisplayRiderPin");
+    if (pinEl) pinEl.textContent = currentPin;
+
+    const totalRidersEl = document.getElementById("kpiFleetTotal");
+    if (totalRidersEl) totalRidersEl.textContent = riders.length;
+
+    const fleetActiveEl = document.getElementById("kpiFleetActive");
+    if (fleetActiveEl) fleetActiveEl.textContent = activeDeliveries.length;
+
+    container.innerHTML = riders.map(rider => {
+      const assigned = orders.filter(o => o.assignedRider === rider.name && o.status !== "delivered" && o.status !== "cancelled");
+      const deliveredCount = orders.filter(o => o.assignedRider === rider.name && o.status === "delivered").length;
+      const isBusy = assigned.length > 0;
+
+      return `
+        <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 44px; height: 44px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                🛵
+              </div>
+              <div>
+                <h4 style="margin: 0; font-size: 1.05rem; color: var(--slate-900);">${escapeHTML(rider.name)}</h4>
+                <div style="font-size: 0.82rem; color: var(--slate-500); margin-top: 2px;">
+                  📞 ${escapeHTML(rider.phone || "9862272399")} • Zone: ${escapeHTML(rider.zone || "Agartala")}
+                </div>
+              </div>
+            </div>
+            <div>
+              <span style="font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: ${isBusy ? "#fff7ed" : "#ecfdf5"}; color: ${isBusy ? "#c2410c" : "#047857"}; border: 1px solid ${isBusy ? "#fed7aa" : "#a7f3d0"};">
+                ${isBusy ? `🛵 On Delivery (${assigned.length})` : "🟢 Ready / Idle"}
+              </span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 20px; margin: 14px 0; font-size: 0.85rem; background: var(--slate-50); padding: 10px 14px; border-radius: var(--radius-sm); flex-wrap: wrap;">
+            <div>Active Deliveries: <strong>${assigned.length}</strong></div>
+            <div>Delivered Total: <strong>${deliveredCount}</strong></div>
+            <div>Assigned Order IDs: <strong>${assigned.map(o => o.id).join(", ") || "None currently"}</strong></div>
+          </div>
+
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="rider.html" class="btn-xs btn-outline" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+              🛵 Open Rider Dispatch Screen
+            </a>
+            <a href="tel:${rider.phone || "9862272399"}" class="btn-xs btn-secondary" style="text-decoration: none;">
+              📞 Call Rider
+            </a>
+            <a href="https://wa.me/91${(rider.phone || "9862272399").replace(/\D/g, "")}" target="_blank" class="btn-xs btn-outline" style="text-decoration: none; color: #15803d; border-color: #86efac;">
+              💬 WhatsApp
+            </a>
+          </div>
+        </div>
+      `;
+    }).join("");
+  },
+
+  handleUpdateRiderPin() {
+    const current = Store.getRiderPin();
+    const pin = prompt("Enter new 4-digit Master Security PIN for Delivery Fleet:", current);
+    if (pin && pin.trim().length >= 4) {
+      Store.setRiderPin(pin.trim());
+      showToast(`Rider PIN updated to ${pin.trim()}!`, "success");
+      this.renderRidersTab();
+    }
+  },
+
+  handleAddNewRider() {
+    const name = prompt("Enter new delivery rider full name (e.g. Rider Sanjib):");
+    if (!name || !name.trim()) return;
+    const phone = prompt("Enter 10-digit mobile number for rider:", "9862272399") || "9862272399";
+    const config = Store.getConfig();
+    const riders = config.riders || DEFAULT_SHOP_CONFIG.riders;
+    const newId = `rider_${Date.now()}`;
+    riders.push({ id: newId, name: name.trim(), phone: phone.trim(), zone: "Agartala" });
+    config.riders = riders;
+    Store.saveConfig(config);
+    showToast(`Rider ${name.trim()} added to fleet!`, "success");
+    this.renderRidersTab();
+  },
+
+  // 6. Customers Directory Tab
+  renderCustomersTab() {
+    const container = document.getElementById("adminCustomersList");
+    if (!container) return;
+
+    const orders = Store.getOrders();
+    const customerMap = {};
+
+    orders.forEach(o => {
+      const phone = o.customer?.phone;
+      if (!phone) return;
+      if (!customerMap[phone]) {
+        customerMap[phone] = {
+          name: o.customer?.name || "Customer",
+          phone: phone,
+          address: o.customer?.address || "",
+          landmark: o.customer?.landmark || "",
+          ordersCount: 0,
+          totalSpent: 0,
+          orders: []
+        };
+      }
+      customerMap[phone].ordersCount += 1;
+      customerMap[phone].totalSpent += (o.summary?.grandTotal || o.grandTotal || 0);
+      customerMap[phone].orders.push(o);
+    });
+
+    const customers = Object.values(customerMap);
+    customers.sort((a, b) => b.totalSpent - a.totalSpent);
+
+    const totalCustEl = document.getElementById("kpiTotalCustomers");
+    if (totalCustEl) totalCustEl.textContent = customers.length;
+
+    const totalCustRevEl = document.getElementById("kpiTotalCustomerRevenue");
+    if (totalCustRevEl) {
+      const total = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+      totalCustRevEl.textContent = `₹${total}`;
+    }
+
+    if (customers.length === 0) {
+      container.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--slate-500);">No customer records logged yet. Customers will appear here as orders are placed.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = customers.map(c => `
+      <tr>
+        <td><strong>${escapeHTML(c.name)}</strong></td>
+        <td><code>${escapeHTML(c.phone)}</code></td>
+        <td style="max-width:200px; font-size:0.82rem; color:var(--slate-600);">${escapeHTML(c.address)} ${c.landmark ? `<br><small>📍 ${escapeHTML(c.landmark)}</small>` : ""}</td>
+        <td><span class="cat-pill-small">${c.ordersCount} Orders</span></td>
+        <td><strong style="color:var(--emerald-700);">₹${c.totalSpent}</strong></td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <a href="tel:${c.phone}" class="btn-xs btn-outline" title="Call Customer">📞</a>
+            <a href="https://wa.me/91${c.phone.replace(/\D/g, "")}" target="_blank" class="btn-xs btn-outline" style="color:#15803d;" title="WhatsApp Customer">💬</a>
+            <button class="btn-xs btn-secondary" onclick="AdminPanel.filterByCustomerPhone('${c.phone}')" title="View customer orders in Orders tab">📦 Orders</button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+  },
+
+  filterByCustomerPhone(phone) {
+    this.switchTab("orders");
+    const searchInput = document.getElementById("adminOrderSearch");
+    if (searchInput) {
+      searchInput.value = phone;
+      this.renderOrders();
+    }
   }
 };
+

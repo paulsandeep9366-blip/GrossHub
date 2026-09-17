@@ -1006,14 +1006,23 @@ function showToast(message, type = 'info') {
 // =======================================================
 
 function updateStorefrontCustomerUI() {
-  const session = Store.getCustomerSession();
+  const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
+  const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
   const headerAccountLabel = document.getElementById("headerAccountLabel");
   const topNavCustomerLink = document.getElementById("topNavCustomerLink");
+  const adminBanner = document.getElementById("storeAdminModeBanner");
+
+  if (adminBanner) {
+    adminBanner.style.display = isAdmin ? "flex" : "none";
+  }
 
   if (session && session.name) {
     const firstName = session.name.split(" ")[0];
     if (headerAccountLabel) headerAccountLabel.textContent = firstName;
     if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👤 Hi, ${escapeHTML(firstName)}`;
+  } else if (isAdmin) {
+    if (headerAccountLabel) headerAccountLabel.textContent = "Admin";
+    if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👑 Admin Mode`;
   } else {
     if (headerAccountLabel) headerAccountLabel.textContent = "Sign In";
     if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👤 Sign In / Account`;
@@ -1270,29 +1279,32 @@ function reorderCustomerOrder(orderId) {
 // =======================================================
 
 function checkStoreAccess() {
-  const session = Store.getCustomerSession();
+  const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
+  const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
   const gate = document.getElementById("storeLoginGate");
   const storeWin = document.getElementById("storeWindow");
 
-  if (session && session.phone) {
+  if (isAdmin || (session && session.phone)) {
     if (gate) gate.style.display = "none";
     if (storeWin) storeWin.style.display = "block";
     updateStorefrontCustomerUI();
 
-    // Auto-fill customer details in checkout if available
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el && val) el.value = val;
-    };
-    set("checkoutName", session.name);
-    set("checkoutPhone", session.phone);
-    set("checkoutAddress", session.address);
-    set("checkoutLandmark", session.landmark);
-    if (session.distanceKm) {
-      selectedDistanceKm = Number(session.distanceKm) || 1.5;
-    }
-    if (session.distanceTierId) {
-      selectedDistanceTierId = session.distanceTierId;
+    if (session) {
+      // Auto-fill customer details in checkout if available
+      const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val) el.value = val;
+      };
+      set("checkoutName", session.name);
+      set("checkoutPhone", session.phone);
+      set("checkoutAddress", session.address);
+      set("checkoutLandmark", session.landmark);
+      if (session.distanceKm) {
+        selectedDistanceKm = Number(session.distanceKm) || 1.5;
+      }
+      if (session.distanceTierId) {
+        selectedDistanceTierId = session.distanceTierId;
+      }
     }
 
     // Auto open account modal if requested via URL (?view=account or #account)
