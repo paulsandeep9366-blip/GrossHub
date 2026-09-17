@@ -608,12 +608,26 @@ button {
 }
 
 .card-visual {
-  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
-  height: 150px;
+  background: #f8fafc;
+  height: 165px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+  display: block;
+}
+
+.product-card:hover .product-img {
+  transform: scale(1.08);
 }
 
 .product-emoji {
@@ -914,14 +928,23 @@ button {
 
 .cir-emoji {
   font-size: 2.2rem;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   background: var(--slate-50);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--slate-100);
+}
+
+.cir-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .cir-details {
@@ -2205,4 +2228,20 @@ button {
   .slg-trust-item span {
     margin-bottom: 0;
   }
+}
+
+.admin-prod-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-prod-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--slate-200);
+  background: var(--slate-100);
+  flex-shrink: 0;
 }

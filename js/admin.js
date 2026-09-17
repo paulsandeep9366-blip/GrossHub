@@ -301,9 +301,18 @@ const AdminPanel = {
       return `
         <tr>
           <td>
-            <span class="admin-prod-emoji">${p.emoji || '🛒'}</span>
-            <strong>${escapeHTML(p.name)}</strong>
-            ${p.badge ? `<span class="admin-badge-tag">${p.badge}</span>` : ''}
+            <div class="admin-prod-cell">
+              ${p.image ? `
+                <img src="${escapeHTML(p.image)}" class="admin-prod-thumb" alt="${escapeHTML(p.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                <span class="admin-prod-emoji" style="display:none;">${p.emoji || '🛒'}</span>
+              ` : `
+                <span class="admin-prod-emoji">${p.emoji || '🛒'}</span>
+              `}
+              <div>
+                <strong>${escapeHTML(p.name)}</strong>
+                ${p.badge ? `<span class="admin-badge-tag">${escapeHTML(p.badge)}</span>` : ''}
+              </div>
+            </div>
           </td>
           <td><span class="cat-pill-small">${p.categoryName || p.category}</span></td>
           <td>${p.unit}</td>
@@ -360,6 +369,8 @@ const AdminPanel = {
     document.getElementById('prodUnit').value = product.unit;
     document.getElementById('prodPrice').value = product.price;
     document.getElementById('prodMrp').value = product.mrp || product.price;
+    const prodImgInput = document.getElementById('prodImage');
+    if (prodImgInput) prodImgInput.value = product.image || '';
     document.getElementById('prodEmoji').value = product.emoji || '🛒';
     document.getElementById('prodBadge').value = product.badge || '';
     document.getElementById('prodDesc').value = product.description || '';
@@ -374,6 +385,8 @@ const AdminPanel = {
     const unit = document.getElementById('prodUnit').value.trim();
     const price = Number(document.getElementById('prodPrice').value);
     const mrp = Number(document.getElementById('prodMrp').value) || price;
+    const imageInput = document.getElementById('prodImage');
+    const image = imageInput ? imageInput.value.trim() : '';
     const emoji = document.getElementById('prodEmoji').value.trim() || '🛒';
     const badge = document.getElementById('prodBadge').value.trim();
     const description = document.getElementById('prodDesc').value.trim();
@@ -389,12 +402,12 @@ const AdminPanel = {
 
     if (this.editingProductId) {
       Store.updateProduct(this.editingProductId, {
-        name, category, categoryName, unit, price, mrp, emoji, badge, description, inStock
+        name, category, categoryName, unit, price, mrp, image, emoji, badge, description, inStock
       });
       showToast(`Updated "${name}" successfully.`, 'success');
     } else {
       Store.addProduct({
-        name, category, categoryName, unit, price, mrp, emoji, badge, description, inStock
+        name, category, categoryName, unit, price, mrp, image, emoji, badge, description, inStock
       });
       showToast(`Added "${name}" to store catalog!`, 'success');
     }

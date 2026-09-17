@@ -112,8 +112,11 @@ const Tracking = {
 
     // Items list
     const itemsHTML = (order.items || []).map(item => `
-      <div class="track-item-row">
-        <span class="ti-name">${escapeHTML(item.name)} <span class="ti-qty">× ${item.qty}</span></span>
+      <div class="track-item-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${item.image ? `<img src="${escapeHTML(item.image)}" style="width:28px; height:28px; border-radius:4px; object-fit:cover;" onerror="this.style.display='none';">` : ''}
+          <span class="ti-name">${escapeHTML(item.name)} <span class="ti-qty">× ${item.qty}</span></span>
+        </div>
         <span class="ti-price">₹${item.subtotal || item.price * item.qty}</span>
       </div>
     `).join('');
@@ -225,6 +228,7 @@ const Tracking = {
             price: product.price,
             unit: product.unit,
             emoji: product.emoji,
+            image: product.image || '',
             qty: pastItem.qty
           });
         }

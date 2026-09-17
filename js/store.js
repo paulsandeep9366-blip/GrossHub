@@ -99,7 +99,26 @@ const Store = {
   getProducts() {
     try {
       const saved = localStorage.getItem(this.KEYS.PRODUCTS);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const defaultMap = new Map(DEFAULT_PRODUCTS.map(p => [p.id, p]));
+          let updatedNeeded = false;
+          const updated = parsed.map(p => {
+            const def = defaultMap.get(p.id);
+            if (def && def.image && (!p.image || p.image !== def.image)) {
+              updatedNeeded = true;
+              return { ...p, image: def.image };
+            }
+            return p;
+          });
+          if (updatedNeeded) {
+            localStorage.setItem(this.KEYS.PRODUCTS, JSON.stringify(updated));
+          }
+          return updated;
+        }
+        return parsed;
+      }
     } catch (e) {
       console.error('Error reading products:', e);
     }
@@ -125,6 +144,7 @@ const Store = {
       price: Number(productData.price) || 0,
       mrp: Number(productData.mrp) || Number(productData.price) || 0,
       emoji: productData.emoji || '🛒',
+      image: productData.image || '',
       badge: productData.badge || '',
       description: productData.description || '',
       inStock: productData.inStock !== false,
@@ -280,7 +300,21 @@ const Store = {
   getCart() {
     try {
       const saved = localStorage.getItem(this.KEYS.CART);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const products = this.getProducts();
+          const pMap = new Map(products.map(p => [p.id, p]));
+          return parsed.map(item => {
+            if (!item.image) {
+              const p = pMap.get(item.id);
+              if (p && p.image) return { ...item, image: p.image };
+            }
+            return item;
+          });
+        }
+        return parsed;
+      }
     } catch (e) {
       console.error('Error reading cart:', e);
     }

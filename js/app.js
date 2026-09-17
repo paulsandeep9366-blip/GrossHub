@@ -184,7 +184,12 @@ function renderProducts() {
     return `
       <div class="product-card ${!product.inStock ? 'out-of-stock' : ''}" data-id="${product.id}">
         <div class="card-visual">
-          <span class="product-emoji">${product.emoji || '🛒'}</span>
+          ${product.image ? `
+            <img src="${escapeHTML(product.image)}" alt="${escapeHTML(product.name)}" class="product-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="product-emoji" style="display:none;">${product.emoji || '🛒'}</span>
+          ` : `
+            <span class="product-emoji">${product.emoji || '🛒'}</span>
+          `}
           ${product.badge ? `<span class="product-badge">${escapeHTML(product.badge)}</span>` : ''}
           ${hasDiscount ? `<span class="discount-badge">${discountPercent}% OFF</span>` : ''}
         </div>
@@ -236,6 +241,7 @@ function addProductToCart(productId) {
       mrp: product.mrp || product.price,
       unit: product.unit,
       emoji: product.emoji,
+      image: product.image || '',
       qty: 1
     });
   }
@@ -336,7 +342,12 @@ function updateCartBadgeAndDrawer() {
   if (drawerItems) {
     drawerItems.innerHTML = cart.map(item => `
       <div class="cart-item-row" data-id="${item.id}">
-        <div class="cir-emoji">${item.emoji || '🛒'}</div>
+        <div class="cir-emoji">
+          ${item.image ? `
+            <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.name)}" class="cir-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+            <span style="display:none;">${item.emoji || '🛒'}</span>
+          ` : (item.emoji || '🛒')}
+        </div>
         <div class="cir-details">
           <div class="cir-title">${escapeHTML(item.name)}</div>
           <div class="cir-unit">${escapeHTML(item.unit || '')}</div>
@@ -689,8 +700,11 @@ function openCheckoutModal() {
   const sumItems = document.getElementById('checkoutSummaryItems');
   if (sumItems) {
     sumItems.innerHTML = cart.map(i => `
-      <div class="c-sum-row">
-        <span>${escapeHTML(i.name)} × ${i.qty}</span>
+      <div class="c-sum-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${i.image ? `<img src="${escapeHTML(i.image)}" style="width:28px; height:28px; border-radius:4px; object-fit:cover;" onerror="this.style.display='none';">` : ''}
+          <span>${escapeHTML(i.name)} × ${i.qty}</span>
+        </div>
         <strong>₹${i.price * i.qty}</strong>
       </div>
     `).join('');
@@ -850,8 +864,11 @@ function showOrderConfirmationModal(order) {
   const itemsListEl = document.getElementById('confirmItemsList');
   if (itemsListEl) {
     itemsListEl.innerHTML = (order.items || []).map(i => `
-      <div class="confirm-item-row">
-        <span>${escapeHTML(i.name)} × ${i.qty}</span>
+      <div class="confirm-item-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${i.image ? `<img src="${escapeHTML(i.image)}" style="width:28px; height:28px; border-radius:4px; object-fit:cover;" onerror="this.style.display='none';">` : ''}
+          <span>${escapeHTML(i.name)} × ${i.qty}</span>
+        </div>
         <strong>₹${i.price * i.qty}</strong>
       </div>
     `).join('');
