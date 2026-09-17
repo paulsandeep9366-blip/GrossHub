@@ -25,9 +25,98 @@
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
+
+  <!-- Customer Entrance & Mobile OTP Login Gate (Required Before Store Access) -->
+  <div id="storeLoginGate" class="store-login-gate-wrapper">
+    <div class="store-login-gate-card">
+      <!-- Brand Header -->
+      <div class="slg-brand">
+        <img src="icons/icon.svg" alt="GrossHub Logo" class="slg-logo">
+        <h1 class="slg-title">GrossHub</h1>
+        <div class="slg-badge">⚡ Agartala's Express Grocery • 30-45 Mins</div>
+      </div>
+
+      <div class="slg-content">
+        <h2 class="slg-heading">Sign In to Enter Store</h2>
+        <p class="slg-subheading">
+          Enter your 10-digit mobile number to access fresh groceries, wholesale rates, and express local delivery.
+        </p>
+
+        <!-- Step 1: Phone & Name Form -->
+        <form id="gatePhoneForm" onsubmit="handleGateSendOtp(event)">
+          <div class="form-group" style="text-align: left; margin-bottom: 14px;">
+            <label class="form-label" for="gateNameInput">Your Full Name *</label>
+            <input type="text" id="gateNameInput" class="form-input" placeholder="e.g. Bikram Debbarma" required autocomplete="name">
+          </div>
+
+          <div class="form-group" style="text-align: left; margin-bottom: 18px;">
+            <label class="form-label" for="gatePhoneInput">10-Digit Mobile Number *</label>
+            <div style="display: flex; gap: 8px;">
+              <span style="display: flex; align-items: center; padding: 0 12px; background: #f1f5f9; border: 1.5px solid var(--slate-300); border-radius: var(--radius-md); font-weight: 700; color: var(--slate-700); font-size: 0.95rem;">+91</span>
+              <input type="tel" id="gatePhoneInput" class="form-input" placeholder="9862272399" maxlength="10" required autocomplete="tel" style="flex: 1;">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-hero-primary" style="width: 100%; padding: 13px; font-size: 1rem; justify-content: center;">
+            Send Verification Code ➔
+          </button>
+        </form>
+
+        <!-- Step 2: OTP Verification Form -->
+        <div id="gateOtpSection" style="display: none;">
+          <div class="otp-display-pill" style="margin-bottom: 16px;">
+            <span>📲 Sent to <strong id="gateTargetPhone">+91 9862272399</strong></span>
+            <button type="button" class="btn-autofill-otp" onclick="autoFillGateOtp()">⚡ Auto-Fill Code</button>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px; text-align: left;">
+            <label class="form-label" for="gateOtpInput" style="text-align: center; display: block;">Enter 4-Digit Verification Code</label>
+            <input type="text" id="gateOtpInput" class="form-input" placeholder="1234" maxlength="4" style="font-size: 1.4rem; letter-spacing: 0.35em; text-align: center; font-weight: 800;" autocomplete="one-time-code">
+            <div id="gateOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px; text-align: center;"></div>
+          </div>
+
+          <button type="button" class="btn-hero-primary" style="width: 100%; padding: 13px; font-size: 1rem; justify-content: center; margin-bottom: 12px;" onclick="verifyGateOtp()">
+            Verify & Enter Store ➔
+          </button>
+
+          <button type="button" onclick="backToGatePhoneStep()" style="background: none; border: none; color: var(--slate-500); font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
+            ← Change Mobile Number
+          </button>
+        </div>
+      </div>
+
+      <!-- Trust Badges -->
+      <div class="slg-trust-grid">
+        <div class="slg-trust-item">
+          <span>🥬</span>
+          <div>
+            <strong>Farm-Fresh Daily</strong>
+            <small>Direct from local farms</small>
+          </div>
+        </div>
+        <div class="slg-trust-item">
+          <span>⚡</span>
+          <div>
+            <strong>30-45 Mins Delivery</strong>
+            <small>Bhattapukur hub dispatch</small>
+          </div>
+        </div>
+        <div class="slg-trust-item">
+          <span>💵</span>
+          <div>
+            <strong>COD & UPI</strong>
+            <small>Pay at your doorstep</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Store Window (Unlocked only after successful Customer Mobile OTP login) -->
+  <div id="storeWindow" style="display: none;">
+
 
   <!-- Top Announcement Bar -->
   <div class="top-announcement-bar">
@@ -316,7 +405,7 @@
                 <span class="poc-icon">💵</span>
                 <div class="poc-info">
                   <strong>Cash on Delivery</strong>
-                  <small>Pay cash to rider at doorstep</small>
+                  <small>Pay cash to delivery partner at doorstep</small>
                 </div>
               </div>
               <div class="payment-option-card" data-method="Instant UPI" onclick="selectPaymentOption('Instant UPI')">
@@ -636,22 +725,6 @@
     </div>
   </footer>
 
-  <!-- Scripts -->
-  <script src="js/data.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/tracking.js"></script>
-  <script src="js/app.js"></script>
-
-  <!-- PWA Service Worker Registration -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js').catch(err => {
-          console.log('SW registration skipped or error:', err);
-        });
-      });
-    }
-  </script>
   <!-- Mobile Bottom Navigation Bar -->
   <nav class="mobile-bottom-nav">
     <a href="index.html" class="mbn-item active">
@@ -675,6 +748,25 @@
       <span class="mbn-text">Basket</span>
     </button>
   </nav>
+  </div> <!-- /#storeWindow -->
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/tracking.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(err => {
+          console.log('SW registration skipped or error:', err);
+        });
+      });
+    }
+  </script>
+
 
 </body>
 </html>

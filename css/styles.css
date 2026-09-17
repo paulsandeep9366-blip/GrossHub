@@ -2060,3 +2060,149 @@ button {
   color: var(--slate-500);
   margin-top: 1px;
 }
+
+
+/* =======================================================
+   STORE ACCESS LOGIN GATE
+   ======================================================= */
+.store-login-gate-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: radial-gradient(circle at 50% 10%, #064e3b 0%, #0f172a 100%);
+  box-sizing: border-box;
+}
+
+.store-login-gate-card {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: gateFadeIn 0.35s ease-out;
+}
+
+@keyframes gateFadeIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.slg-brand {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  padding: 28px 24px 22px 24px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.slg-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.slg-title {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.slg-badge {
+  display: inline-block;
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #a7f3d0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.slg-content {
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.slg-heading {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.slg-subheading {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0 0 20px 0;
+  line-height: 1.45;
+}
+
+.slg-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 16px 14px;
+}
+
+.slg-trust-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-size: 0.72rem;
+}
+
+.slg-trust-item span {
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+}
+
+.slg-trust-item strong {
+  color: #0f172a;
+  font-size: 0.74rem;
+  line-height: 1.2;
+}
+
+.slg-trust-item small {
+  color: #64748b;
+  font-size: 0.68rem;
+}
+
+@media (max-width: 480px) {
+  .store-login-gate-card {
+    border-radius: 16px;
+  }
+  .slg-brand {
+    padding: 22px 18px 18px 18px;
+  }
+  .slg-content {
+    padding: 22px 18px;
+  }
+  .slg-trust-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    text-align: left;
+  }
+  .slg-trust-item {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+  }
+  .slg-trust-item span {
+    margin-bottom: 0;
+  }
+}

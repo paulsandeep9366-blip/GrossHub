@@ -21,39 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCartBadgeAndDrawer();
   setupStoreListeners();
 
-  // Initialize Admin & Rider modules
-  if (typeof AdminPanel !== 'undefined') AdminPanel.init();
-  if (typeof RiderPanel !== 'undefined') RiderPanel.init();
-
-  // Update storefront customer session display
-  updateStorefrontCustomerUI();
-
-  // Auto open account portal if requested via URL (?view=account or #account)
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("view") === "account" || window.location.hash === "#account") {
-    setTimeout(() => {
-      handleAccountClick();
-    }, 150);
-  }
-
-  // Auto-fill customer details in checkout if available
-  const savedCust = custSession || Store.getCustomer();
-  if (savedCust) {
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el && val) el.value = val;
-    };
-    set('checkoutName', savedCust.name);
-    set('checkoutPhone', savedCust.phone);
-    set('checkoutAddress', savedCust.address);
-    set('checkoutLandmark', savedCust.landmark);
-    if (savedCust.distanceKm) {
-      selectedDistanceKm = Number(savedCust.distanceKm) || 1.5;
-    }
-    if (savedCust.distanceTierId) {
-      selectedDistanceTierId = savedCust.distanceTierId;
-    }
-  }
+  // Verify customer authentication and control store window access
+  checkStoreAccess();
 });
 
 // 1. Store Header & Status
@@ -1290,9 +1259,161 @@ function reorderCustomerOrder(orderId) {
   }
 }
 
+// =======================================================
+// STORE ENTRANCE GATE & AUTHENTICATION ACCESS CONTROL
+// =======================================================
+
+function checkStoreAccess() {
+  const session = Store.getCustomerSession();
+  const gate = document.getElementById("storeLoginGate");
+  const storeWin = document.getElementById("storeWindow");
+
+  if (session && session.phone) {
+    if (gate) gate.style.display = "none";
+    if (storeWin) storeWin.style.display = "block";
+    updateStorefrontCustomerUI();
+
+    // Auto-fill customer details in checkout if available
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val) el.value = val;
+    };
+    set("checkoutName", session.name);
+    set("checkoutPhone", session.phone);
+    set("checkoutAddress", session.address);
+    set("checkoutLandmark", session.landmark);
+    if (session.distanceKm) {
+      selectedDistanceKm = Number(session.distanceKm) || 1.5;
+    }
+    if (session.distanceTierId) {
+      selectedDistanceTierId = session.distanceTierId;
+    }
+
+    // Auto open account modal if requested via URL (?view=account or #account)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("view") === "account" || window.location.hash === "#account") {
+      setTimeout(() => {
+        handleAccountClick();
+      }, 150);
+    }
+  } else {
+    // Lock store window and display login entrance gate
+    if (gate) gate.style.display = "flex";
+    if (storeWin) storeWin.style.display = "none";
+
+    // Pre-populate fields if saved previously
+    const saved = Store.getCustomer();
+    const gateName = document.getElementById("gateNameInput");
+    const gatePhone = document.getElementById("gatePhoneInput");
+    if (gateName && saved?.name && !gateName.value) gateName.value = saved.name;
+    if (gatePhone && saved?.phone && !gatePhone.value) gatePhone.value = saved.phone;
+  }
+}
+
+function handleGateSendOtp(e) {
+  if (e) e.preventDefault();
+  const nameInput = document.getElementById("gateNameInput");
+  const phoneInput = document.getElementById("gatePhoneInput");
+
+  const name = nameInput ? nameInput.value.trim() : "";
+  const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
+
+  if (!name) {
+    showToast("Please enter your full name.", "error");
+    if (nameInput) nameInput.focus();
+    return;
+  }
+
+  if (!phone || phone.length < 10) {
+    showToast("Please enter a valid 10-digit mobile number.", "error");
+    if (phoneInput) phoneInput.focus();
+    return;
+  }
+
+  const targetEl = document.getElementById("gateTargetPhone");
+  if (targetEl) targetEl.textContent = `+91 ${phone}`;
+
+  const otpSection = document.getElementById("gateOtpSection");
+  const phoneForm = document.getElementById("gatePhoneForm");
+  if (otpSection) otpSection.style.display = "block";
+  if (phoneForm) phoneForm.style.display = "none";
+
+  const otpInput = document.getElementById("gateOtpInput");
+  if (otpInput) {
+    otpInput.value = "";
+    otpInput.focus();
+  }
+
+  showToast(`Demo OTP: 1234 sent to +91 ${phone}! Click Auto-Fill Code.`, "info");
+}
+
+function autoFillGateOtp() {
+  const otpInput = document.getElementById("gateOtpInput");
+  const otpErr = document.getElementById("gateOtpError");
+  if (otpInput) {
+    otpInput.value = "1234";
+    otpInput.focus();
+  }
+  if (otpErr) {
+    otpErr.style.display = "none";
+    otpErr.textContent = "";
+  }
+  showToast("Code 1234 auto-filled! Click Verify & Enter Store.", "success");
+}
+
+function backToGatePhoneStep() {
+  const otpSection = document.getElementById("gateOtpSection");
+  const phoneForm = document.getElementById("gatePhoneForm");
+  const otpErr = document.getElementById("gateOtpError");
+  if (otpSection) otpSection.style.display = "none";
+  if (phoneForm) phoneForm.style.display = "block";
+  if (otpErr) {
+    otpErr.style.display = "none";
+    otpErr.textContent = "";
+  }
+}
+
+function verifyGateOtp() {
+  const otpInput = document.getElementById("gateOtpInput");
+  const otpErr = document.getElementById("gateOtpError");
+  const nameInput = document.getElementById("gateNameInput");
+  const phoneInput = document.getElementById("gatePhoneInput");
+
+  const otp = otpInput ? otpInput.value.trim() : "";
+  const name = nameInput ? nameInput.value.trim() : "Valued Customer";
+  const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
+
+  if (otp !== "1234") {
+    if (otpErr) {
+      otpErr.textContent = "Invalid OTP. Please enter 1234 (Demo OTP) or click Auto-Fill Code.";
+      otpErr.style.display = "block";
+    }
+    showToast("Incorrect verification code. Please enter 1234.", "error");
+    return;
+  }
+
+  if (otpErr) otpErr.style.display = "none";
+
+  const session = {
+    name: name,
+    phone: phone,
+    verifiedAt: new Date().toISOString()
+  };
+
+  Store.setCustomerSession(session);
+  Store.setCustomer({ name, phone });
+
+  // Unlock store window
+  checkStoreAccess();
+
+  showToast(`Welcome to GrossHub, ${name}! Store unlocked. 🎉`, "success");
+}
+
 function handleCustomerLogout() {
   Store.clearCustomerSession();
-  updateStorefrontCustomerUI();
   closeModal("customerAccountModal");
-  showToast("You have been signed out.", "info");
+  closeModal("customerAuthModal");
+  checkStoreAccess();
+  backToGatePhoneStep();
+  showToast("You have been signed out. Please sign in to enter the store.", "info");
 }
