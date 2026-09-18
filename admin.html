@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=2.3">
-  <link rel="stylesheet" href="css/admin.css?v=2.3">
+  <link rel="stylesheet" href="css/styles.css?v=2.4">
+  <link rel="stylesheet" href="css/admin.css?v=2.4">
   <style>
     body {
       background: #f1f5f9;
@@ -148,7 +148,16 @@
     <div id="adminLoginView" class="admin-login-fullscreen">
       <div style="font-size:3.5rem; margin-bottom:12px;">🏪</div>
       <h2 style="margin-bottom:6px;">GrossHub Merchant Portal</h2>
-      <p style="color:var(--slate-500); font-size:0.9rem; margin-bottom:24px;">Please enter your administrator security password to access store management.</p>
+      <p style="color:var(--slate-500); font-size:0.9rem; margin-bottom:20px;">Please enter your administrator security password to access store management.</p>
+
+      <!-- 5-Minute Session Timeout Re-Login Notice -->
+      <div id="adminTimeoutNotice" class="portal-timeout-alert" style="display:none;">
+        <span class="timeout-icon">⏱️</span>
+        <div>
+          <strong>Session Expired (5-Min Outside Portal)</strong>
+          <div>You were away from the admin portal for more than 5 minutes. For security, please re-enter your password.</div>
+        </div>
+      </div>
 
       <form id="adminLoginForm">
         <div class="form-group" style="text-align:left;">
@@ -609,9 +618,9 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/data.js?v=2.1"></script>
-  <script src="js/store.js?v=2.1"></script>
-  <script src="js/admin.js?v=2.3"></script>
+  <script src="js/data.js?v=2.4"></script>
+  <script src="js/store.js?v=2.4"></script>
+  <script src="js/admin.js?v=2.4"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {

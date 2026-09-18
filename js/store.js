@@ -474,5 +474,184 @@ const Store = {
     } catch(e) {
       return false;
     }
+  },
+
+  // Customer alias helper
+  setCustomer(customer) {
+    this.saveCustomer(customer);
+  },
+
+  // 11. Multi-Portal Session Inactivity & Outside-Portal Guard (5-minute timeout)
+  SessionGuard: {
+    TIMEOUT_MS: 5 * 60 * 1000, // 5 minutes = 300,000 ms
+    _guards: {},
+
+    // Register and initialize guard for a portal ('admin', 'rider', 'customer')
+    init(portal, options = {}) {
+      const KEY_LEFT = `grosshub_${portal}_left_time`;
+      const KEY_ACTIVE = `grosshub_${portal}_last_active`;
+
+      const guard = {
+        portal,
+        isAuth: options.isAuth || (() => false),
+        onTimeout: options.onTimeout || (() => {}),
+        KEY_LEFT,
+        KEY_ACTIVE
+      };
+      this._guards[portal] = guard;
+
+      const recordActive = () => {
+        try {
+          if (guard.isAuth()) {
+            const now = Date.now();
+            localStorage.setItem(KEY_ACTIVE, String(now));
+            localStorage.removeItem(KEY_LEFT);
+          }
+        } catch(e) {}
+      };
+
+      const recordLeave = () => {
+        try {
+          if (guard.isAuth()) {
+            // Only set left_time if not already set
+            if (!localStorage.getItem(KEY_LEFT)) {
+              localStorage.setItem(KEY_LEFT, String(Date.now()));
+            }
+          }
+        } catch(e) {}
+      };
+
+      const checkTimeout = () => {
+        try {
+          if (!guard.isAuth()) {
+            return false;
+          }
+
+          const now = Date.now();
+          const leftStr = localStorage.getItem(KEY_LEFT);
+          const activeStr = localStorage.getItem(KEY_ACTIVE);
+
+          let timedOut = false;
+          let reason = '';
+
+          if (leftStr) {
+            const leftTime = parseInt(leftStr, 10);
+            if (leftTime && (now - leftTime >= this.TIMEOUT_MS)) {
+              timedOut = true;
+              reason = 'outside';
+            }
+          }
+
+          if (!timedOut && activeStr) {
+            const lastActive = parseInt(activeStr, 10);
+            if (lastActive && (now - lastActive >= this.TIMEOUT_MS)) {
+              timedOut = true;
+              reason = 'idle';
+            }
+          }
+
+          if (timedOut) {
+            localStorage.removeItem(KEY_LEFT);
+            localStorage.removeItem(KEY_ACTIVE);
+            console.warn(`[GrossHub SessionGuard] Portal '${portal}' session timed out (${reason}). Requiring re-login.`);
+            try {
+              guard.onTimeout(reason);
+            } catch(err) {
+              console.error(`[GrossHub SessionGuard] onTimeout error in ${portal}:`, err);
+            }
+            return true;
+          } else {
+            // Still active and visible: reset leave time and refresh active stamp
+            if (document.visibilityState === 'visible') {
+              localStorage.removeItem(KEY_LEFT);
+              localStorage.setItem(KEY_ACTIVE, String(now));
+            }
+            return false;
+          }
+        } catch(e) {
+          console.error('[GrossHub SessionGuard] Error checking timeout:', e);
+          return false;
+        }
+      };
+
+      guard.checkTimeout = checkTimeout;
+      guard.recordActive = recordActive;
+      guard.recordLeave = recordLeave;
+
+      // Activity tracking: resets timer when user interacts with portal
+      const events = ['mousedown', 'mousemove', 'keydown', 'touchstart', 'scroll', 'click'];
+      let lastRecorded = 0;
+      const throttledActive = () => {
+        const now = Date.now();
+        if (now - lastRecorded > 3000) { // throttle write to every 3s
+          lastRecorded = now;
+          recordActive();
+        }
+      };
+
+      events.forEach(evt => {
+        window.addEventListener(evt, throttledActive, { passive: true });
+      });
+
+      // Tab visibility changes (switching tabs, minimizing browser, phone screen lock)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          recordLeave();
+        } else if (document.visibilityState === 'visible') {
+          checkTimeout();
+        }
+      });
+
+      // Window blur & focus (switching apps or desktop windows)
+      window.addEventListener('blur', () => {
+        recordLeave();
+      });
+
+      window.addEventListener('focus', () => {
+        checkTimeout();
+      });
+
+      // Page hide (tab close or navigating away)
+      window.addEventListener('pagehide', () => {
+        recordLeave();
+      });
+
+      // Periodic check interval (runs every 5 seconds)
+      setInterval(() => {
+        checkTimeout();
+      }, 5000);
+
+      // Perform initial check on initialization
+      const didTimeout = checkTimeout();
+      if (!didTimeout && guard.isAuth()) {
+        recordActive();
+      }
+
+      return guard;
+    },
+
+    // Manually trigger check for a portal
+    check(portal) {
+      if (portal && this._guards[portal]) {
+        return this._guards[portal].checkTimeout();
+      }
+      return false;
+    },
+
+    // Clear tracking timestamps upon manual logout
+    clear(portal) {
+      try {
+        localStorage.removeItem(`grosshub_${portal}_left_time`);
+        localStorage.removeItem(`grosshub_${portal}_last_active`);
+      } catch(e) {}
+    },
+
+    // Stamp active timestamp upon successful login
+    recordLogin(portal) {
+      try {
+        localStorage.removeItem(`grosshub_${portal}_left_time`);
+        localStorage.setItem(`grosshub_${portal}_last_active`, String(Date.now()));
+      } catch(e) {}
+    }
   }
 };

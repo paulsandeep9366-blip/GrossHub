@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCartBadgeAndDrawer();
   setupStoreListeners();
 
+  // Initialize 5-minute session guard for customer storefront
+  initCustomerSessionGuard();
+
   // Verify customer authentication and control store window access
   checkStoreAccess();
 });
@@ -1525,6 +1528,45 @@ function reorderCustomerOrder(orderId) {
 // STORE ENTRANCE GATE & AUTHENTICATION ACCESS CONTROL
 // =======================================================
 
+function initCustomerSessionGuard() {
+  if (typeof Store !== 'undefined' && Store.SessionGuard) {
+    Store.SessionGuard.init('customer', {
+      isAuth: () => {
+        const session = Store.getCustomerSession();
+        return !!(session && session.phone);
+      },
+      onTimeout: (reason) => handleCustomerTimeout(reason)
+    });
+  }
+}
+
+function handleCustomerTimeout(reason = 'outside') {
+  Store.clearCustomerSession();
+  closeModal("customerAccountModal");
+  closeModal("customerAuthModal");
+  closeModal("checkoutModal");
+  closeModal("activeTrackingModal");
+
+  // Lock store window and show entrance gate
+  checkStoreAccess();
+  backToGatePhoneStep();
+
+  const notice = document.getElementById("customerTimeoutNotice");
+  if (notice) {
+    notice.style.display = "flex";
+    const descEl = notice.querySelector('div div');
+    if (descEl) {
+      if (reason === 'outside') {
+        descEl.textContent = 'You were away from the store for more than 5 minutes. For security, please sign in to resume shopping.';
+      } else {
+        descEl.textContent = 'Your session was idle for more than 5 minutes. For security, please sign in to resume shopping.';
+      }
+    }
+  }
+
+  showToast('Session timed out after 5 minutes outside store. Please sign in.', 'warning');
+}
+
 function checkStoreAccess() {
   const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
   const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
@@ -1674,6 +1716,13 @@ function verifyGateOtp() {
   Store.setCustomerSession(session);
   Store.setCustomer({ name, phone });
 
+  if (typeof Store !== 'undefined' && Store.SessionGuard) {
+    Store.SessionGuard.recordLogin('customer');
+  }
+
+  const timeoutNotice = document.getElementById("customerTimeoutNotice");
+  if (timeoutNotice) timeoutNotice.style.display = "none";
+
   // Unlock store window
   checkStoreAccess();
 
@@ -1682,6 +1731,11 @@ function verifyGateOtp() {
 
 function handleCustomerLogout() {
   Store.clearCustomerSession();
+  if (typeof Store !== 'undefined' && Store.SessionGuard) {
+    Store.SessionGuard.clear('customer');
+  }
+  const notice = document.getElementById("customerTimeoutNotice");
+  if (notice) notice.style.display = "none";
   closeModal("customerAccountModal");
   closeModal("customerAuthModal");
   checkStoreAccess();

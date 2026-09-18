@@ -24,7 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/styles.css?v=2.3">
+  <link rel="stylesheet" href="css/styles.css?v=2.4">
 </head>
 <body>
 
@@ -43,6 +43,15 @@
         <p class="slg-subheading">
           Enter your 10-digit mobile number to access fresh groceries, wholesale rates, and express local delivery.
         </p>
+
+        <!-- 5-Minute Session Timeout Re-Login Notice -->
+        <div id="customerTimeoutNotice" class="portal-timeout-alert" style="display: none;">
+          <span class="timeout-icon">⏱️</span>
+          <div>
+            <strong>Session Expired (5-Min Outside Store)</strong>
+            <div>You were away from the store for more than 5 minutes. For security, please sign in to resume shopping.</div>
+          </div>
+        </div>
 
         <!-- Step 1: Phone & Name Form -->
         <form id="gatePhoneForm" onsubmit="handleGateSendOtp(event)">
@@ -831,10 +840,10 @@
   </div> <!-- /#storeWindow -->
 
   <!-- Scripts -->
-  <script src="js/data.js?v=2.1"></script>
-  <script src="js/store.js?v=2.1"></script>
-  <script src="js/tracking.js?v=2.2"></script>
-  <script src="js/app.js?v=2.3"></script>
+  <script src="js/data.js?v=2.4"></script>
+  <script src="js/store.js?v=2.4"></script>
+  <script src="js/tracking.js?v=2.4"></script>
+  <script src="js/app.js?v=2.4"></script>
 
   <!-- PWA Service Worker Registration -->
   <script>

@@ -13,7 +13,48 @@ const AdminPanel = {
 
   init() {
     this.checkSession();
+    this.initSessionGuard();
     this.setupEventListeners();
+  },
+
+  initSessionGuard() {
+    if (typeof Store !== 'undefined' && Store.SessionGuard) {
+      Store.SessionGuard.init('admin', {
+        isAuth: () => this.isAuthenticated || (sessionStorage.getItem('grosshub_admin_logged_in') === 'true'),
+        onTimeout: (reason) => this.handleTimeout(reason)
+      });
+    }
+  },
+
+  handleTimeout(reason = 'outside') {
+    this.isAuthenticated = false;
+    sessionStorage.removeItem('grosshub_admin_logged_in');
+    
+    const dashView = document.getElementById('adminDashboardView');
+    const loginView = document.getElementById('adminLoginView');
+    if (dashView) dashView.style.display = 'none';
+    if (loginView) loginView.style.display = 'block';
+
+    const topLogout = document.getElementById('btnAdminTopLogout');
+    if (topLogout) topLogout.style.display = 'none';
+
+    const notice = document.getElementById('adminTimeoutNotice');
+    if (notice) {
+      notice.style.display = 'flex';
+      const descEl = notice.querySelector('div div');
+      if (descEl) {
+        if (reason === 'outside') {
+          descEl.textContent = 'You were away from the admin portal for more than 5 minutes. For security, please re-enter your password.';
+        } else {
+          descEl.textContent = 'Your session was idle for more than 5 minutes. For security, please re-enter your password.';
+        }
+      }
+    }
+
+    const pwdInput = document.getElementById('adminPasswordInput');
+    if (pwdInput) pwdInput.value = '';
+
+    showToast('Admin session timed out after 5 minutes. Please re-login.', 'warning');
   },
 
   checkSession() {
@@ -73,6 +114,11 @@ const AdminPanel = {
     if (pwd === Store.getAdminPassword()) {
       this.isAuthenticated = true;
       sessionStorage.setItem('grosshub_admin_logged_in', 'true');
+      if (typeof Store !== 'undefined' && Store.SessionGuard) {
+        Store.SessionGuard.recordLogin('admin');
+      }
+      const timeoutNotice = document.getElementById('adminTimeoutNotice');
+      if (timeoutNotice) timeoutNotice.style.display = 'none';
       if (input) input.value = '';
       if (errorEl) errorEl.style.display = 'none';
       this.showDashboard();
@@ -88,12 +134,17 @@ const AdminPanel = {
   handleLogout() {
     this.isAuthenticated = false;
     sessionStorage.removeItem('grosshub_admin_logged_in');
+    if (typeof Store !== 'undefined' && Store.SessionGuard) {
+      Store.SessionGuard.clear('admin');
+    }
     const dashView = document.getElementById('adminDashboardView');
     const loginView = document.getElementById('adminLoginView');
     if (dashView) dashView.style.display = 'none';
     if (loginView) loginView.style.display = 'block';
     const topLogout = document.getElementById('btnAdminTopLogout');
     if (topLogout) topLogout.style.display = 'none';
+    const timeoutNotice = document.getElementById('adminTimeoutNotice');
+    if (timeoutNotice) timeoutNotice.style.display = 'none';
     showToast('Logged out of Admin Portal', 'info');
   },
 

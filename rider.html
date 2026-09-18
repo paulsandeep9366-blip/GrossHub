@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=2.1">
-  <link rel="stylesheet" href="css/admin.css?v=2.1">
+  <link rel="stylesheet" href="css/styles.css?v=2.4">
+  <link rel="stylesheet" href="css/admin.css?v=2.4">
   <style>
     body {
       background: #f8fafc;
@@ -182,7 +182,16 @@
     <div id="riderLoginView" class="rider-login-card">
       <div style="font-size:3.5rem; margin-bottom:12px;">🛵</div>
       <h2 style="font-size:1.35rem; margin-bottom:6px; color:var(--slate-900);">Delivery Partner Login</h2>
-      <p style="color:var(--slate-500); font-size:0.88rem; margin-bottom:24px;">Sign in with your assigned Rider ID and Password to manage deliveries.</p>
+      <p style="color:var(--slate-500); font-size:0.88rem; margin-bottom:20px;">Sign in with your assigned Rider ID and Password to manage deliveries.</p>
+
+      <!-- 5-Minute Session Timeout Re-Login Notice -->
+      <div id="riderTimeoutNotice" class="portal-timeout-alert" style="display:none;">
+        <span class="timeout-icon">⏱️</span>
+        <div>
+          <strong>Session Expired (5-Min Outside Portal)</strong>
+          <div>You were away from the rider dispatch portal for more than 5 minutes. For security, please re-login.</div>
+        </div>
+      </div>
 
       <form id="riderLoginForm">
         <div class="form-group" style="text-align:left; margin-bottom:16px;">
@@ -266,9 +275,9 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/data.js?v=2.1"></script>
-  <script src="js/store.js?v=2.1"></script>
-  <script src="js/rider.js?v=2.1"></script>
+  <script src="js/data.js?v=2.4"></script>
+  <script src="js/store.js?v=2.4"></script>
+  <script src="js/rider.js?v=2.4"></script>
   <script>
     function escapeHTML(str) {
       if (!str) return "";

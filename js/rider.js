@@ -11,7 +11,41 @@ const RiderPanel = {
 
   init() {
     this.checkSession();
+    this.initSessionGuard();
     this.setupEventListeners();
+  },
+
+  initSessionGuard() {
+    if (typeof Store !== 'undefined' && Store.SessionGuard) {
+      Store.SessionGuard.init('rider', {
+        isAuth: () => this.isAuthenticated || !!Store.getRiderSession(),
+        onTimeout: (reason) => this.handleTimeout(reason)
+      });
+    }
+  },
+
+  handleTimeout(reason = 'outside') {
+    this.isAuthenticated = false;
+    Store.clearRiderSession();
+    this.showLogin();
+
+    const notice = document.getElementById('riderTimeoutNotice');
+    if (notice) {
+      notice.style.display = 'flex';
+      const descEl = notice.querySelector('div div');
+      if (descEl) {
+        if (reason === 'outside') {
+          descEl.textContent = 'You were away from the rider portal for more than 5 minutes. For security, please re-login.';
+        } else {
+          descEl.textContent = 'Your session was idle for more than 5 minutes. For security, please re-login.';
+        }
+      }
+    }
+
+    const pwdInput = document.getElementById('riderPasswordInput');
+    if (pwdInput) pwdInput.value = '';
+
+    showToast('Rider session timed out after 5 minutes. Please re-login.', 'warning');
   },
 
   checkSession() {
@@ -38,6 +72,11 @@ const RiderPanel = {
   enterAsAdmin() {
     this.isAuthenticated = true;
     this.activeRider = "🏪 Fleet Supervisor (Admin)";
+    if (typeof Store !== 'undefined' && Store.SessionGuard) {
+      Store.SessionGuard.recordLogin('rider');
+    }
+    const timeoutNotice = document.getElementById('riderTimeoutNotice');
+    if (timeoutNotice) timeoutNotice.style.display = 'none';
     this.showDashboard();
     showToast("Entered Rider Portal with Admin Privileges.", "success");
   },
@@ -129,6 +168,12 @@ const RiderPanel = {
       const pwdInput = document.getElementById("riderPasswordInput");
       if (pwdInput) pwdInput.value = "";
 
+      if (typeof Store !== 'undefined' && Store.SessionGuard) {
+        Store.SessionGuard.recordLogin('rider');
+      }
+      const timeoutNotice = document.getElementById('riderTimeoutNotice');
+      if (timeoutNotice) timeoutNotice.style.display = 'none';
+
       this.showDashboard();
       showToast(`Welcome back, ${matchedRider.name}! 🛵`, "success");
     } else {
@@ -143,6 +188,11 @@ const RiderPanel = {
   handleLogout() {
     this.isAuthenticated = false;
     Store.clearRiderSession();
+    if (typeof Store !== 'undefined' && Store.SessionGuard) {
+      Store.SessionGuard.clear('rider');
+    }
+    const timeoutNotice = document.getElementById('riderTimeoutNotice');
+    if (timeoutNotice) timeoutNotice.style.display = 'none';
     this.showLogin();
     showToast("Logged out of Rider Portal.", "info");
   },
