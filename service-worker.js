@@ -3,12 +3,17 @@
  * Stale-while-revalidate offline caching strategy
  */
 
-const CACHE_NAME = 'grosshub-v2.4.0';
+const CACHE_NAME = 'grosshub-v2.6.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './admin.html',
+  './rider.html',
   './css/styles.css',
   './css/admin.css',
+  './css/leaflet.css',
+  './js/leaflet.js',
+  './js/html2pdf.bundle.min.js',
   './js/data.js',
   './js/store.js',
   './js/tracking.js',
