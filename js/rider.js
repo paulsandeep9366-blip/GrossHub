@@ -284,6 +284,9 @@ const RiderPanel = {
           <button class="btn-rider-action btn-deliver" onclick="RiderPanel.handleDelivered('${order.id}')">
             ✅ Mark Delivered ${isPaid ? '(No Cash)' : `(Collect ₹${order.summary?.grandTotal || 0})`}
           </button>
+          <button class="btn-rider-action btn-undeliver" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; margin-top:6px;" onclick="RiderPanel.handleCancelUndelivered('${order.id}')">
+            ❌ Undelivered / Cancel Order
+          </button>
         `;
       } else if (order.status === 'delivered') {
         actionButtons = `
@@ -369,6 +372,22 @@ const RiderPanel = {
         rider: this.activeRider
       }, `Delivered by ${this.activeRider}`);
       showToast(`Order ${orderId} marked as Delivered! 🎉`, 'success');
+      this.renderOrders();
+      if (typeof AdminPanel !== 'undefined' && AdminPanel.renderOrders) {
+        AdminPanel.renderOrders();
+        AdminPanel.renderMetrics();
+      }
+    }
+  },
+
+  handleCancelUndelivered(orderId) {
+    const reason = prompt(
+      `Delivery Issue for Order ${orderId}:\nPlease state why the order could not be delivered:\n(e.g., Customer refused delivery, Customer phone switched off, Doorstep locked, Wrong address)`,
+      'Customer refused delivery at doorstep'
+    );
+    if (reason && reason.trim()) {
+      Store.cancelOrder(orderId, reason.trim(), `Rider ${this.activeRider}`);
+      showToast(`Order ${orderId} marked cancelled. Reason logged for Admin.`, 'info');
       this.renderOrders();
       if (typeof AdminPanel !== 'undefined' && AdminPanel.renderOrders) {
         AdminPanel.renderOrders();

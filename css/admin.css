@@ -963,3 +963,137 @@ input:checked + .slider:before {
     transform: translateY(0);
   }
 }
+
+/* Order Cancellation Reason Badges & Presets */
+.admin-cancel-reason-pill {
+  margin-top: 6px;
+  background: #fef2f2;
+  border: 1.5px solid #fca5a5;
+  border-radius: 6px;
+  padding: 6px 9px;
+  text-align: left;
+  line-height: 1.35;
+  max-width: 220px;
+}
+
+.acrp-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.acrp-badge {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.acrp-body {
+  font-size: 0.76rem;
+  color: #991b1b;
+  word-break: break-word;
+}
+
+.acrp-meta {
+  font-size: 0.68rem;
+  color: #7f1d1d;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.btn-acrp-edit {
+  background: transparent;
+  border: 1px dashed #f87171;
+  color: #b91c1c;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  display: inline-block;
+  transition: all 0.15s ease;
+}
+
+.btn-acrp-edit:hover {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.row-cancelled {
+  background-color: #fffafb !important;
+}
+
+.badge-cancelled-pill {
+  display: inline-block;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+
+.cancel-presets-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.btn-preset-chip {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.btn-preset-chip:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #991b1b;
+}
+
+.inv-cancellation-banner {
+  background: #fef2f2;
+  border: 2px solid #ef4444;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.icb-title {
+  color: #991b1b;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icb-reason {
+  color: #b91c1c;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.icb-time {
+  color: #64748b;
+  font-size: 0.72rem;
+  margin-top: 2px;
+}

@@ -1942,6 +1942,12 @@ function renderUnifiedCustomerOrders(phone) {
           <strong>Items:</strong> ${itemsSummary || "Standard grocery package"}
         </div>
 
+        ${order.status === 'cancelled' ? `
+          <div style="font-size:0.8rem; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 10px; margin-bottom:10px;">
+            🚫 <strong>Cancellation Reason:</strong> ${escapeHTML(order.cancelReason || 'Cancelled by customer / store')}
+          </div>
+        ` : ''}
+
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-top:1px solid var(--slate-100); padding-top:10px;">
           <div style="font-size:0.95rem;">
             Total: <strong style="color:var(--emerald-700); font-size:1.1rem;">₹${order.summary?.grandTotal || order.grandTotal || 0}</strong>

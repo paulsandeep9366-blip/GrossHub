@@ -582,5 +582,41 @@ const INITIAL_SEED_ORDERS = [
       { status: "out_for_delivery", time: "10:05 AM" },
       { status: "delivered", time: "10:28 AM" }
     ]
+  },
+  {
+    id: "GH-8085",
+    createdAt: new Date(Date.now() - 300 * 60 * 1000).toISOString(),
+    status: "cancelled",
+    cancelReason: "Customer requested cancellation (Ordered duplicate items by mistake)",
+    cancelledBy: "Customer Request",
+    cancelledAt: new Date(Date.now() - 275 * 60 * 1000).toISOString(),
+    customer: {
+      name: "Debashis Paul",
+      phone: "9862272399",
+      address: "Banamalipur, Near Old Motor Stand, Agartala",
+      landmark: "Near Old Motor Stand",
+      notes: "Please call before arrival"
+    },
+    deliverySlot: "Instant Delivery (30-45 mins)",
+    paymentMethod: "Cash on Delivery",
+    paymentStatus: "Cancelled",
+    rider: "Pending Assignment",
+    deliveryDistanceKm: 2.8,
+    items: [
+      { id: 2, name: "Fresh Local Potatoes (Aloo)", price: 28, qty: 3, subtotal: 84, image: "images/products/potatoes.jpg" },
+      { id: 3, name: "Fresh Red Onions (Peyaj)", price: 42, qty: 2, subtotal: 84, image: "images/products/red-onions.jpg" }
+    ],
+    summary: {
+      itemCount: 5,
+      subtotal: 168,
+      deliveryCharge: 35,
+      couponDiscount: 0,
+      couponCode: "",
+      grandTotal: 203
+    },
+    statusHistory: [
+      { status: "placed", time: "08:15 AM", note: "Order placed" },
+      { status: "cancelled", time: "08:40 AM", note: "Cancelled: Customer requested cancellation (Ordered duplicate items by mistake)", reason: "Customer requested cancellation (Ordered duplicate items by mistake)" }
+    ]
   }
 ];

@@ -223,6 +223,11 @@ const AdminPanel = {
             <div>
               <strong>${o.id}</strong> • <span class="text-muted">${escapeHTML(o.customer?.name || 'Customer')}</span>
               <div style="font-size:0.75rem; color:#64748b;">${new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${new Date(o.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</div>
+              ${o.status === 'cancelled' ? `
+                <div style="font-size:0.75rem; color:#dc2626; background:#fef2f2; border:1px solid #fecaca; border-radius:4px; padding:2px 6px; margin-top:4px; display:inline-block;">
+                  🚫 <strong>Reason:</strong> ${escapeHTML(o.cancelReason || 'Customer requested cancellation')}
+                </div>
+              ` : ''}
             </div>
             <div style="display:flex; gap:6px; align-items:center;">
               <span class="track-badge ${o.status}">${formatStatusLabel(o.status)}</span>
@@ -273,10 +278,11 @@ const AdminPanel = {
     }
 
     container.innerHTML = orders.map(order => `
-      <tr>
+      <tr class="${order.status === 'cancelled' ? 'row-cancelled' : ''}">
         <td>
-          <strong>${order.id}</strong><br>
-          <small class="text-muted">${new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${new Date(order.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</small>
+          <strong>${order.id}</strong>
+          ${order.status === 'cancelled' ? `<br><span class="badge-cancelled-pill">❌ CANCELLED</span>` : ''}
+          <br><small class="text-muted">${new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${new Date(order.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</small>
         </td>
         <td>
           <strong>${escapeHTML(order.customer?.name || 'Guest')}</strong><br>
@@ -310,6 +316,20 @@ const AdminPanel = {
             <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
             <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
           </select>
+          ${order.status === 'cancelled' ? `
+            <div class="admin-cancel-reason-pill">
+              <div class="acrp-header">
+                <span class="acrp-badge">🚫 Cancellation Reason</span>
+              </div>
+              <div class="acrp-body" title="${escapeHTML(order.cancelReason || 'Customer requested cancellation')}">
+                <strong>${escapeHTML(order.cancelReason || 'Customer requested cancellation')}</strong>
+              </div>
+              ${order.cancelledBy ? `<div class="acrp-meta">By: ${escapeHTML(order.cancelledBy)}${order.cancelledAt ? ` • ${new Date(order.cancelledAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}` : ''}</div>` : ''}
+              <button type="button" class="btn-acrp-edit" onclick="AdminPanel.openCancelReasonModal('${order.id}')" title="Edit cancellation reason">
+                ✏️ Edit Reason
+              </button>
+            </div>
+          ` : ''}
         </td>
         <td>
           <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
@@ -341,8 +361,87 @@ const AdminPanel = {
   },
 
   handleChangeOrderStatus(orderId, newStatus) {
+    if (newStatus === 'cancelled') {
+      this.openCancelReasonModal(orderId);
+      return;
+    }
     Store.updateOrderStatus(orderId, newStatus);
     showToast(`Order ${orderId} status updated to ${newStatus}`, 'success');
+    this.renderMetrics();
+    this.renderOrders();
+    if (typeof RiderPanel !== 'undefined' && RiderPanel.renderOrders) {
+      RiderPanel.renderOrders();
+    }
+  },
+
+  openCancelReasonModal(orderId) {
+    const order = Store.getOrder(orderId);
+    if (!order) return;
+
+    const modal = document.getElementById('adminCancelOrderModal');
+    const targetInput = document.getElementById('cancelTargetOrderId');
+    const displayLabel = document.getElementById('cancelTargetOrderDisplay');
+    const reasonInput = document.getElementById('cancelReasonInput');
+    const titleEl = document.getElementById('cancelModalTitle');
+
+    if (targetInput) targetInput.value = order.id;
+    if (displayLabel) displayLabel.textContent = `${order.id} (${order.customer?.name || 'Customer'})`;
+    if (reasonInput) reasonInput.value = order.cancelReason || 'Customer requested cancellation (Ordered by mistake)';
+    if (titleEl) {
+      titleEl.textContent = order.status === 'cancelled' 
+        ? `✏️ Edit Cancellation Reason — ${order.id}` 
+        : `🚫 Cancel Order Delivery — ${order.id}`;
+    }
+
+    if (modal && typeof openModal === 'function') {
+      openModal('adminCancelOrderModal');
+      setTimeout(() => { if (reasonInput) reasonInput.focus(); }, 150);
+    } else {
+      const promptVal = prompt(`Enter cancellation reason for Order ${order.id}:`, order.cancelReason || 'Customer requested cancellation');
+      if (promptVal !== null) {
+        Store.cancelOrder(order.id, promptVal.trim() || 'Customer requested cancellation', 'Admin Dispatch');
+        showToast(`Order ${order.id} cancelled. Reason: "${promptVal.trim()}"`, 'info');
+        this.renderMetrics();
+        this.renderOrders();
+      } else {
+        this.renderOrders();
+      }
+    }
+  },
+
+  closeCancelModal() {
+    if (typeof closeModal === 'function') {
+      closeModal('adminCancelOrderModal');
+    }
+    this.renderOrders();
+  },
+
+  setCancelReasonPreset(presetText) {
+    const reasonInput = document.getElementById('cancelReasonInput');
+    if (reasonInput) {
+      reasonInput.value = presetText;
+      reasonInput.focus();
+    }
+  },
+
+  confirmCancelOrder() {
+    const targetInput = document.getElementById('cancelTargetOrderId');
+    const reasonInput = document.getElementById('cancelReasonInput');
+    const orderId = targetInput ? targetInput.value : null;
+    const reason = (reasonInput ? reasonInput.value.trim() : '') || 'Customer requested cancellation';
+
+    if (!orderId) {
+      showToast('No order selected for cancellation.', 'error');
+      return;
+    }
+
+    Store.cancelOrder(orderId, reason, 'Admin Portal');
+    showToast(`Order ${orderId} cancelled. Reason: "${reason}"`, 'success');
+    
+    if (typeof closeModal === 'function') {
+      closeModal('adminCancelOrderModal');
+    }
+
     this.renderMetrics();
     this.renderOrders();
     if (typeof RiderPanel !== 'undefined' && RiderPanel.renderOrders) {
@@ -660,6 +759,7 @@ const AdminPanel = {
       'Grand Total (INR)',
       'Payment Mode',
       'Status',
+      'Cancellation Reason',
       'Assigned Rider'
     ];
 
@@ -683,6 +783,7 @@ const AdminPanel = {
         o.summary?.grandTotal || 0,
         `"${o.paymentMethod || 'COD'}"`,
         `"${o.status}"`,
+        `"${(o.cancelReason || '').replace(/"/g, '""')}"`,
         `"${o.rider || 'Unassigned'}"`
       ].join(',');
     });
@@ -721,6 +822,14 @@ const AdminPanel = {
 
     return `
       <div class="invoice-paper" id="${isMulti ? "" : "grosshubInvoiceDoc"}" style="${isMulti ? "box-shadow:none; max-width:100%; margin:0 0 12px 0; border: 1px solid #cbd5e1;" : ""}">
+        ${order.status === 'cancelled' ? `
+          <!-- Cancellation Alert Banner -->
+          <div class="inv-cancellation-banner">
+            <div class="icb-title">🚫 ORDER & DELIVERY CANCELLED</div>
+            <div class="icb-reason"><strong>Reason for Cancellation:</strong> ${escapeHTML(order.cancelReason || 'Customer requested cancellation')}</div>
+            <div class="icb-time">Cancelled by: <strong>${escapeHTML(order.cancelledBy || 'Store Dispatch')}</strong>${order.cancelledAt ? ` • ${new Date(order.cancelledAt).toLocaleString('en-IN')}` : ''}</div>
+          </div>
+        ` : ''}
         <!-- Top Invoice Header -->
         <div class="inv-header">
           <div class="inv-brand">
@@ -734,8 +843,8 @@ const AdminPanel = {
             <p><strong>Date & Time:</strong> ${orderDate}, ${orderTime}</p>
             <p><strong>Slot:</strong> ${escapeHTML(order.deliverySlot || "Instant Express (30-45 mins)")}</p>
             <div style="margin-top: 3px;">
-              <span class="inv-stamp" style="${isPaid ? "border-color: #16a34a; color: #15803d;" : "border-color: #d97706; color: #b45309;"}">
-                ${isPaid ? "PAID ONLINE (UPI / QR)" : "PAYMENT DUE (CASH ON DELIVERY)"}
+              <span class="inv-stamp" style="${order.status === 'cancelled' ? "border-color: #ef4444; color: #b91c1c;" : (isPaid ? "border-color: #16a34a; color: #15803d;" : "border-color: #d97706; color: #b45309;")}">
+                ${order.status === 'cancelled' ? "ORDER CANCELLED (VOID)" : (isPaid ? "PAID ONLINE (UPI / QR)" : "PAYMENT DUE (CASH ON DELIVERY)")}
               </span>
             </div>
           </div>

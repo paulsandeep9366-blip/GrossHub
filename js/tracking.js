@@ -77,7 +77,10 @@ const Tracking = {
           <span class="cb-icon">❌</span>
           <div>
             <strong>This order has been cancelled</strong>
-            <p>Please contact our support at 9862272399 or place a new order.</p>
+            <p style="margin:4px 0 2px 0; color:#b91c1c; font-weight:600; font-size:0.86rem;">
+              🚫 <strong>Reason:</strong> ${escapeHTML(order.cancelReason || 'Customer requested cancellation')}
+            </p>
+            <p style="margin:0; font-size:0.8rem; color:#64748b;">Please contact our support at 9862272399 or place a new order.</p>
           </div>
         </div>
       `;
@@ -301,10 +304,14 @@ const Tracking = {
 
   handleCancelOrder(orderId) {
     if (confirm(`Are you sure you want to cancel Order ${orderId}?`)) {
-      const reason = prompt('Please let us know the reason for cancellation:') || 'Customer requested cancellation';
-      Store.updateOrderStatus(orderId, 'cancelled', null, `Cancelled: ${reason}`);
+      const reason = prompt('Please let us know the reason for cancellation (e.g. Ordered by mistake, Delivery delay):') || 'Customer requested cancellation';
+      Store.cancelOrder(orderId, reason.trim() || 'Customer requested cancellation', 'Customer (Self-service)');
       showToast(`Order ${orderId} has been cancelled.`, 'info');
       this.trackOrder(orderId);
+      if (typeof AdminPanel !== 'undefined' && AdminPanel.renderOrders) {
+        AdminPanel.renderOrders();
+        AdminPanel.renderMetrics();
+      }
     }
   },
 

@@ -307,7 +307,7 @@ const Store = {
     return newOrder;
   },
 
-  updateOrderStatus(orderId, newStatus, riderInfo = null, note = '') {
+  updateOrderStatus(orderId, newStatus, riderInfo = null, note = '', reason = '') {
     const orders = this.getOrders();
     const order = orders.find(o => o.id === orderId);
     if (!order) return null;
@@ -322,13 +322,63 @@ const Store = {
       order.paymentStatus = 'Cash Collected by Rider';
     }
 
+    if (newStatus === 'cancelled') {
+      const finalReason = reason || note || order.cancelReason || 'Customer requested cancellation';
+      order.cancelReason = finalReason;
+      if (!order.cancelledAt) order.cancelledAt = new Date().toISOString();
+      if (!order.cancelledBy) order.cancelledBy = riderInfo?.rider || 'Admin Dispatch';
+      order.paymentStatus = 'Cancelled / Voided';
+    }
+
     const now = new Date();
     const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
     order.statusHistory.push({
       status: newStatus,
       time: timeFormatted,
-      note: note || `Status updated to ${newStatus}`
+      note: note || (newStatus === 'cancelled' ? `Cancelled: ${order.cancelReason}` : `Status updated to ${newStatus}`),
+      reason: newStatus === 'cancelled' ? order.cancelReason : undefined
+    });
+
+    this.saveOrders(orders);
+    return order;
+  },
+
+  cancelOrder(orderId, reason = 'Customer requested cancellation', cancelledBy = 'Admin Dispatch') {
+    const orders = this.getOrders();
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return null;
+
+    order.status = 'cancelled';
+    order.cancelReason = reason || 'Customer requested cancellation';
+    order.cancelledBy = cancelledBy;
+    order.cancelledAt = new Date().toISOString();
+    order.paymentStatus = 'Cancelled / Voided';
+
+    const timeFormatted = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    order.statusHistory.push({
+      status: 'cancelled',
+      time: timeFormatted,
+      note: `Cancelled by ${cancelledBy}: ${order.cancelReason}`,
+      reason: order.cancelReason
+    });
+
+    this.saveOrders(orders);
+    return order;
+  },
+
+  updateCancelReason(orderId, newReason) {
+    const orders = this.getOrders();
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return null;
+
+    order.cancelReason = newReason;
+    const timeFormatted = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    order.statusHistory.push({
+      status: 'cancelled',
+      time: timeFormatted,
+      note: `Cancellation reason updated to: ${newReason}`,
+      reason: newReason
     });
 
     this.saveOrders(orders);

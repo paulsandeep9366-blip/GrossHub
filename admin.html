@@ -597,7 +597,51 @@
     </div>
   </div>
 
-    <!-- Admin Invoice / Bill PDF Preview Modal -->
+  <!-- Order Cancellation Reason Modal -->
+  <div class="modal-overlay" id="adminCancelOrderModal">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header" style="background: #991b1b; color: #ffffff; padding: 14px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.25rem;">🚫</span>
+          <h3 id="cancelModalTitle" style="color: #ffffff; margin: 0; font-size: 1.1rem;">Cancel Order Delivery</h3>
+        </div>
+        <button class="btn-modal-close" onclick="AdminPanel.closeCancelModal()" style="color: #ffffff;">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <input type="hidden" id="cancelTargetOrderId" value="">
+        <p style="margin: 0 0 6px 0; color: #1e293b; font-size: 0.95rem;">
+          Specify the cancellation reason for <strong id="cancelTargetOrderDisplay">GH-XXXX</strong>:
+        </p>
+        <p style="color: #64748b; font-size: 0.8rem; margin: 0 0 12px 0;">
+          This reason will appear in the Admin order table, live customer tracking, rider dispatch, and official bill statements.
+        </p>
+        
+        <label class="form-label" style="font-weight: 700; margin-bottom: 6px; display: block;">Quick Presets (Click to apply):</label>
+        <div class="cancel-presets-grid">
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Customer requested cancellation (Ordered by mistake)')">👤 Customer requested</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Customer unreachable / Phone switched off')">📵 Phone unreachable</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Delivery address unreachable / Out of service area')">📍 Address unreachable</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Items out of stock at Hub')">📦 Items out of stock</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Customer refused delivery at doorstep')">🚪 Refused at doorstep</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Duplicate / Test order')">⚠️ Duplicate / Test</button>
+        </div>
+
+        <div class="form-group" style="margin-top: 14px; margin-bottom: 18px;">
+          <label class="form-label" for="cancelReasonInput"><strong>Cancellation Reason *</strong></label>
+          <textarea id="cancelReasonInput" class="form-input" rows="3" placeholder="Enter specific reason for cancellation..." style="resize: vertical; font-size: 0.92rem;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="AdminPanel.closeCancelModal()" style="padding: 8px 16px;">Keep Order</button>
+          <button type="button" class="btn-hero-primary" style="background: #dc2626; border-color: #dc2626; padding: 8px 18px;" onclick="AdminPanel.confirmCancelOrder()">
+            Confirm Cancellation ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Invoice / Bill PDF Preview Modal -->
   <div class="modal-overlay" id="adminInvoiceModal">
     <div class="modal-container" style="max-width: 800px; max-height: 94vh; display: flex; flex-direction: column;">
       <div class="modal-header" style="background: var(--slate-900); color: var(--white); border-bottom: none; padding: 12px 20px;">
