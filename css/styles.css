@@ -3665,3 +3665,150 @@ button {
 .sz-cta-arrow {
   font-size: 1.1rem;
 }
+
+
+/* Swiggy / Zomato Header Location Bar */
+.sz-header-location-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6px 14px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sz-header-location-bar:hover {
+  background: #ecfdf5;
+  border-color: #059669;
+  transform: translateY(-1px);
+}
+
+.sz-hlb-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #059669;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sz-hlb-addr {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+
+.sz-hlb-addr strong {
+  max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sz-hlb-arrow {
+  color: #059669;
+  font-size: 0.75rem;
+}
+
+/* Swiggy / Zomato Cart Drawer Delivery Strip */
+.sz-drawer-delivery-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 12px 16px 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sz-drawer-delivery-strip:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.sz-dds-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sz-dds-icon {
+  font-size: 1.4rem;
+}
+
+.sz-dds-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sz-dds-title {
+  font-size: 0.74rem;
+  color: #166534;
+}
+
+.sz-dds-loc {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sz-dds-btn {
+  background: #ffffff;
+  color: #059669;
+  border: 1px solid #86efac;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Swiggy / Zomato Drawer Checkout Button */
+.sz-drawer-checkout-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+  transition: all 0.2s ease;
+}
+
+.sz-drawer-checkout-btn:hover {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  transform: translateY(-1px);
+}
+
+.sz-dcb-price {
+  background: rgba(255, 255, 255, 0.22);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+@media (max-width: 768px) {
+  .sz-header-location-bar {
+    order: 3;
+    width: 100%;
+    margin-top: 6px;
+    padding: 6px 12px;
+  }
+}

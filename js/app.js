@@ -407,6 +407,8 @@ function updateCartBadgeAndDrawer() {
   setTxt('drawerDeliveryFee', deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`);
   setTxt('drawerDiscount', `-₹${couponDiscount}`);
   setTxt('drawerGrandTotal', `₹${grandTotal}`);
+  const drawerCtaPrice = document.getElementById('drawerCtaPrice');
+  if (drawerCtaPrice) drawerCtaPrice.textContent = `₹${grandTotal}`;
 
   const discRow = document.getElementById('drawerDiscountRow');
   if (discRow) discRow.style.display = couponDiscount > 0 ? 'flex' : 'none';
@@ -839,6 +841,10 @@ function initCheckoutDeliveryMap(initialLat, initialLng) {
   if (szLocalityName) szLocalityName.textContent = nearest.label;
   const szFullAddress = document.getElementById('szFullAddress');
   if (szFullAddress) szFullAddress.textContent = nearest.fullAddress;
+  const topHeaderLoc = document.getElementById('topHeaderDeliveryLoc');
+  if (topHeaderLoc) topHeaderLoc.textContent = nearest.label;
+  const drawerLoc = document.getElementById('drawerDeliveryLoc');
+  if (drawerLoc) drawerLoc.textContent = nearest.label;
 
   if (checkoutMap) {
     if (checkoutRoutePolyline) {
@@ -957,6 +963,10 @@ function handleMapCustomerLocationChange(lat, lng, source = 'map') {
 
   const szFullAddress = document.getElementById('szFullAddress');
   if (szFullAddress) szFullAddress.textContent = nearest.fullAddress;
+  const topHeaderLoc = document.getElementById('topHeaderDeliveryLoc');
+  if (topHeaderLoc) topHeaderLoc.textContent = nearest.label;
+  const drawerLoc = document.getElementById('drawerDeliveryLoc');
+  if (drawerLoc) drawerLoc.textContent = nearest.label;
 
   // 4. Calculate Distance and set the Delivery Fee
   setCustomerDistance(effectiveKm, source);
