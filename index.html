@@ -26,7 +26,7 @@
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="css/leaflet.css">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/styles.css?v=2.8.0">
+  <link rel="stylesheet" href="css/styles.css?v=2.9.0">
 </head>
 <body>
 
@@ -419,21 +419,35 @@
                 <div class="sz-search-results-dropdown" id="szSearchResultsDropdown"></div>
               </div>
 
-              <!-- Leaflet Map Container -->
+              <!-- Google Maps View Toggle (Map / Satellite) -->
+              <div class="sz-gmap-layer-switch" id="szGmapLayerSwitch">
+                <button type="button" class="sz-gls-btn active" id="btnGmapRoadmap" onclick="switchGoogleMapLayer('roadmap')" title="Google Maps Streets">
+                  <span>🗺️</span> Map
+                </button>
+                <button type="button" class="sz-gls-btn" id="btnGmapSatellite" onclick="switchGoogleMapLayer('satellite')" title="Google Maps Satellite">
+                  <span>🛰️</span> Satellite
+                </button>
+              </div>
+
+              <!-- Leaflet Map Container with Google Maps -->
               <div id="checkoutDeliveryMap" class="sz-leaflet-map"></div>
 
-              <!-- Floating Center Pin 📍 (Zomato/Swiggy Signature) -->
+              <!-- Floating Center Pin 📍 (Google Maps Pin with Target Bullseye) -->
               <div class="sz-center-pin-container" id="szCenterPinContainer">
                 <div class="sz-pin-bubble">
                   <span class="sz-pin-bubble-dot"></span>
-                  <span class="sz-pin-bubble-text">Order will be delivered here</span>
+                  <span class="sz-pin-bubble-text" id="szPinBubbleText">Pin delivery location here</span>
                 </div>
                 <div class="sz-pin-icon-wrap">
-                  <svg class="sz-pin-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C7.58 2 4 5.58 4 10C4 15.25 12 22 12 22C12 22 20 15.25 20 10C20 5.58 16.42 2 12 2Z" fill="#059669" stroke="#ffffff" stroke-width="1.5"/>
-                    <circle cx="12" cy="9.5" r="3.2" fill="#ffffff"/>
+                  <svg class="sz-pin-svg" viewBox="0 0 38 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 0C8.5 0 0 8.5 0 19C0 32 19 48 19 48C19 48 38 32 38 19C38 8.5 29.5 0 19 0Z" fill="#EA4335"/>
+                    <circle cx="19" cy="18" r="7.5" fill="#FFFFFF"/>
+                    <circle cx="19" cy="18" r="4" fill="#B31412"/>
                   </svg>
-                  <div class="sz-pin-shadow"></div>
+                  <div class="sz-pin-crosshair">
+                    <span class="sz-crosshair-ring"></span>
+                    <span class="sz-crosshair-dot"></span>
+                  </div>
                 </div>
               </div>
 
@@ -445,7 +459,7 @@
 
               <!-- Map Drag Notice -->
               <div class="sz-map-drag-hint">
-                <span>Pan or drag map to adjust exact doorstep pin</span>
+                <span>📍 Tap or drag map to pin exact doorstep</span>
               </div>
             </div>
 
@@ -468,6 +482,11 @@
                     <span class="sz-meta-icon">🚚</span>
                     Delivery Fee: <strong id="mapCalculatedFeeVal" class="sz-fee-val">₹35</strong>
                   </span>
+                </div>
+                <div class="sz-loc-actions" style="margin-top: 8px;">
+                  <a href="https://www.google.com/maps?q=23.8188,91.2725" id="szGoogleMapsLink" target="_blank" class="sz-gmaps-link" title="Open this pinned location in Google Maps">
+                    <span>🗺️</span> Open in Google Maps ↗
+                  </a>
                 </div>
               </div>
             </div>
@@ -947,10 +966,10 @@
   <!-- Leaflet Map Engine -->
   <script src="js/leaflet.js"></script>
   <!-- Scripts -->
-  <script src="js/data.js?v=2.8.0"></script>
-  <script src="js/store.js?v=2.8.0"></script>
-  <script src="js/tracking.js?v=2.8.0"></script>
-  <script src="js/app.js?v=2.8.0"></script>
+  <script src="js/data.js?v=2.9.0"></script>
+  <script src="js/store.js?v=2.9.0"></script>
+  <script src="js/tracking.js?v=2.9.0"></script>
+  <script src="js/app.js?v=2.9.0"></script>
 
   <!-- PWA Service Worker Registration -->
   <script>

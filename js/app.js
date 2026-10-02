@@ -1,3 +1,49 @@
+
+// --- Google Maps Connected Layer Engine ---
+const GOOGLE_MAPS_ROADMAP_URL = 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+const GOOGLE_MAPS_SATELLITE_URL = 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+const GOOGLE_MAPS_SUBDOMAINS = ['mt0', 'mt1', 'mt2', 'mt3'];
+
+let gmapRoadmapLayer = null;
+let gmapSatelliteLayer = null;
+let currentGoogleMapLayer = 'roadmap';
+
+function switchGoogleMapLayer(layerType) {
+  if (!checkoutMap) return;
+  currentGoogleMapLayer = layerType;
+
+  if (layerType === 'satellite') {
+    if (gmapRoadmapLayer && checkoutMap.hasLayer(gmapRoadmapLayer)) {
+      checkoutMap.removeLayer(gmapRoadmapLayer);
+    }
+    if (!gmapSatelliteLayer) {
+      gmapSatelliteLayer = L.tileLayer(GOOGLE_MAPS_SATELLITE_URL, {
+        maxZoom: 21,
+        subdomains: GOOGLE_MAPS_SUBDOMAINS,
+        attribution: 'Google Maps'
+      });
+    }
+    gmapSatelliteLayer.addTo(checkoutMap);
+    document.getElementById('btnGmapSatellite')?.classList.add('active');
+    document.getElementById('btnGmapRoadmap')?.classList.remove('active');
+  } else {
+    if (gmapSatelliteLayer && checkoutMap.hasLayer(gmapSatelliteLayer)) {
+      checkoutMap.removeLayer(gmapSatelliteLayer);
+    }
+    if (!gmapRoadmapLayer) {
+      gmapRoadmapLayer = L.tileLayer(GOOGLE_MAPS_ROADMAP_URL, {
+        maxZoom: 21,
+        subdomains: GOOGLE_MAPS_SUBDOMAINS,
+        attribution: 'Google Maps'
+      });
+    }
+    gmapRoadmapLayer.addTo(checkoutMap);
+    document.getElementById('btnGmapRoadmap')?.classList.add('active');
+    document.getElementById('btnGmapSatellite')?.classList.remove('active');
+  }
+}
+window.switchGoogleMapLayer = switchGoogleMapLayer;
+
 /**
  * GrossHub - Main Storefront Application Logic (Phases 1, 2, 5 & 6)
  * Handles catalog browsing, live search, cart drawer, dual WhatsApp & web checkout,
@@ -845,6 +891,10 @@ function initCheckoutDeliveryMap(initialLat, initialLng) {
   if (topHeaderLoc) topHeaderLoc.textContent = nearest.label;
   const drawerLoc = document.getElementById('drawerDeliveryLoc');
   if (drawerLoc) drawerLoc.textContent = nearest.label;
+  const gmapsLink = document.getElementById('szGoogleMapsLink');
+  if (gmapsLink) {
+    gmapsLink.href = 'https://www.google.com/maps?q=' + custLat + ',' + custLng;
+  }
 
   if (checkoutMap) {
     if (checkoutRoutePolyline) {
@@ -861,9 +911,11 @@ function initCheckoutDeliveryMap(initialLat, initialLng) {
     attributionControl: false
   }).setView([custLat, custLng], 15);
 
-  // OpenStreetMap tile layer
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
+  // Google Maps Connected Roadmap tile layer
+  gmapRoadmapLayer = L.tileLayer(GOOGLE_MAPS_ROADMAP_URL, {
+    maxZoom: 21,
+    subdomains: GOOGLE_MAPS_SUBDOMAINS,
+    attribution: 'Google Maps'
   }).addTo(checkoutMap);
 
   // Store Hub Marker (Fixed dispatch hub)
@@ -967,6 +1019,10 @@ function handleMapCustomerLocationChange(lat, lng, source = 'map') {
   if (topHeaderLoc) topHeaderLoc.textContent = nearest.label;
   const drawerLoc = document.getElementById('drawerDeliveryLoc');
   if (drawerLoc) drawerLoc.textContent = nearest.label;
+  const gmapsLink = document.getElementById('szGoogleMapsLink');
+  if (gmapsLink) {
+    gmapsLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
+  }
 
   // 4. Calculate Distance and set the Delivery Fee
   setCustomerDistance(effectiveKm, source);
@@ -1481,6 +1537,8 @@ function openCheckoutModal() {
   selectPaymentOption('Cash on Delivery');
 
   openModal('checkoutModal');
+  const szModalBody = document.querySelector('#checkoutModal .modal-body');
+  if (szModalBody) szModalBody.scrollTop = 0;
 
   // Initialize interactive Leaflet map & trace customer route
   setTimeout(() => {
