@@ -164,6 +164,19 @@ const Tracking = {
 
       ${riderHTML}
 
+      <!-- Interactive Live Route Tracking & Customer Traced Doorstep Map -->
+      <div class="tracking-live-map-card">
+        <div class="tlm-header">
+          <span style="font-weight:700; color:#0f172a; display:flex; align-items:center; gap:6px;">
+            <span class="cms-live-dot pulse"></span> 🗺️ Live Delivery Route & Traced Customer Doorstep
+          </span>
+          <span style="font-size:0.75rem; color:#047857; font-weight:700; background:#ecfdf5; padding:2px 8px; border-radius:10px;">
+            ${order.deliveryDistanceKm ? `Traced: ${order.deliveryDistanceKm} km` : 'Agartala Express Route'}
+          </span>
+        </div>
+        <div id="trackingLiveMap" class="tracking-live-map"></div>
+      </div>
+
       <div class="track-delivery-address">
         <div class="address-header">📍 Delivery Address</div>
         <div class="address-body">
@@ -179,7 +192,7 @@ const Tracking = {
         <div class="track-items-list">${itemsHTML}</div>
         <div class="track-summary-totals">
           <div class="row"><span>Item Subtotal:</span> <span>₹${order.summary?.subtotal || 0}</span></div>
-          <div class="row"><span>Delivery Fee:</span> <span>${order.summary?.deliveryCharge === 0 ? '<strong class="text-success">FREE</strong>' : `₹${order.summary?.deliveryCharge}`}${order.deliveryDistanceKm ? ` <small class="text-muted">(${order.deliveryDistanceKm} km)</small>` : ''}</span></div>
+          <div class="row"><span>Uber Rider Delivery Fee:</span> <span>${order.summary?.deliveryCharge === 0 ? '<strong class="text-success">FREE (Sponsored)</strong>' : `₹${order.summary?.deliveryCharge}`}${order.deliveryDistanceKm ? ` <small class="text-muted">(${order.deliveryDistanceKm} km)</small>` : ''}</span></div>
           ${order.summary?.couponDiscount ? `<div class="row text-success"><span>Promo (${order.summary.couponCode}):</span> <span>-₹${order.summary.couponDiscount}</span></div>` : ''}
           <div class="row grand-total"><span>Final Total:</span> <span>₹${order.summary?.grandTotal || 0}</span></div>
         </div>
@@ -198,6 +211,92 @@ const Tracking = {
         ${cancelBtnHTML}
       </div>
     `;
+
+    setTimeout(() => {
+      this.initLiveOrderTrackingMap(order);
+    }, 150);
+  },
+
+  initLiveOrderTrackingMap(order) {
+    const mapEl = document.getElementById('trackingLiveMap');
+    if (!mapEl || typeof L === 'undefined') return;
+
+    if (this._trackingMapInstance) {
+      try { this._trackingMapInstance.remove(); } catch(e) {}
+      this._trackingMapInstance = null;
+    }
+
+    const storeLat = 23.8188;
+    const storeLng = 91.2725;
+    const custLat = Number(order.customerLat || order.gpsCoords?.lat || 23.8315);
+    const custLng = Number(order.customerLng || order.gpsCoords?.lng || 91.2825);
+
+    const map = L.map('trackingLiveMap', {
+      zoomControl: true,
+      attributionControl: false
+    }).setView([(storeLat + custLat) / 2, (storeLng + custLng) / 2], 13);
+
+    this._trackingMapInstance = map;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    // Store Hub Marker
+    const storeIcon = L.divIcon({
+      className: 'leaflet-store-marker',
+      html: '<div class="map-hub-pin"><span class="pin-icon">🏪</span><span class="pin-badge">Store Hub</span></div>',
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
+    });
+    L.marker([storeLat, storeLng], { icon: storeIcon }).addTo(map)
+      .bindPopup('<strong>🏪 GrossHub Bhattapukur Hub</strong><br>Dispatch Center');
+
+    // Customer Doorstep Pin
+    const custIcon = L.divIcon({
+      className: 'leaflet-customer-marker',
+      html: '<div class="map-customer-pin"><span class="pin-head">📍</span><span class="pin-label">Doorstep</span></div>',
+      iconSize: [40, 48],
+      iconAnchor: [20, 44]
+    });
+    L.marker([custLat, custLng], { icon: custIcon }).addTo(map)
+      .bindPopup(`<strong>📍 Customer Location</strong><br>${escapeHTML(order.customer?.name || 'Customer Doorstep')}`);
+
+    // Route polyline
+    L.polyline([
+      [storeLat, storeLng],
+      [custLat, custLng]
+    ], {
+      color: '#059669',
+      weight: 4,
+      dashArray: '6, 8',
+      opacity: 0.85
+    }).addTo(map);
+
+    // Rider Marker
+    let riderLat = storeLat;
+    let riderLng = storeLng;
+    if (order.status === 'out_for_delivery') {
+      riderLat = storeLat + (custLat - storeLat) * 0.65;
+      riderLng = storeLng + (custLng - storeLng) * 0.65;
+    } else if (order.status === 'delivered') {
+      riderLat = custLat;
+      riderLng = custLng;
+    }
+
+    const riderIcon = L.divIcon({
+      className: 'map-rider-pin-wrap',
+      html: '<div class="map-rider-pin">🛵</div>',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+    L.marker([riderLat, riderLng], { icon: riderIcon }).addTo(map)
+      .bindPopup(`<strong>🛵 Delivery Partner: ${escapeHTML(order.rider || 'Express Fleet')}</strong><br>Status: ${order.status.replace('_', ' ')}`);
+
+    const bounds = L.latLngBounds([[storeLat, storeLng], [custLat, custLng]]);
+    map.fitBounds(bounds, { padding: [35, 35], maxZoom: 15 });
+
+    setTimeout(() => { map.invalidateSize(); }, 200);
   },
 
   handleCancelOrder(orderId) {
@@ -437,8 +536,8 @@ const CustomerInvoice = {
               <td class="num">₹${order.summary?.subtotal || 0}</td>
             </tr>
             <tr>
-              <td>Delivery Charge (${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km` : 'Standard'}):</td>
-              <td class="num">${(order.summary?.deliveryCharge === 0) ? '<strong style="color:#16a34a;">FREE</strong>' : `₹${order.summary?.deliveryCharge || 0}`}</td>
+              <td>Uber Delivery Rider Fee (${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km` : 'Standard'}):</td>
+              <td class="num">${(order.summary?.deliveryCharge === 0) ? '<strong style="color:#16a34a;">FREE (Sponsored)</strong>' : `₹${order.summary?.deliveryCharge || 0}`}</td>
             </tr>
             ${order.summary?.handlingCharge ? `
             <tr>

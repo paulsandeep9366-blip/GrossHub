@@ -178,7 +178,10 @@
       <div class="admin-top-bar">
         <h3>🏪 GrossHub Admin Control Center</h3>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn-xs btn-hero-primary" onclick="AdminPanel.printTotalBillReport()">
+          <button class="btn-xs btn-hero-primary" style="background: #059669;" onclick="AdminPanel.printAllIndividualBills()" title="Generate & Print / Download PDF Bills for Every Individual Order">
+            📑 All Individual Bills PDF
+          </button>
+          <button class="btn-xs btn-hero-primary" onclick="AdminPanel.printTotalBillReport()" title="Consolidated Sales & Bill Statement">
             📄 Total Bill PDF
           </button>
           <button class="btn-xs btn-outline" style="background:#334155; color:#fff;" onclick="AdminPanel.exportOrdersToCSV()">
@@ -252,7 +255,10 @@
               </select>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button class="btn-hero-primary" style="font-size: 0.85rem; padding: 7px 14px;" onclick="AdminPanel.printTotalBillReport()">
+              <button class="btn-hero-primary" style="font-size: 0.85rem; padding: 7px 14px; background: #059669;" onclick="AdminPanel.printAllIndividualBills()" title="Generate & Print / Download PDF Bills for Every Individual Order">
+                📑 All Individual Bills (PDF)
+              </button>
+              <button class="btn-hero-primary" style="font-size: 0.85rem; padding: 7px 14px;" onclick="AdminPanel.printTotalBillReport()" title="Consolidated Sales & Bill Statement">
                 📄 Export Total Bill (PDF)
               </button>
               <button class="btn-secondary" onclick="AdminPanel.exportOrdersToCSV()">
@@ -599,9 +605,15 @@
           <span style="font-size: 1.3rem;">🧾</span>
           <h3 id="modalInvoiceTitle" style="color: var(--white); margin: 0; font-size: 1.1rem;">Official Delivery Bill & Tax Invoice</h3>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <button type="button" class="btn-hero-primary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="AdminPanel.printActiveInvoice()">
-            🖨️ Print / Save as PDF
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn-hero-primary" style="padding: 6px 14px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;" onclick="AdminPanel.downloadCurrentInvoicePDF()" id="btnModalDownloadPDF" title="Download as PDF file">
+            📥 Download PDF Bill
+          </button>
+          <button type="button" class="btn-secondary" style="padding: 6px 14px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; background: #334155; color: #fff;" onclick="AdminPanel.printActiveInvoice()" title="Print Bill or Save to PDF">
+            🖨️ Print Bill
+          </button>
+          <button type="button" class="btn-outline" style="padding: 6px 12px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,0.1);" onclick="AdminPanel.shareInvoiceOnWhatsApp()" id="btnModalShareWhatsApp" title="Share Bill Details on WhatsApp">
+            💬 WhatsApp
           </button>
           <button class="btn-modal-close" onclick="closeModal('adminInvoiceModal')" style="color: var(--white);">✕</button>
         </div>
@@ -618,9 +630,10 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/data.js?v=2.4"></script>
-  <script src="js/store.js?v=2.4"></script>
-  <script src="js/admin.js?v=2.4"></script>
+  <script src="js/html2pdf.bundle.min.js"></script>
+  <script src="js/data.js?v=2.5"></script>
+  <script src="js/store.js?v=2.5"></script>
+  <script src="js/admin.js?v=2.5"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {

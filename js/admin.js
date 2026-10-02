@@ -10,6 +10,9 @@ const AdminPanel = {
   orderStatusFilter: 'all',
   searchQuery: '',
   editingProductId: null,
+  currentInvoiceType: 'single', // 'single' | 'all_individual' | 'total_report' | 'customer_statement'
+  currentInvoiceOrderId: null,
+  currentInvoiceOrder: null,
 
   init() {
     this.checkSession();
@@ -216,13 +219,20 @@ const AdminPanel = {
         recentContainer.innerHTML = `<p class="text-muted">No orders placed yet.</p>`;
       } else {
         recentContainer.innerHTML = recent.map(o => `
-          <div class="snippet-order-row">
+          <div class="snippet-order-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f1f5f9; gap:10px; flex-wrap:wrap;">
             <div>
               <strong>${o.id}</strong> • <span class="text-muted">${escapeHTML(o.customer?.name || 'Customer')}</span>
+              <div style="font-size:0.75rem; color:#64748b;">${new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${new Date(o.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</div>
             </div>
-            <div>
+            <div style="display:flex; gap:6px; align-items:center;">
               <span class="track-badge ${o.status}">${formatStatusLabel(o.status)}</span>
-              <strong>₹${o.summary?.grandTotal || 0}</strong>
+              <strong style="margin-right:4px;">₹${o.summary?.grandTotal || 0}</strong>
+              <button class="btn-xs btn-hero-primary" onclick="AdminPanel.openOrderInvoiceModal('${o.id}')" title="View / Print PDF Bill for ${o.id}">
+                🧾 PDF Bill
+              </button>
+              <button class="btn-xs" style="background:#0284c7; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;" onclick="AdminPanel.downloadOrderPDFDirect('${o.id}')" title="Direct Download PDF Bill">
+                📥
+              </button>
             </div>
           </div>
         `).join('');
@@ -276,6 +286,8 @@ const AdminPanel = {
           <small class="addr-clamp" title="${escapeHTML(order.customer?.address || '')}">
             ${escapeHTML(order.customer?.address || 'Bhattapukur, Agartala')}
           </small>
+          ${order.deliveryDistanceKm ? `<br><span style="font-size:0.75rem; color:#047857; font-weight:700;">🛵 ${order.deliveryDistanceKm} km</span>` : ''}
+          ${(order.customerLat && order.customerLng) ? ` • <a href="https://www.google.com/maps?q=${order.customerLat},${order.customerLng}" target="_blank" style="font-size:0.72rem; color:#0284c7; font-weight:700; text-decoration:none;">📍 Map Pin</a>` : ''}
         </td>
         <td>
           <strong>₹${order.summary?.grandTotal || 0}</strong><br>
@@ -300,12 +312,15 @@ const AdminPanel = {
           </select>
         </td>
         <td>
-          <div style="display:flex; gap:4px; flex-wrap:wrap;">
-            <button class="btn-xs btn-outline" onclick="AdminPanel.viewOrderDetails('${order.id}')" title="View details">
-              👁️ View
+          <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+            <button class="btn-xs btn-hero-primary" onclick="AdminPanel.openOrderInvoiceModal('${order.id}')" title="Preview / Print Official PDF Bill for ${order.id}">
+              🧾 Bill PDF
             </button>
-            <button class="btn-xs btn-hero-primary" onclick="AdminPanel.openOrderInvoiceModal('${order.id}')" title="Print / Download PDF Bill">
-              🧾 PDF Bill
+            <button class="btn-xs" style="background:#0284c7; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:3px;" onclick="AdminPanel.downloadOrderPDFDirect('${order.id}')" title="Direct Download PDF Bill file for ${order.id}">
+              📥 Download
+            </button>
+            <button class="btn-xs btn-outline" onclick="AdminPanel.viewOrderDetails('${order.id}')" title="View full order details">
+              👁️
             </button>
           </div>
         </td>
@@ -685,48 +700,42 @@ const AdminPanel = {
   },
 
   // 6. Customer Bill & Order Tax Invoice PDF Generation (Admin Portal)
-  openOrderInvoiceModal(orderId) {
-    const order = Store.getOrder(orderId);
-    if (!order) {
-      showToast('Order not found.', 'danger');
-      return;
-    }
+  // Generates official, retail GST-compliant tax invoices & bills for individual orders and batch printing
+  generateOrderInvoiceHTML(order, isMulti = false) {
+    if (!order) return "";
 
-    const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
+    const orderDate = new Date(order.createdAt).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric"
     });
-    const orderTime = new Date(order.createdAt).toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit'
+    const orderTime = new Date(order.createdAt).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit"
     });
 
-    const isPaid = order.paymentMethod !== 'COD';
+    const isPaid = order.paymentMethod !== "COD";
     const items = order.items || [];
     const gps = order.gpsCoords || order.customer?.gpsCoords;
+    const invoiceNum = `INV-${order.id}`;
 
-    const html = `
-      <div class="invoice-paper" id="grosshubInvoiceDoc">
+    return `
+      <div class="invoice-paper" id="${isMulti ? "" : "grosshubInvoiceDoc"}" style="${isMulti ? "box-shadow:none; max-width:100%; margin:0 0 12px 0; border: 1px solid #cbd5e1;" : ""}">
         <!-- Top Invoice Header -->
         <div class="inv-header">
           <div class="inv-brand">
             <h2>🥬 GrossHub</h2>
-            <p><strong>GrossHub Quick Commerce Private Limited</strong></p>
-            <p>Fulfillment Hub: Bhattapukur, Agartala, Tripura West - 799003</p>
-            <p>GSTIN: <strong>16AABCG1234F1Z0</strong> • FSSAI Lic: <strong>21623001000452</strong></p>
-            <p>Helpline: <strong>+91 98622 72399</strong> • Email: support@grosshub.in • Web: grosshub.in</p>
+            <p><strong>GrossHub Quick Commerce Private Limited</strong> • Bhattapukur Hub, Agartala - 799003</p>
+            <p>GSTIN: <strong>16AABCG1234F1Z0</strong> • FSSAI: <strong>21623001000452</strong> • Helpline: <strong>+91 98622 72399</strong></p>
           </div>
           <div class="inv-meta">
-            <div class="inv-badge-title">CUSTOMER TAX INVOICE & BILL</div>
-            <p style="margin-top: 6px;"><strong>Invoice No:</strong> INV-${order.id}</p>
-            <p><strong>Order ID:</strong> ${order.id}</p>
-            <p><strong>Date Placed:</strong> ${orderDate}</p>
-            <p><strong>Time Placed:</strong> ${orderTime}</p>
-            <p><strong>Delivery Slot:</strong> ${escapeHTML(order.deliverySlot || 'Express 30-45 mins')}</p>
-            <div style="margin-top: 8px;">
-              <span class="inv-stamp" style="${isPaid ? 'border-color: #16a34a; color: #15803d;' : 'border-color: #d97706; color: #b45309;'}">
-                ${isPaid ? 'PAID VIA ONLINE UPI / QR' : 'PAYMENT DUE (CASH ON DELIVERY)'}
+            <div class="inv-badge-title">TAX INVOICE & RETAIL BILL</div>
+            <p style="margin-top: 2px;"><strong>Inv No:</strong> ${invoiceNum} • <strong>Order:</strong> ${order.id}</p>
+            <p><strong>Date & Time:</strong> ${orderDate}, ${orderTime}</p>
+            <p><strong>Slot:</strong> ${escapeHTML(order.deliverySlot || "Instant Express (30-45 mins)")}</p>
+            <div style="margin-top: 3px;">
+              <span class="inv-stamp" style="${isPaid ? "border-color: #16a34a; color: #15803d;" : "border-color: #d97706; color: #b45309;"}">
+                ${isPaid ? "PAID ONLINE (UPI / QR)" : "PAYMENT DUE (CASH ON DELIVERY)"}
               </span>
             </div>
           </div>
@@ -735,24 +744,21 @@ const AdminPanel = {
         <!-- Customer & Delivery Details Grid -->
         <div class="inv-grid-2">
           <div>
-            <div class="inv-block-title">Customer & Delivery Destination:</div>
-            <div style="font-size: 0.98rem; font-weight: 700; color: #0f172a;">${escapeHTML(order.customer?.name || 'Customer')}</div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;">📞 +91 ${escapeHTML(order.customer?.phone || 'N/A')}</div>
-            <div style="font-size: 0.83rem; color: #475569; margin-top: 3px; line-height: 1.4;">
-              📍 ${escapeHTML(order.customer?.address || 'Agartala, Tripura')}
-              ${order.customer?.landmark ? `<br><small><strong>Landmark:</strong> ${escapeHTML(order.customer.landmark)}</small>` : ''}
-              ${order.customer?.notes ? `<br><small><strong>Notes / Instructions:</strong> ${escapeHTML(order.customer.notes)}</small>` : ''}
-              ${gps ? `<br><small style="color: #047857; font-weight: 600;">🎯 <strong>GPS Coordinates:</strong> ${gps.lat.toFixed(4)}° N, ${gps.lng.toFixed(4)}° E ${gps.accuracy ? `(±${gps.accuracy}m)` : ''}</small>` : ''}
+            <div class="inv-block-title">Customer & Destination:</div>
+            <div style="font-size: 0.86rem; font-weight: 700; color: #0f172a;">${escapeHTML(order.customer?.name || "Customer")} • 📞 +91 ${escapeHTML(order.customer?.phone || "N/A")}</div>
+            <div style="font-size: 0.74rem; color: #475569; margin-top: 2px; line-height: 1.3;">
+              📍 ${escapeHTML(order.customer?.address || "Agartala, Tripura")}
+              ${order.customer?.landmark ? ` • <small><strong>Landmark:</strong> ${escapeHTML(order.customer.landmark)}</small>` : ""}
+              ${order.customer?.notes ? `<br><small><strong>Notes:</strong> ${escapeHTML(order.customer.notes)}</small>` : ""}
+              ${gps ? `<br><small style="color: #047857; font-weight: 600;">🎯 <strong>GPS:</strong> ${gps.lat.toFixed(4)}° N, ${gps.lng.toFixed(4)}° E</small>` : ""}
             </div>
           </div>
           <div>
-            <div class="inv-block-title">Fulfillment & Logistics Dispatch:</div>
-            <div style="font-size: 0.85rem; color: #334155;"><strong>Fulfillment Hub:</strong> GrossHub Bhattapukur Hub, Agartala</div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Assigned Fleet Rider:</strong> ${escapeHTML(order.rider || 'Unassigned')}</div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Rider Contact:</strong> ${order.riderPhone ? `📞 ${order.riderPhone}` : 'GrossHub Agartala Dispatch'}</div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Distance:</strong> ${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km (${order.deliveryDistanceLabel || 'Calculated'})` : 'Standard City Delivery Zone'}</div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Status:</strong> <span style="text-transform: uppercase; font-weight: 700; color: #064e3b;">${order.status.replace('_', ' ')}</span></div>
-            <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Payment Method:</strong> ${escapeHTML(order.paymentMethod || 'COD')}</div>
+            <div class="inv-block-title">Dispatch & Fulfillment:</div>
+            <div style="font-size: 0.76rem; color: #334155;"><strong>Hub:</strong> GrossHub Bhattapukur Hub, Agartala</div>
+            <div style="font-size: 0.76rem; color: #334155; margin-top: 1px;"><strong>Rider:</strong> ${escapeHTML(order.rider || "Unassigned")} ${order.riderPhone ? `(📞 ${order.riderPhone})` : ""}</div>
+            <div style="font-size: 0.76rem; color: #334155; margin-top: 1px;"><strong>Distance:</strong> ${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km` : "Standard Zone"} • <strong>Status:</strong> <span style="text-transform: uppercase; font-weight: 700; color: #064e3b;">${order.status.replace("_", " ")}</span></div>
+            <div style="font-size: 0.76rem; color: #334155; margin-top: 1px;"><strong>Payment Mode:</strong> ${escapeHTML(order.paymentMethod || "COD")}</div>
           </div>
         </div>
 
@@ -760,83 +766,297 @@ const AdminPanel = {
         <table class="inv-table">
           <thead>
             <tr>
-              <th style="width: 38px;">#</th>
+              <th style="width: 32px;">#</th>
               <th>Item Description</th>
               <th style="width: 80px;">Unit</th>
-              <th class="num" style="width: 75px;">MRP</th>
-              <th class="num" style="width: 75px;">Rate</th>
-              <th class="num" style="width: 50px;">Qty</th>
-              <th class="num" style="width: 90px;">Total</th>
+              <th class="num" style="width: 65px;">MRP</th>
+              <th class="num" style="width: 65px;">Rate</th>
+              <th class="num" style="width: 45px;">Qty</th>
+              <th class="num" style="width: 75px;">Total</th>
             </tr>
           </thead>
           <tbody>
-            ${items.map((it, idx) => {
+            ${items.length === 0 ? `
+              <tr><td colspan="7" class="text-center py-2" style="color:#64748b;">Grocery essentials package</td></tr>
+            ` : items.map((it, idx) => {
               const itemTotal = (it.price || 0) * (it.qty || 1);
               return `
                 <tr>
                   <td>${idx + 1}</td>
                   <td><strong>${escapeHTML(it.name)}</strong></td>
-                  <td>${escapeHTML(it.unit || '1 pc')}</td>
+                  <td>${escapeHTML(it.unit || "1 pc")}</td>
                   <td class="num text-muted"><del>₹${it.mrp || it.price}</del></td>
                   <td class="num">₹${it.price}</td>
                   <td class="num"><strong>${it.qty}</strong></td>
                   <td class="num"><strong>₹${itemTotal}</strong></td>
                 </tr>
               `;
-            }).join('')}
+            }).join("")}
           </tbody>
         </table>
 
-        <!-- Totals Summary Box -->
-        <div class="inv-totals-box">
-          <table class="inv-totals-table">
-            <tr>
-              <td>Items Subtotal (${order.summary?.itemCount || items.length} items):</td>
-              <td class="num">₹${order.summary?.subtotal || 0}</td>
-            </tr>
-            <tr>
-              <td>Delivery Fee (${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km` : 'Standard'}):</td>
-              <td class="num">${(order.summary?.deliveryCharge === 0) ? '<strong style="color: #16a34a;">FREE</strong>' : `₹${order.summary?.deliveryCharge || 0}`}</td>
-            </tr>
-            ${order.summary?.handlingCharge ? `
-            <tr>
-              <td>Handling / Platform Fee:</td>
-              <td class="num">₹${order.summary.handlingCharge}</td>
-            </tr>` : ''}
-            ${(order.summary?.couponDiscount || 0) > 0 ? `
-            <tr style="color: #16a34a; font-weight: 600;">
-              <td>Discount Applied (${escapeHTML(order.couponCode || 'PROMO')}):</td>
-              <td class="num">-₹${order.summary.couponDiscount}</td>
-            </tr>` : ''}
-            <tr class="grand-total">
-              <td>Total Bill Payable:</td>
-              <td class="num">₹${order.summary?.grandTotal || 0}</td>
-            </tr>
-            <tr>
-              <td style="font-size:0.8rem; color:#64748b;">Payment Mode:</td>
-              <td class="num" style="font-size:0.82rem; font-weight:700;">${escapeHTML(order.paymentMethod || 'COD')}</td>
-            </tr>
-          </table>
+        <!-- Bottom Section: Side-by-Side Verification (Left) + Totals Box (Right) -->
+        <div class="inv-bottom-section">
+          <!-- Left: Verification, Barcode & Stamp -->
+          <div class="inv-security-bar">
+            <div class="inv-security-qr">
+              <div class="inv-qr-box">
+                <span>SCAN</span>
+                <span>VERIFY</span>
+                <span>GROSS</span>
+              </div>
+              <div>
+                <div style="font-weight: 700; color: #0f172a; font-size: 0.74rem;">AUTHENTIC TAX BILL & RECEIPT</div>
+                <div style="font-size: 0.68rem; color: #64748b;">UID: GH-INV-${order.id}-${(order.summary?.grandTotal || 0)}</div>
+                <div style="font-size: 0.68rem; color: #64748b;">Mode: <strong>${escapeHTML(order.paymentMethod || "COD")}</strong> (${isPaid ? "PAID" : "DUE"})</div>
+              </div>
+            </div>
+            <div style="border-top: 1px dashed #cbd5e1; padding-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-family: monospace; font-size: 0.7rem; color: #0f172a; font-weight: 700;">[GROSSHUB-VERIFIED-BILL]</span>
+              <span style="font-size: 0.68rem; color: #059669; font-weight: 700;">✓ VALIDATED</span>
+            </div>
+          </div>
+
+          <!-- Right: Totals Summary Box -->
+          <div class="inv-totals-box">
+            <table class="inv-totals-table">
+              <tr>
+                <td>Items Subtotal (${order.summary?.itemCount || items.length} items):</td>
+                <td class="num">₹${order.summary?.subtotal || 0}</td>
+              </tr>
+              <tr>
+                <td>Uber Delivery Rider Fee (${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km` : "Standard"}):</td>
+                <td class="num">${(order.summary?.deliveryCharge === 0) ? "<strong style=\"color: #16a34a;\">FREE (Sponsored)</strong>" : `₹${order.summary?.deliveryCharge || 0}`}</td>
+              </tr>
+              ${order.summary?.handlingCharge ? `
+              <tr>
+                <td>Handling / Platform Fee:</td>
+                <td class="num">₹${order.summary.handlingCharge}</td>
+              </tr>` : ""}
+              ${(order.summary?.couponDiscount || 0) > 0 ? `
+              <tr style="color: #16a34a; font-weight: 600;">
+                <td>Discount (${escapeHTML(order.couponCode || "PROMO")}):</td>
+                <td class="num">-₹${order.summary.couponDiscount}</td>
+              </tr>` : ""}
+              <tr class="grand-total">
+                <td>Total Bill Payable:</td>
+                <td class="num">₹${order.summary?.grandTotal || 0}</td>
+              </tr>
+            </table>
+          </div>
         </div>
 
         <!-- Official Footer & Verification -->
         <div class="inv-footer">
           <div>
             <p style="margin: 0; font-weight: 700; color: #0f172a;">Customer Guarantee & Terms:</p>
-            <p style="margin: 2px 0;">1. All fresh produce & essentials are guaranteed fresh on delivery. 100% replacement guarantee.</p>
-            <p style="margin: 0;">2. Computer-generated official tax invoice issued by GrossHub Quick Commerce.</p>
+            <p style="margin: 1px 0;">1. 100% Replacement Guarantee on all fresh produce & groceries. 2. Official computer-generated retail tax bill.</p>
           </div>
           <div style="text-align: right;">
             <p style="margin: 0; font-weight: 700; color: #0f172a;">GrossHub Fulfillment Hub</p>
-            <div style="font-family: monospace; font-size: 0.78rem; color: #64748b; margin: 3px 0;">[GROSSHUB-HQ-VALIDATED-INVOICE]</div>
-            <p style="margin: 0; font-size: 0.72rem; color: #64748b;">Bhattapukur, Agartala - 799003</p>
+            <p style="margin: 1px 0; font-size: 0.66rem; color: #64748b;">Agartala Operations • Generated: ${new Date().toLocaleDateString("en-IN")}</p>
           </div>
         </div>
       </div>
     `;
+  },
+
+  openOrderInvoiceModal(orderId) {
+    const order = Store.getOrder(orderId);
+    if (!order) {
+      showToast('Order not found.', 'danger');
+      return;
+    }
+
+    this.currentInvoiceType = 'single';
+    this.currentInvoiceOrderId = order.id;
+    this.currentInvoiceOrder = order;
 
     const titleEl = document.getElementById('modalInvoiceTitle');
-    if (titleEl) titleEl.textContent = `Customer Bill & Tax Invoice — ${order.id}`;
+    if (titleEl) titleEl.textContent = `Official Tax Invoice & Bill — ${order.id}`;
+
+    const whatsappBtn = document.getElementById('btnModalShareWhatsApp');
+    if (whatsappBtn) whatsappBtn.style.display = 'inline-flex';
+
+    const container = document.getElementById('invoicePrintContainer');
+    if (container) container.innerHTML = this.generateOrderInvoiceHTML(order, false);
+
+    openModal('adminInvoiceModal');
+  },
+
+  // 1-Click Direct Download of PDF Bill for an individual order
+  downloadOrderPDFDirect(orderId) {
+    const order = Store.getOrder(orderId);
+    if (!order) {
+      showToast('Order not found.', 'danger');
+      return;
+    }
+
+    const filename = `GrossHub_Bill_${order.id}.pdf`;
+
+    if (typeof html2pdf !== 'undefined') {
+      showToast(`Generating official PDF bill for ${order.id}... 📥`, 'info');
+
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '780px';
+      tempContainer.style.background = '#ffffff';
+      tempContainer.style.padding = '16px';
+      tempContainer.style.zIndex = '-1000';
+      tempContainer.innerHTML = this.generateOrderInvoiceHTML(order, false);
+      document.body.appendChild(tempContainer);
+
+      const opt = {
+        margin: [6, 6, 6, 6],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(tempContainer).save().then(() => {
+        if (document.body.contains(tempContainer)) {
+          document.body.removeChild(tempContainer);
+        }
+        showToast(`Official PDF bill for ${order.id} downloaded! ✅`, 'success');
+      }).catch(err => {
+        console.error('Direct PDF error:', err);
+        if (document.body.contains(tempContainer)) {
+          document.body.removeChild(tempContainer);
+        }
+        this.openOrderInvoiceModal(orderId);
+        showToast('Direct download error. Opening print preview...', 'warning');
+      });
+    } else {
+      this.openOrderInvoiceModal(orderId);
+      setTimeout(() => {
+        window.print();
+      }, 300);
+    }
+  },
+
+  // Download whatever bill/report is currently in modal as a high-quality PDF file
+  downloadCurrentInvoicePDF() {
+    const container = document.getElementById('invoicePrintContainer');
+    if (!container || !container.innerHTML.trim()) {
+      showToast('No invoice document loaded to download.', 'warning');
+      return;
+    }
+
+    let filename = `GrossHub_Invoice_${new Date().toISOString().slice(0,10)}.pdf`;
+    if (this.currentInvoiceType === 'single' && this.currentInvoiceOrderId) {
+      filename = `GrossHub_Bill_${this.currentInvoiceOrderId}.pdf`;
+    } else if (this.currentInvoiceType === 'all_individual') {
+      filename = `GrossHub_All_Individual_Bills_${new Date().toISOString().slice(0,10)}.pdf`;
+    } else if (this.currentInvoiceType === 'total_report') {
+      filename = `GrossHub_Total_Sales_Statement_${new Date().toISOString().slice(0,10)}.pdf`;
+    } else if (this.currentInvoiceType === 'customer_statement') {
+      filename = `GrossHub_Customer_Statement_${this.currentInvoiceOrderId || 'Customer'}.pdf`;
+    }
+
+    if (typeof html2pdf !== 'undefined') {
+      showToast('Generating official PDF document... Please wait 📥', 'info');
+
+      // Clone element for optimal PDF export rendering
+      const clone = container.cloneNode(true);
+      clone.style.background = '#ffffff';
+      clone.style.padding = '12px';
+      clone.style.width = '100%';
+      clone.style.boxSizing = 'border-box';
+
+      // Hide any no-print banners in clone
+      const noPrints = clone.querySelectorAll('.no-print');
+      noPrints.forEach(el => el.remove());
+
+      const opt = {
+        margin: [6, 6, 6, 6],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(clone).save().then(() => {
+        showToast(`PDF Bill saved: ${filename}! ✅`, 'success');
+      }).catch(err => {
+        console.error('PDF export error:', err);
+        showToast('Direct download encountered an issue. Opening print dialog...', 'warning');
+        window.print();
+      });
+    } else {
+      showToast('Opening PDF Print / Save Dialog. Select "Save as PDF".', 'info');
+      window.print();
+    }
+  },
+
+  // Generates & prints/downloads bills for every individual order in PDF form
+  printAllIndividualBills() {
+    let orders = Store.getOrders();
+    if (orders.length === 0) {
+      showToast('No orders found to generate individual bills.', 'warning');
+      return;
+    }
+
+    // Apply active filter if any
+    let filterLabel = 'All Orders Master Fleet';
+    if (this.orderStatusFilter && this.orderStatusFilter !== 'all') {
+      orders = orders.filter(o => o.status === this.orderStatusFilter);
+      filterLabel = `Status: ${this.orderStatusFilter.toUpperCase()}`;
+    }
+
+    if (this.searchQuery) {
+      const q = this.searchQuery;
+      orders = orders.filter(o => 
+        o.id.toLowerCase().includes(q) ||
+        (o.customer?.name || '').toLowerCase().includes(q) ||
+        (o.customer?.phone || '').includes(q) ||
+        (o.rider || '').toLowerCase().includes(q)
+      );
+      filterLabel += ` (Search: "${q}")`;
+    }
+
+    if (orders.length === 0) {
+      showToast('No orders match current filter for individual bills.', 'warning');
+      return;
+    }
+
+    const html = `
+      <div id="grosshubAllIndividualBillsDoc">
+        <div style="background: #0f172a; color: #ffffff; padding: 12px 18px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;" class="no-print">
+          <div>
+            <strong>📑 All Orders Individual Bills — Ready in PDF Form</strong><br>
+            <small style="color: #94a3b8;">${orders.length} Individual Tax Invoices generated (${filterLabel}). Each bill prints on its own clean A4 page.</small>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-xs btn-hero-primary" onclick="AdminPanel.downloadCurrentInvoicePDF()">
+              📥 Download Multi-Page PDF
+            </button>
+            <button type="button" class="btn-xs btn-secondary" style="background:#334155; color:#fff;" onclick="AdminPanel.printActiveInvoice()">
+              🖨️ Print All Bills
+            </button>
+          </div>
+        </div>
+        ${orders.map((order, idx) => `
+          <div class="individual-order-bill-page" style="${idx < orders.length - 1 ? 'page-break-after: always; break-after: page;' : ''} margin-bottom: 24px;">
+            ${this.generateOrderInvoiceHTML(order, true)}
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    this.currentInvoiceType = 'all_individual';
+    this.currentInvoiceOrderId = 'ALL';
+    this.currentInvoiceOrder = null;
+
+    const titleEl = document.getElementById('modalInvoiceTitle');
+    if (titleEl) titleEl.textContent = `All Individual Order Bills (${orders.length} Bills in PDF Form)`;
+
+    const whatsappBtn = document.getElementById('btnModalShareWhatsApp');
+    if (whatsappBtn) whatsappBtn.style.display = 'none';
 
     const container = document.getElementById('invoicePrintContainer');
     if (container) container.innerHTML = html;
@@ -1012,8 +1232,15 @@ const AdminPanel = {
       </div>
     `;
 
+    this.currentInvoiceType = 'total_report';
+    this.currentInvoiceOrderId = 'REPORT';
+    this.currentInvoiceOrder = null;
+
     const titleEl = document.getElementById('modalInvoiceTitle');
     if (titleEl) titleEl.textContent = 'Master Total Bill & Sales Statement';
+
+    const whatsappBtn = document.getElementById('btnModalShareWhatsApp');
+    if (whatsappBtn) whatsappBtn.style.display = 'none';
 
     const container = document.getElementById('invoicePrintContainer');
     if (container) container.innerHTML = html;
@@ -1023,6 +1250,49 @@ const AdminPanel = {
 
   printActiveInvoice() {
     window.print();
+  },
+
+  // WhatsApp sharing of invoice to customer
+  shareInvoiceOnWhatsApp() {
+    if (this.currentInvoiceOrder) {
+      const order = this.currentInvoiceOrder;
+      const phone = (order.customer?.phone || '').replace(/\D/g, '');
+      const isPaid = order.paymentMethod !== 'COD';
+      const itemsText = (order.items || []).map(i => `• ${i.name} (x${i.qty}) - ₹${(i.price || 0) * (i.qty || 1)}`).join("\n");
+
+      const msg = `*🥬 GrossHub Agartala — Official Retail Tax Bill*\n` +
+        `--------------------------------\n` +
+        `*Invoice No:* INV-${order.id}\n` +
+        `*Customer:* ${order.customer?.name || 'Customer'}\n` +
+        `*Phone:* +91 ${order.customer?.phone || ''}\n` +
+        `*Delivery Address:* ${order.customer?.address || 'Agartala'}\n` +
+        `--------------------------------\n` +
+        `*Items Ordered:*\n${itemsText}\n` +
+        `--------------------------------\n` +
+        `*Items Subtotal:* ₹${order.summary?.subtotal || 0}\n` +
+        `*Delivery Fee:* ₹${order.summary?.deliveryCharge || 0}\n` +
+        (order.summary?.couponDiscount ? `*Discount (${order.couponCode || 'PROMO'}):* -₹${order.summary.couponDiscount}\n` : '') +
+        `*Grand Total Bill:* ₹${order.summary?.grandTotal || 0}\n` +
+        `*Payment Method:* ${order.paymentMethod || 'COD'} (${isPaid ? 'PAID ONLINE' : 'CASH ON DELIVERY DUE'})\n` +
+        `*Delivery Partner:* ${order.rider || 'GrossHub Fleet'}\n` +
+        `--------------------------------\n` +
+        `Thank you for choosing GrossHub Quick Commerce! 🛒\n` +
+        `Helpline: +91 98622 72399 • Agartala`;
+
+      const targetUrl = phone ? `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(targetUrl, '_blank');
+      showToast('Opening WhatsApp with customer bill details! 💬', 'info');
+      return;
+    }
+
+    if (this.currentInvoiceType === 'customer_statement' && this.currentInvoiceOrderId) {
+      const phone = this.currentInvoiceOrderId;
+      const msg = `*🥬 GrossHub Agartala — Customer Account Statement*\nYour official purchase and billing statement has been prepared. Please contact GrossHub Admin Helpline: +91 98622 72399 for questions.`;
+      window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+      return;
+    }
+
+    showToast('Please open an individual order bill to share on WhatsApp.', 'warning');
   },
 
   // 5. Fleet & Riders Management Tab
@@ -1290,9 +1560,14 @@ const AdminPanel = {
                 </td>
                 <td class="num"><strong>₹${o.summary?.grandTotal || 0}</strong></td>
                 <td style="text-align: center;">
-                  <button type="button" class="btn-xs btn-outline" style="padding: 2px 6px; font-size: 0.72rem; cursor: pointer;" onclick="AdminPanel.openOrderInvoiceModal('${o.id}')">
-                    🧾 PDF
-                  </button>
+                  <div style="display:flex; gap:3px; justify-content:center;">
+                    <button type="button" class="btn-xs btn-outline" style="padding: 2px 6px; font-size: 0.72rem; cursor: pointer;" onclick="AdminPanel.openOrderInvoiceModal('${o.id}')" title="Preview PDF Bill">
+                      🧾 PDF
+                    </button>
+                    <button type="button" class="btn-xs" style="background:#0284c7; color:#fff; border:none; padding: 2px 6px; font-size: 0.72rem; cursor: pointer; border-radius:3px;" onclick="AdminPanel.downloadOrderPDFDirect('${o.id}')" title="Direct Download PDF Bill">
+                      📥
+                    </button>
+                  </div>
                 </td>
               </tr>
             `).join('')}

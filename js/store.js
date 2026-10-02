@@ -39,13 +39,57 @@ const Store = {
     return { ...DEFAULT_SHOP_CONFIG };
   },
 
-  // Distance-based delivery fee calculation
+  // Uber Delivery Rider Fee & Distance Calculation
   calculateDeliveryFee(distanceKm = 1.5, subtotal = 0, coupon = null) {
     const config = this.getConfig();
-    const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
-    const threshold = config.freeDeliveryThreshold || 499;
+    const uber = config.uberDeliveryPricing || (DEFAULT_SHOP_CONFIG.uberDeliveryPricing || {
+      baseFare: 20,
+      perKmRate: 10,
+      minFare: 25,
+      freeDeliveryThreshold: 499,
+      freeDeliveryMaxKm: 5
+    });
 
-    const km = Math.max(0.1, Number(distanceKm) || 1.5);
+    const km = Math.max(0.1, Math.round(Number(distanceKm) * 10) / 10 || 1.5);
+    const baseFare = Number(uber.baseFare) !== undefined ? Number(uber.baseFare) : 20;
+    const perKmRate = Number(uber.perKmRate) !== undefined ? Number(uber.perKmRate) : 10;
+    const minFare = Number(uber.minFare) !== undefined ? Number(uber.minFare) : 25;
+    const threshold = Number(uber.freeDeliveryThreshold) || (config.freeDeliveryThreshold || 499);
+    const freeMaxKm = Number(uber.freeDeliveryMaxKm) || 5;
+
+    // Uber Delivery Partner Fee Model:
+    // Base Pickup/Dispatch + (Distance in km * Per-km Rate), subject to guaranteed minimum rider fare
+    const distanceFare = Math.round(km * perKmRate);
+    const rawRiderFee = baseFare + distanceFare;
+    const uberRiderFee = Math.max(minFare, rawRiderFee);
+
+    let finalFee = uberRiderFee;
+    let isFree = false;
+    let isDiscounted = false;
+    let discountAmount = 0;
+    let sponsoredByStore = 0;
+
+    if (coupon && coupon.type === 'free_delivery') {
+      finalFee = 0;
+      isFree = true;
+      discountAmount = uberRiderFee;
+      sponsoredByStore = uberRiderFee;
+    } else if (subtotal >= threshold) {
+      if (km <= freeMaxKm) {
+        finalFee = 0;
+        isFree = true;
+        discountAmount = uberRiderFee;
+        sponsoredByStore = uberRiderFee;
+      } else {
+        // Partial delivery sponsorship for distant delivery over threshold
+        discountAmount = Math.min(uberRiderFee, 35);
+        finalFee = Math.max(0, uberRiderFee - discountAmount);
+        isDiscounted = true;
+        sponsoredByStore = discountAmount;
+      }
+    }
+
+    const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
     let matchedTier = tiers[0];
     for (const tier of tiers) {
       if (km <= tier.maxKm) {
@@ -55,37 +99,28 @@ const Store = {
       matchedTier = tier;
     }
 
-    const originalFee = Number(matchedTier.fee) || 0;
-    let finalFee = originalFee;
-    let isFree = false;
-    let isDiscounted = false;
-    let discountAmount = 0;
-
-    if (coupon && coupon.type === 'free_delivery') {
-      finalFee = 0;
-      isFree = true;
-      discountAmount = originalFee;
-    } else if (subtotal >= threshold) {
-      if (km <= 5) {
-        finalFee = 0;
-        isFree = true;
-        discountAmount = originalFee;
-      } else {
-        discountAmount = Math.min(originalFee, 30);
-        finalFee = Math.max(0, originalFee - discountAmount);
-        isDiscounted = true;
-      }
-    }
-
     return {
       fee: finalFee,
-      originalFee,
+      originalFee: uberRiderFee,
       isFree: finalFee === 0,
       isDiscounted,
       discountAmount,
       distanceKm: km,
+      uberBreakdown: {
+        modelName: 'Uber Delivery Rider Fare',
+        baseFare: baseFare,
+        perKmRate: perKmRate,
+        minFare: minFare,
+        distanceKm: km,
+        distanceFare: distanceFare,
+        totalRiderFee: uberRiderFee,
+        finalFeeCharged: finalFee,
+        isFree: finalFee === 0,
+        sponsoredByStore: sponsoredByStore,
+        breakdownText: 'Base ₹' + baseFare + ' + (' + km + ' km × ₹' + perKmRate + '/km) = ₹' + uberRiderFee
+      },
       tier: matchedTier,
-      tierLabel: matchedTier.label
+      tierLabel: 'Uber Rider: ' + km + ' km (₹' + uberRiderFee + ')'
     };
   },
 
@@ -239,6 +274,10 @@ const Store = {
       deliverySlot: orderPayload.deliverySlot || 'Instant Delivery (30-45 mins)',
       deliveryDistanceKm: orderPayload.deliveryDistanceKm !== undefined ? orderPayload.deliveryDistanceKm : 1.5,
       deliveryDistanceLabel: orderPayload.deliveryDistanceLabel || '0 - 2 km (Local)',
+      gpsCoords: orderPayload.gpsCoords || orderPayload.customer?.gpsCoords || null,
+      customerLat: orderPayload.customerLat || orderPayload.gpsCoords?.lat || orderPayload.customer?.gpsCoords?.lat || 23.8250,
+      customerLng: orderPayload.customerLng || orderPayload.gpsCoords?.lng || orderPayload.customer?.gpsCoords?.lng || 91.2780,
+      uberBreakdown: orderPayload.uberBreakdown || null,
       paymentMethod: orderPayload.paymentMethod || 'Cash on Delivery',
       paymentStatus: (orderPayload.paymentMethod && orderPayload.paymentMethod.includes('UPI')) ? 'Paid Online' : 'Pending COD Collection',
       rider: 'Pending Assignment',

@@ -267,7 +267,9 @@ const RiderPanel = {
 
     container.innerHTML = filtered.map(order => {
       const isPaid = order.paymentStatus.toLowerCase().includes('paid');
-      const mapsQuery = encodeURIComponent(`${order.customer?.address || ''}, Agartala, Tripura`);
+      const mapsQuery = (order.customerLat && order.customerLng)
+        ? `${order.customerLat},${order.customerLng}`
+        : encodeURIComponent(`${order.customer?.address || ''}, Agartala, Tripura`);
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
 
       let actionButtons = '';

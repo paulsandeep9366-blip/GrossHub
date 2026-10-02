@@ -23,6 +23,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="css/leaflet.css">
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/styles.css?v=2.4">
 </head>
@@ -415,20 +417,79 @@
             <input type="text" id="checkoutNotes" class="form-input" placeholder="e.g. Please ring bell twice or call upon arrival">
           </div>
 
-          <!-- Distance-Based Delivery Zone & Automatic Fee Calculation -->
-          <div class="form-group distance-selector-section">
-            <div class="distance-header-row">
-              <label class="form-label" style="margin-bottom:0; font-weight:600;">📍 Delivery Distance & Automatic Fee</label>
-              <button type="button" class="btn-gps-detect" id="btnGpsDetect" onclick="handleAutoDetectLocation()" title="Calculate exact distance & fee with GPS">
-                <span id="gpsDetectIcon">🎯</span> <span id="gpsDetectText">Track with GPS</span>
+          <!-- Interactive Customer Location Map & Live Delivery Route Tracing -->
+          <div class="checkout-map-section">
+            <div class="cms-header">
+              <div class="cms-title">
+                <span class="cms-live-dot pulse"></span>
+                <strong>📍 Trace Exact Location on Map</strong>
+                <span class="cms-sub">Tap or drag pin to your exact building / doorstep</span>
+              </div>
+              <button type="button" class="btn-cms-gps" id="btnMapLocateMe" onclick="handleAutoDetectLocation()" title="Trace your exact coordinates with browser GPS">
+                <span id="mapGpsIcon">🎯</span> <span id="mapGpsText">Trace My Location</span>
               </button>
             </div>
+            
+            <div class="map-container-frame">
+              <div id="checkoutDeliveryMap" class="checkout-delivery-map"></div>
+              <div class="map-quick-hint">
+                <span>💡 <strong>Interactive Map:</strong> Tap anywhere or drag the blue pin 📍 right to your doorstep for pinpoint delivery.</span>
+              </div>
+            </div>
+
+            <!-- Route & Distance Telemetry Bar -->
+            <div class="map-telemetry-bar">
+              <div class="mtb-point">
+                <div class="mtb-icon">🏪</div>
+                <div class="mtb-data">
+                  <span class="mtb-lbl">GrossHub Hub</span>
+                  <strong class="mtb-val">Bhattapukur, Agartala</strong>
+                </div>
+              </div>
+              <div class="mtb-connector">
+                <span class="mtb-line"></span>
+                <span class="mtb-arrow">➔</span>
+                <span class="mtb-dist-pill" id="mtbTracedDistBadge">1.5 km</span>
+              </div>
+              <div class="mtb-point">
+                <div class="mtb-icon">📍</div>
+                <div class="mtb-data">
+                  <span class="mtb-lbl">Your Doorstep</span>
+                  <strong class="mtb-val" id="mtbDoorstepName">Traced on Map</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Uber Delivery Rider Fare Live Breakdown Card -->
+            <div class="uber-fare-card" id="uberFareCard">
+              <div class="ufc-header">
+                <div class="ufc-brand">
+                  <div class="ufc-badge">⚡ UBER DELIVERY RIDER PRICING</div>
+                  <strong class="ufc-title" id="ufcTitle">Transparent Rider Delivery Fare</strong>
+                </div>
+                <div class="ufc-pricing">
+                  <div class="ufc-fee" id="dlfAmount">₹35</div>
+                  <div class="ufc-fee-sub" id="ufcDisplayFeeSub">Delivery Fee</div>
+                </div>
+              </div>
+              <div class="ufc-formula" id="ufcFormula">
+                <span>Base Fare: <strong>₹20</strong></span>
+                <span class="ufc-dot">•</span>
+                <span>Distance: <strong id="ufcFormulaKm">1.5 km</strong> × ₹10/km = <strong id="ufcFormulaDistFare">₹15</strong></span>
+                <span class="ufc-dot">•</span>
+                <span class="ufc-min">(Min ₹25)</span>
+              </div>
+              <div class="ufc-free-banner" id="ufcFreeBanner" style="display: none;">
+                🎉 <strong>Free Delivery Unlocked!</strong> GrossHub sponsors 100% of your Uber Rider delivery fee!
+              </div>
+            </div>
+
             <div id="gpsStatusMessage" class="gps-status-msg" style="display: none;"></div>
 
-            <!-- Real-time Distance Stepper & Live Fee Badge -->
+            <!-- Quick Locality & Manual Distance Adjustment -->
             <div class="distance-input-row">
               <div class="dir-left">
-                <span class="dir-label">Distance from Bhattapukur Hub:</span>
+                <span class="dir-label">Adjust Distance Manually:</span>
                 <div class="dir-stepper-box">
                   <button type="button" class="btn-dist-step" onclick="changeCustomerDistance(-0.5)" title="Decrease distance">−</button>
                   <input type="number" id="checkoutCustomDistance" class="form-input dist-input" min="0.1" max="50" step="0.5" value="1.5" oninput="handleCustomerDistanceInput(this.value)">
@@ -436,31 +497,22 @@
                   <button type="button" class="btn-dist-step" onclick="changeCustomerDistance(0.5)" title="Increase distance">+</button>
                 </div>
               </div>
-              <div class="dir-fee-display" id="distanceLiveFeeDisplay">
-                <span class="dlf-label">Delivery Fee</span>
-                <span class="dlf-amount" id="dlfAmount">₹15</span>
+              <div style="flex: 1; min-width: 220px;">
+                <select id="checkoutAreaSelect" class="form-select" onchange="handleCustomerAreaSelect(this.value)" style="font-size: 0.85rem;">
+                  <option value="">-- Or jump to Agartala Locality --</option>
+                  <option value="1.5">Bhattapukur, Badharghat, AD Nagar, Pratapgarh (~1.5 km)</option>
+                  <option value="3.5">Melarmath, Banamalipur, Ramnagar, Battala (~3.5 km)</option>
+                  <option value="6.5">Kunjaban, GB Hospital, Indranagar, Amtali (~6.5 km)</option>
+                  <option value="10.0">Khayerpur, Ranirbazar, New Capital Complex (~10 km)</option>
+                  <option value="15.0">Jirania, Sekerkote, Airport Zone (~15 km)</option>
+                </select>
               </div>
             </div>
 
-            <!-- Quick Locality Selector Dropdown -->
-            <div style="margin-bottom: 10px;">
-              <select id="checkoutAreaSelect" class="form-select" onchange="handleCustomerAreaSelect(this.value)" style="font-size: 0.85rem;">
-                <option value="">-- Or select your Agartala locality --</option>
-                <option value="1.5">Bhattapukur, Badharghat, AD Nagar, Pratapgarh (~1.5 km - ₹15)</option>
-                <option value="3.5">Melarmath, Banamalipur, Ramnagar, Battala (~3.5 km - ₹30)</option>
-                <option value="6.5">Kunjaban, GB Hospital, Indranagar, Amtali (~6.5 km - ₹50)</option>
-                <option value="10.0">Khayerpur, Ranirbazar, New Capital Complex (~10 km - ₹75)</option>
-                <option value="15.0">Jirania, Sekerkote, Airport Zone (~15 km - ₹100)</option>
-              </select>
-            </div>
-
-            <div class="distance-tiers-list" id="distanceTiersContainer">
-              <!-- Rendered dynamically by app.js -->
+            <div class="distance-tiers-list" id="distanceTiersContainer" style="display: none;">
+              <!-- Kept for backward compatibility -->
             </div>
             <input type="hidden" id="checkoutSelectedDistance" value="1.5">
-            <div class="distance-hint-row">
-              <small class="text-muted">🛵 Calculated automatically from GrossHub Hub, Bhattapukur. Free delivery above ₹499 within 5 km!</small>
-            </div>
           </div>
 
           <!-- Payment Selection -->
@@ -839,6 +891,8 @@
   </nav>
   </div> <!-- /#storeWindow -->
 
+  <!-- Leaflet Map Engine -->
+  <script src="js/leaflet.js"></script>
   <!-- Scripts -->
   <script src="js/data.js?v=2.4"></script>
   <script src="js/store.js?v=2.4"></script>

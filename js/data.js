@@ -39,7 +39,16 @@ const DEFAULT_SHOP_CONFIG = {
     { id: "tier_3", maxKm: 8, fee: 50, label: "5 - 8 km (Extended City)", desc: "Kunjaban, GB Hospital, Indranagar, Amtali" },
     { id: "tier_4", maxKm: 12, fee: 75, label: "8 - 12 km (Suburbs)", desc: "Khayerpur, Ranirbazar, New Capital Complex" },
     { id: "tier_5", maxKm: 999, fee: 100, label: "12+ km (Outskirts)", desc: "Jirania, Sekerkote, Airport Zone" }
-  ]
+  ],
+  uberDeliveryPricing: {
+    enabled: true,
+    modelName: "Uber Delivery Rider Fare",
+    baseFare: 20,       // ₹20 standard base dispatch/pickup fare
+    perKmRate: 10,      // ₹10 per km
+    minFare: 25,        // ₹25 minimum rider delivery fare
+    freeDeliveryThreshold: 499, // Store-sponsored free delivery for orders >= ₹499
+    freeDeliveryMaxKm: 5        // Free delivery covers up to 5 km from hub
+  }
 };
 
 const CATEGORIES = [

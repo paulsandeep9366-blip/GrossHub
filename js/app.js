@@ -522,6 +522,7 @@ function handleAutoDetectLocation() {
       };
 
       setCustomerDistance(effectiveKm, 'gps');
+      updateCheckoutMapPosition(userLat, userLng, accuracy);
 
       // Auto reverse-geocode address if address field is blank
       const addrInput = document.getElementById('checkoutAddress');
@@ -601,18 +602,349 @@ function handleAutoDetectLocation() {
 }
 
 // Agartala Localities and approximate distance from Bhattapukur Store
+const GROSSHUB_STORE_COORDS = {
+  lat: 23.8188,
+  lng: 91.2725,
+  name: "GrossHub Hub, Bhattapukur"
+};
+
+const DEFAULT_AGARTALA_CUSTOMER_COORDS = {
+  lat: 23.8315,
+  lng: 91.2825,
+  name: "Melarmath, Agartala"
+};
+
+let checkoutMap = null;
+let checkoutStoreMarker = null;
+let checkoutCustomerMarker = null;
+let checkoutRoutePolyline = null;
+let checkoutAccuracyCircle = null;
+let checkoutReverseGeoTimer = null;
+
 const AGARTALA_LOCALITY_DISTANCES = [
-  // Tier 1: 0 - 2 km (Local - ₹15)
-  { names: ['bhattapukur', 'bhatta pukur', 'badharghat', 'badhar ghat', 'arundhutinagar', 'arundhuti nagar', 'ad nagar', 'a.d. nagar', 'pratapgarh', 'dashamighat', 'bypass road'], km: 1.5, label: 'Bhattapukur / Local' },
-  // Tier 2: 2 - 5 km (City Core - ₹30)
-  { names: ['melarmath', 'melar math', 'banamalipur', 'ramnagar', 'ram nagar', 'battala', 'math chowmuhani', 'post office chowmuhani', 'radhanagar', 'radha nagar', 'city centre', 'city center', 'palace compound', 'dhaleswar', 'shakuntala', 'jagannath bari', 'lake chowmuhani', 'jail road', 'krishnanagar', 'krishna nagar', 'bordowali', 'motor stand'], km: 3.5, label: 'City Core' },
-  // Tier 3: 5 - 8 km (Extended City - ₹50)
-  { names: ['kunjaban', 'gb hospital', 'g.b. hospital', 'gb bazar', 'g.b. bazar', 'indranagar', 'indra nagar', 'amtali', 'heritage park', 'secretariat', 'capital complex', 'abhoynagar', 'abhoy nagar', 'ushabazar', 'usha bazar', 'lichubagan', 'lichu bagan', 'circuit house', 'narshingarh'], km: 6.5, label: 'Extended City' },
-  // Tier 4: 8 - 12 km (Suburbs - ₹75)
-  { names: ['khayerpur', 'khayer pur', 'ranirbazar', 'ranir bazar', 'new capital complex', 'bodhjungnagar', 'hapania', 'tmc hospital', 'tripura medical college', 'airport', 'singerbil', 'agartala airport'], km: 10.0, label: 'Suburbs' },
-  // Tier 5: 12+ km (Outskirts - ₹100)
-  { names: ['jirania', 'sekerkote', 'seker kote', 'bishalgarh', 'lembucherra', 'champaknagar', 'champak nagar', 'kamalasagar'], km: 15.0, label: 'Outskirts' }
+  // 0 - 2 km (Local Zone)
+  { names: ['bhattapukur', 'bhatta pukur', 'badharghat', 'badhar ghat', 'arundhutinagar', 'arundhuti nagar', 'ad nagar', 'a.d. nagar', 'pratapgarh', 'dashamighat', 'bypass road'], km: 1.5, lat: 23.8188, lng: 91.2725, label: 'Bhattapukur, Agartala', fullAddress: 'Bhattapukur, Agartala, Tripura - 799003' },
+  { names: ['battala', 'dashamighat', 'battala bazar'], km: 2.0, lat: 23.8245, lng: 91.2760, label: 'Battala, Agartala', fullAddress: 'Battala, Agartala, Tripura - 799001' },
+  { names: ['bordowali', 'arundhutinagar 12'], km: 2.2, lat: 23.8110, lng: 91.2750, label: 'Bordowali, Agartala', fullAddress: 'Bordowali, Agartala, Tripura - 799003' },
+
+  // 2 - 5 km (City Core Zone)
+  { names: ['melarmath', 'melar math', 'city centre', 'city center'], km: 3.0, lat: 23.8315, lng: 91.2825, label: 'Melarmath, Agartala', fullAddress: 'Melarmath, Agartala, Tripura - 799001' },
+  { names: ['banamalipur', 'math chowmuhani', 'post office chowmuhani'], km: 3.5, lat: 23.8360, lng: 91.2880, label: 'Banamalipur, Agartala', fullAddress: 'Banamalipur, Agartala, Tripura - 799001' },
+  { names: ['ramnagar', 'ram nagar', 'jail road'], km: 3.8, lat: 23.8410, lng: 91.2780, label: 'Ramnagar, Agartala', fullAddress: 'Ramnagar, Agartala, Tripura - 799002' },
+  { names: ['krishnanagar', 'krishna nagar', 'palace compound', 'shakuntala road'], km: 3.5, lat: 23.8385, lng: 91.2830, label: 'Krishnanagar, Agartala', fullAddress: 'Krishnanagar, Agartala, Tripura - 799001' },
+  { names: ['dhaleswar', 'jagannath bari', 'lake chowmuhani'], km: 4.0, lat: 23.8330, lng: 91.2940, label: 'Dhaleswar, Agartala', fullAddress: 'Dhaleswar, Agartala, Tripura - 799007' },
+  { names: ['radhanagar', 'radha nagar', 'motor stand'], km: 4.2, lat: 23.8440, lng: 91.2860, label: 'Radhanagar, Agartala', fullAddress: 'Radhanagar, Agartala, Tripura - 799002' },
+
+  // 5 - 8 km (Extended City Zone)
+  { names: ['abhoynagar', 'abhoy nagar'], km: 5.5, lat: 23.8480, lng: 91.2920, label: 'Abhoynagar, Agartala', fullAddress: 'Abhoynagar, Agartala, Tripura - 799005' },
+  { names: ['kunjaban', 'shyamali bazar', 'heritage park', 'circuit house'], km: 6.0, lat: 23.8580, lng: 91.2870, label: 'Kunjaban, Agartala', fullAddress: 'Kunjaban, Agartala, Tripura - 799006' },
+  { names: ['gb hospital', 'g.b. hospital', 'gb bazar', 'g.b. bazar'], km: 6.8, lat: 23.8640, lng: 91.2910, label: 'GB Hospital Area, Agartala', fullAddress: 'GB Hospital Complex, Kunjaban, Agartala, Tripura - 799006' },
+  { names: ['indranagar', 'indra nagar'], km: 6.5, lat: 23.8520, lng: 91.3100, label: 'Indranagar, Agartala', fullAddress: 'Indranagar, Agartala, Tripura - 799006' },
+  { names: ['hapania', 'tmc hospital', 'tripura medical college'], km: 5.8, lat: 23.7850, lng: 91.2700, label: 'Hapania, Agartala', fullAddress: 'Hapania, Agartala, Tripura - 799014' },
+  { names: ['amtali', 'tripura university', 'suryamaninagar'], km: 7.5, lat: 23.7650, lng: 91.2650, label: 'Amtali, Agartala', fullAddress: 'Amtali, Agartala, Tripura - 799130' },
+
+  // 8 - 12 km (Suburbs)
+  { names: ['new capital complex', 'secretariat', 'capital complex', 'assembly'], km: 8.5, lat: 23.8700, lng: 91.2990, label: 'New Capital Complex, Agartala', fullAddress: 'New Capital Complex, Secretariat, Agartala, Tripura - 799010' },
+  { names: ['lichubagan', 'lichu bagan', 'ushabazar', 'usha bazar'], km: 8.0, lat: 23.8750, lng: 91.2750, label: 'Ushabazar / Lichubagan', fullAddress: 'Ushabazar, Agartala, Tripura - 799009' },
+  { names: ['airport', 'singerbil', 'agartala airport', 'mbb airport', 'narshingarh'], km: 12.0, lat: 23.8860, lng: 91.2405, label: 'Airport Area, Agartala', fullAddress: 'MBB Airport Area, Singerbil, Agartala, Tripura - 799009' },
+  { names: ['khayerpur', 'khayer pur', 'bodhjungnagar'], km: 10.0, lat: 23.8450, lng: 91.3500, label: 'Khayerpur, Agartala', fullAddress: 'Khayerpur, Agartala, Tripura - 799008' },
+  { names: ['ranirbazar', 'ranir bazar'], km: 11.5, lat: 23.8350, lng: 91.3800, label: 'Ranirbazar, Agartala', fullAddress: 'Ranirbazar, West Tripura - 799035' },
+
+  // 12+ km (Outskirts)
+  { names: ['jirania', 'nit agartala', 'champaknagar'], km: 15.0, lat: 23.8400, lng: 91.4250, label: 'Jirania, Tripura', fullAddress: 'Jirania, West Tripura - 799045' },
+  { names: ['sekerkote', 'seker kote', 'bishalgarh'], km: 14.0, lat: 23.7300, lng: 91.2500, label: 'Sekerkote, Tripura', fullAddress: 'Sekerkote, West Tripura - 799130' }
 ];
+
+function getNearestAgartalaAddress(lat, lng) {
+  let nearest = AGARTALA_LOCALITY_DISTANCES[0];
+  let minDistance = 999999;
+
+  for (const loc of AGARTALA_LOCALITY_DISTANCES) {
+    if (loc.lat && loc.lng) {
+      const dist = calculateHaversineDistanceKm(lat, lng, loc.lat, loc.lng);
+      if (dist < minDistance) {
+        minDistance = dist;
+        nearest = loc;
+      }
+    }
+  }
+
+  if (minDistance < 1.0) {
+    return {
+      areaName: nearest.label,
+      fullAddress: nearest.fullAddress,
+      matchedLoc: nearest
+    };
+  }
+
+  return {
+    areaName: `Near ${nearest.label}`,
+    fullAddress: `${nearest.label}, Agartala, Tripura`,
+    matchedLoc: nearest
+  };
+}
+
+function initCheckoutDeliveryMap(initialLat, initialLng) {
+  const mapContainer = document.getElementById('checkoutDeliveryMap');
+  if (!mapContainer || typeof L === 'undefined') return;
+
+  const config = Store.getConfig();
+  const storeLoc = config.storeLocation || GROSSHUB_STORE_COORDS;
+  const storeLat = (storeLoc && storeLoc.lat) ? storeLoc.lat : GROSSHUB_STORE_COORDS.lat;
+  const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : GROSSHUB_STORE_COORDS.lng;
+
+  // Check if address field already has text we can match
+  const addrInput = document.getElementById('checkoutAddress');
+  let custLat = initialLat;
+  let custLng = initialLng;
+
+  if (!custLat || !custLng) {
+    if (addrInput && addrInput.value && addrInput.value.trim().length > 3) {
+      const lower = addrInput.value.toLowerCase();
+      const matched = AGARTALA_LOCALITY_DISTANCES.find(loc => loc.names.some(n => lower.includes(n)));
+      if (matched && matched.lat && matched.lng) {
+        custLat = matched.lat;
+        custLng = matched.lng;
+      }
+    }
+  }
+
+  if (!custLat || !custLng) {
+    custLat = (lastCustomerGps ? lastCustomerGps.lat : DEFAULT_AGARTALA_CUSTOMER_COORDS.lat);
+    custLng = (lastCustomerGps ? lastCustomerGps.lng : DEFAULT_AGARTALA_CUSTOMER_COORDS.lng);
+  }
+
+  // If address field is blank, immediately set it from the initial pin!
+  if (addrInput && (!addrInput.value || addrInput.value.trim() === '')) {
+    const nearest = getNearestAgartalaAddress(custLat, custLng);
+    addrInput.value = nearest.fullAddress;
+  }
+
+  if (checkoutMap) {
+    if (checkoutCustomerMarker) {
+      checkoutCustomerMarker.setLatLng([custLat, custLng]);
+    }
+    if (checkoutRoutePolyline) {
+      checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [custLat, custLng]]);
+    }
+    const bounds = L.latLngBounds([[storeLat, storeLng], [custLat, custLng]]);
+    checkoutMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+    setTimeout(() => { if (checkoutMap) checkoutMap.invalidateSize(); }, 200);
+    return;
+  }
+
+  // Create Leaflet Map
+  checkoutMap = L.map('checkoutDeliveryMap', {
+    zoomControl: true,
+    attributionControl: false
+  }).setView([(storeLat + custLat) / 2, (storeLng + custLng) / 2], 14);
+
+  // OpenStreetMap tile layer
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(checkoutMap);
+
+  // Store Hub Marker (Fixed dispatch hub)
+  const storeIcon = L.divIcon({
+    className: 'leaflet-store-marker',
+    html: '<div class="map-hub-pin"><span class="pin-icon">🏪</span><span class="pin-badge">GrossHub Hub</span></div>',
+    iconSize: [42, 42],
+    iconAnchor: [21, 21]
+  });
+
+  checkoutStoreMarker = L.marker([storeLat, storeLng], {
+    icon: storeIcon,
+    interactive: true
+  }).addTo(checkoutMap);
+
+  checkoutStoreMarker.bindPopup('<strong>🏪 GrossHub Hub, Bhattapukur</strong><br>Express Grocery Dispatch Center');
+
+  // Customer Doorstep Marker (Draggable!)
+  const customerIcon = L.divIcon({
+    className: 'leaflet-customer-marker',
+    html: '<div class="map-customer-pin"><span class="pin-head">📍</span><span class="pin-label">Your Doorstep</span></div>',
+    iconSize: [40, 50],
+    iconAnchor: [20, 46]
+  });
+
+  checkoutCustomerMarker = L.marker([custLat, custLng], {
+    icon: customerIcon,
+    draggable: true,
+    autoPan: true
+  }).addTo(checkoutMap);
+
+  checkoutCustomerMarker.bindPopup('<strong>📍 Your Delivery Location</strong><br>Drag pin directly to your doorstep!');
+
+  // Route Polyline (Dashed emerald route)
+  checkoutRoutePolyline = L.polyline([
+    [storeLat, storeLng],
+    [custLat, custLng]
+  ], {
+    color: '#059669',
+    weight: 4,
+    dashArray: '6, 8',
+    opacity: 0.9,
+    lineJoin: 'round'
+  }).addTo(checkoutMap);
+
+  const bounds = L.latLngBounds([[storeLat, storeLng], [custLat, custLng]]);
+  checkoutMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+
+  // Drag listeners
+  checkoutCustomerMarker.on('drag', (e) => {
+    const pos = e.target.getLatLng();
+    if (checkoutRoutePolyline) {
+      checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [pos.lat, pos.lng]]);
+    }
+    const straightKm = calculateHaversineDistanceKm(storeLat, storeLng, pos.lat, pos.lng);
+    const roadKm = straightKm < 1 ? Math.round(straightKm * 1.1 * 10) / 10 : Math.round(straightKm * 1.25 * 10) / 10;
+    const effectiveKm = Math.max(0.5, Math.min(35, roadKm));
+    
+    const distBadge = document.getElementById('mtbTracedDistBadge');
+    if (distBadge) distBadge.textContent = `${effectiveKm} km`;
+  });
+
+  checkoutCustomerMarker.on('dragend', (e) => {
+    const pos = e.target.getLatLng();
+    handleMapCustomerLocationChange(pos.lat, pos.lng, 'map_drag');
+  });
+
+  // Tap anywhere on map to drop customer pin
+  checkoutMap.on('click', (e) => {
+    if (checkoutCustomerMarker) {
+      checkoutCustomerMarker.setLatLng(e.latlng);
+    }
+    handleMapCustomerLocationChange(e.latlng.lat, e.latlng.lng, 'map_click');
+  });
+
+  setTimeout(() => {
+    if (checkoutMap) checkoutMap.invalidateSize();
+  }, 250);
+}
+
+function handleMapCustomerLocationChange(lat, lng, source = 'map') {
+  const config = Store.getConfig();
+  const storeLoc = config.storeLocation || GROSSHUB_STORE_COORDS;
+  const storeLat = (storeLoc && storeLoc.lat) ? storeLoc.lat : GROSSHUB_STORE_COORDS.lat;
+  const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : GROSSHUB_STORE_COORDS.lng;
+
+  // 1. Redraw Route Polyline
+  if (checkoutRoutePolyline) {
+    checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [lat, lng]]);
+  }
+
+  // 2. Calculate Road Distance from Bhattapukur Store Hub
+  const straightKm = calculateHaversineDistanceKm(storeLat, storeLng, lat, lng);
+  const roadKm = straightKm < 1 ? Math.round(straightKm * 1.1 * 10) / 10 : Math.round(straightKm * 1.25 * 10) / 10;
+  const effectiveKm = Math.max(0.5, Math.min(35, roadKm));
+
+  lastCustomerGps = {
+    lat: lat,
+    lng: lng,
+    accuracy: 10,
+    calculatedKm: roadKm,
+    effectiveKm: effectiveKm,
+    timestamp: new Date().toISOString()
+  };
+
+  // 3. IMMEDIATELY set the delivery address as selected in map
+  const nearest = getNearestAgartalaAddress(lat, lng);
+  const addrInput = document.getElementById('checkoutAddress');
+  if (addrInput) {
+    addrInput.value = nearest.fullAddress;
+  }
+
+  // 4. Calculate Distance and set the Delivery Fee using Uber Rider model
+  setCustomerDistance(effectiveKm, source);
+
+  // 5. Update Telemetry Bar
+  const distBadge = document.getElementById('mtbTracedDistBadge');
+  if (distBadge) distBadge.textContent = `${effectiveKm} km`;
+
+  const doorstepName = document.getElementById('mtbDoorstepName');
+  if (doorstepName) doorstepName.textContent = nearest.areaName;
+
+  // 6. Show instant feedback banner
+  const cart = Store.getCart();
+  const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+  const feeInfo = Store.calculateDeliveryFee(effectiveKm, subtotal, activeCoupon);
+  const feeDisplayStr = feeInfo.isFree ? 'FREE (GrossHub Sponsored)' : `₹${feeInfo.fee}`;
+  showAddressDetectionNotice(`📍 Delivery address set from Map: "${nearest.fullAddress}" • Distance: ${effectiveKm} km • Uber Rider Delivery Fee: ${feeDisplayStr}`);
+
+  // 7. Refine with OpenStreetMap Nominatim reverse geocode (async)
+  if (checkoutReverseGeoTimer) clearTimeout(checkoutReverseGeoTimer);
+  checkoutReverseGeoTimer = setTimeout(() => {
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.address) {
+        const a = data.address;
+        const parts = [];
+        if (a.road || a.pedestrian || a.suburb) parts.push(a.road || a.pedestrian || a.suburb);
+        if (a.neighbourhood || a.residential) parts.push(a.neighbourhood || a.residential);
+        if (a.city || a.town || a.county) parts.push(a.city || a.town || a.county);
+
+        if (parts.length > 0) {
+          const roadPart = (parts[0] && !/^z\d+/i.test(parts[0]) && !/^\d+$/.test(parts[0])) ? parts[0].trim() : '';
+          const alreadyIncluded = roadPart && (
+            nearest.fullAddress.toLowerCase().includes(roadPart.toLowerCase()) || 
+            nearest.areaName.toLowerCase().includes(roadPart.toLowerCase())
+          );
+          const refinedPlace = (roadPart && !alreadyIncluded) 
+            ? `${roadPart}, ${nearest.fullAddress}` 
+            : nearest.fullAddress;
+          if (doorstepName) doorstepName.textContent = roadPart || nearest.areaName;
+          if (addrInput) addrInput.value = refinedPlace;
+          showAddressDetectionNotice(`📍 Delivery address set from Map: "${refinedPlace}" • Distance: ${effectiveKm} km • Uber Rider Delivery Fee: ${feeDisplayStr}`);
+        }
+      }
+    })
+    .catch(() => {});
+  }, 500);
+}
+
+function updateCheckoutMapPosition(lat, lng, accuracy) {
+  if (!checkoutMap) {
+    initCheckoutDeliveryMap(lat, lng);
+    return;
+  }
+
+  const config = Store.getConfig();
+  const storeLoc = config.storeLocation || GROSSHUB_STORE_COORDS;
+  const storeLat = (storeLoc && storeLoc.lat) ? storeLoc.lat : GROSSHUB_STORE_COORDS.lat;
+  const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : GROSSHUB_STORE_COORDS.lng;
+
+  if (checkoutCustomerMarker) {
+    checkoutCustomerMarker.setLatLng([lat, lng]);
+  }
+
+  if (checkoutRoutePolyline) {
+    checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [lat, lng]]);
+  }
+
+  if (accuracy && accuracy < 5000) {
+    if (checkoutAccuracyCircle) {
+      checkoutAccuracyCircle.setLatLng([lat, lng]);
+      checkoutAccuracyCircle.setRadius(accuracy);
+    } else {
+      checkoutAccuracyCircle = L.circle([lat, lng], {
+        radius: accuracy,
+        color: '#059669',
+        fillColor: '#10b981',
+        fillOpacity: 0.15,
+        weight: 1
+      }).addTo(checkoutMap);
+    }
+  }
+
+  const bounds = L.latLngBounds([[storeLat, storeLng], [lat, lng]]);
+  checkoutMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+
+  const doorstepName = document.getElementById('mtbDoorstepName');
+  if (doorstepName) doorstepName.textContent = 'GPS Traced 🎯';
+}
 
 function setCustomerDistance(km, source = 'manual') {
   const numKm = Math.max(0.1, Math.min(50, Math.round(Number(km) * 10) / 10));
@@ -671,6 +1003,37 @@ function setCustomerDistance(km, source = 'manual') {
     }
   }
 
+  // Update Uber Delivery Rider Fare Live Breakdown Card
+  const formulaKm = document.getElementById('ufcFormulaKm');
+  if (formulaKm) formulaKm.textContent = `${numKm} km`;
+
+  const formulaDistFare = document.getElementById('ufcFormulaDistFare');
+  if (formulaDistFare) {
+    const distFare = (totals.feeInfo && totals.feeInfo.uberBreakdown && totals.feeInfo.uberBreakdown.distanceFare !== undefined)
+      ? totals.feeInfo.uberBreakdown.distanceFare
+      : Math.round(numKm * 10);
+    formulaDistFare.textContent = `₹${distFare}`;
+  }
+
+  const freeBanner = document.getElementById('ufcFreeBanner');
+  const ufcTitle = document.getElementById('ufcTitle');
+  const ufcFeeSub = document.getElementById('ufcDisplayFeeSub');
+  const sponsoredAmt = document.getElementById('ufcSponsoredAmount');
+
+  if (totals.feeInfo && totals.feeInfo.isFree) {
+    if (freeBanner) freeBanner.style.display = 'block';
+    if (sponsoredAmt) sponsoredAmt.textContent = totals.feeInfo.originalFee || '35';
+    if (ufcTitle) ufcTitle.textContent = '🎉 GrossHub Sponsors Uber Rider Fee!';
+    if (ufcFeeSub) ufcFeeSub.textContent = '100% Free for you';
+  } else {
+    if (freeBanner) freeBanner.style.display = 'none';
+    if (ufcTitle) ufcTitle.textContent = 'Transparent Rider Delivery Fare';
+    if (ufcFeeSub) ufcFeeSub.textContent = 'Delivery Fee';
+  }
+
+  const distBadge = document.getElementById('mtbTracedDistBadge');
+  if (distBadge) distBadge.textContent = `${numKm} km`;
+
   renderDistanceTierCards();
   updateCartBadgeAndDrawer();
 }
@@ -684,19 +1047,76 @@ function handleCustomerDistanceInput(val) {
 
 function changeCustomerDistance(delta) {
   const current = Number(document.getElementById('checkoutCustomDistance')?.value) || selectedDistanceKm || 1.5;
-  setCustomerDistance(Math.max(0.5, Math.round((current + delta) * 10) / 10), 'stepper');
+  const newKm = Math.max(0.5, Math.min(35, Math.round((current + delta) * 10) / 10));
+  setCustomerDistance(newKm, 'stepper');
+
+  // Scale map customer marker position radially along the route
+  if (checkoutCustomerMarker && checkoutMap) {
+    const config = Store.getConfig();
+    const storeLoc = config.storeLocation || GROSSHUB_STORE_COORDS;
+    const storeLat = (storeLoc && storeLoc.lat) ? storeLoc.lat : GROSSHUB_STORE_COORDS.lat;
+    const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : GROSSHUB_STORE_COORDS.lng;
+
+    const currentPos = checkoutCustomerMarker.getLatLng();
+    const dLat = currentPos.lat - storeLat;
+    const dLng = currentPos.lng - storeLng;
+    const currentDistDeg = Math.sqrt(dLat * dLat + dLng * dLng) || 0.01;
+
+    // 1 deg ~ 111 km road distance factor 1.25
+    const targetDeg = (newKm / 1.25) / 111.0;
+    const scale = targetDeg / currentDistDeg;
+
+    const newLat = storeLat + (dLat * scale);
+    const newLng = storeLng + (dLng * scale);
+
+    checkoutCustomerMarker.setLatLng([newLat, newLng]);
+    if (checkoutRoutePolyline) {
+      checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [newLat, newLng]]);
+    }
+
+    // Set delivery address as selected in map
+    const nearest = getNearestAgartalaAddress(newLat, newLng);
+    const addrInput = document.getElementById('checkoutAddress');
+    if (addrInput) {
+      addrInput.value = nearest.fullAddress;
+    }
+
+    const doorstepName = document.getElementById('mtbDoorstepName');
+    if (doorstepName) doorstepName.textContent = nearest.areaName;
+
+    const cart = Store.getCart();
+    const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const feeInfo = Store.calculateDeliveryFee(newKm, subtotal, activeCoupon);
+    const feeDisplayStr = feeInfo.isFree ? 'FREE (Sponsored)' : `₹${feeInfo.fee}`;
+    showAddressDetectionNotice(`📍 Delivery address set from Map: "${nearest.fullAddress}" • Distance: ${newKm} km • Delivery Fee: ${feeDisplayStr}`);
+  }
 }
 
 function handleCustomerAreaSelect(val) {
   if (!val) return;
   const parsed = parseFloat(val);
   if (!isNaN(parsed) && parsed > 0) {
-    setCustomerDistance(parsed, 'area_select');
+    // Pan map & move pin to selected Agartala locality
+    const matched = AGARTALA_LOCALITY_DISTANCES.find(l => Math.abs(l.km - parsed) < 0.35);
+    if (matched && matched.lat && matched.lng) {
+      if (checkoutCustomerMarker) {
+        checkoutCustomerMarker.setLatLng([matched.lat, matched.lng]);
+      }
+      handleMapCustomerLocationChange(matched.lat, matched.lng, 'area_select');
+      if (checkoutMap) {
+        const config = Store.getConfig();
+        const storeLoc = config.storeLocation || GROSSHUB_STORE_COORDS;
+        const bounds = L.latLngBounds([[storeLoc.lat || 23.8188, storeLoc.lng || 91.2725], [matched.lat, matched.lng]]);
+        checkoutMap.fitBounds(bounds, { padding: [40, 40] });
+      }
+    } else {
+      setCustomerDistance(parsed, 'area_select');
+    }
   }
 }
 
 function handleAddressDistanceDetection(addressText) {
-  if (!addressText) {
+  if (!addressText || !addressText.trim()) {
     hideAddressDetectionNotice();
     return;
   }
@@ -714,14 +1134,30 @@ function handleAddressDistanceDetection(addressText) {
     }
   }
 
-  // 2. Check known Agartala localities
+  // 2. Check known Agartala localities & update map location
   for (const loc of AGARTALA_LOCALITY_DISTANCES) {
     for (const name of loc.names) {
       if (lower.includes(name)) {
+        if (loc.lat && loc.lng) {
+          if (checkoutCustomerMarker) {
+            checkoutCustomerMarker.setLatLng([loc.lat, loc.lng]);
+          }
+          if (checkoutRoutePolyline) {
+            const config = Store.getConfig();
+            const storeLoc = config.storeLocation || GROSSHUB_STORE_COORDS;
+            checkoutRoutePolyline.setLatLngs([[storeLoc.lat || 23.8188, storeLoc.lng || 91.2725], [loc.lat, loc.lng]]);
+          }
+          if (checkoutMap) {
+            checkoutMap.panTo([loc.lat, loc.lng]);
+          }
+          const doorstepName = document.getElementById('mtbDoorstepName');
+          if (doorstepName) doorstepName.textContent = loc.label;
+        }
+
         setCustomerDistance(loc.km, 'address_text');
         const feeInfo = Store.calculateDeliveryFee(loc.km, Store.getCart().reduce((s,i)=>s+i.price*i.qty,0), activeCoupon);
-        const feeText = feeInfo.isFree ? 'FREE' : `₹${feeInfo.fee}`;
-        showAddressDetectionNotice(`📍 Matched "${name.charAt(0).toUpperCase() + name.slice(1)}" (~${loc.km} km) • Delivery fee automatically set to ${feeText}!`);
+        const feeText = feeInfo.isFree ? 'FREE (Sponsored)' : `₹${feeInfo.fee}`;
+        showAddressDetectionNotice(`📍 Matched "${name.charAt(0).toUpperCase() + name.slice(1)}" (~${loc.km} km) • Delivery fee set to ${feeText} (Uber Rider Fare)!`);
         return;
       }
     }
@@ -948,6 +1384,16 @@ function openCheckoutModal() {
   selectPaymentOption('Cash on Delivery');
 
   openModal('checkoutModal');
+
+  // Initialize interactive Leaflet map & trace customer route
+  setTimeout(() => {
+    initCheckoutDeliveryMap(lastCustomerGps ? lastCustomerGps.lat : null, lastCustomerGps ? lastCustomerGps.lng : null);
+    const addrInput = document.getElementById('checkoutAddress');
+    if (!addrInput || !addrInput.value || addrInput.value.trim() === '') {
+      const pos = checkoutCustomerMarker ? checkoutCustomerMarker.getLatLng() : { lat: 23.8315, lng: 91.2825 };
+      handleMapCustomerLocationChange(pos.lat, pos.lng, 'modal_open');
+    }
+  }, 150);
 }
 
 function selectPaymentOption(option) {
@@ -1020,7 +1466,10 @@ function handleCheckoutSubmit(e) {
   const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
   const matchedTier = tiers.find(t => t.id === selectedDistanceTierId) || tiers[0];
 
-  // Create order
+  const custLat = lastCustomerGps?.lat || (checkoutCustomerMarker ? checkoutCustomerMarker.getLatLng().lat : 23.8250);
+  const custLng = lastCustomerGps?.lng || (checkoutCustomerMarker ? checkoutCustomerMarker.getLatLng().lng : 91.2780);
+
+  // Create order with exact traced coordinates & Uber delivery rider fee breakdown
   const order = Store.createOrder({
     customer: { 
       name, 
@@ -1030,12 +1479,15 @@ function handleCheckoutSubmit(e) {
       notes,
       distanceKm: selectedDistanceKm,
       distanceTierId: selectedDistanceTierId,
-      gpsCoords: lastCustomerGps
+      gpsCoords: lastCustomerGps || { lat: custLat, lng: custLng }
     },
     deliverySlot: slot,
     deliveryDistanceKm: selectedDistanceKm,
-    deliveryDistanceLabel: matchedTier.label,
-    gpsCoords: lastCustomerGps,
+    deliveryDistanceLabel: `Uber Rider: ${selectedDistanceKm} km`,
+    gpsCoords: lastCustomerGps || { lat: custLat, lng: custLng },
+    customerLat: custLat,
+    customerLng: custLng,
+    uberBreakdown: totals.feeInfo?.uberBreakdown || null,
     paymentMethod: selectedPaymentMethod,
     items: cart,
     subtotal: totals.subtotal,
