@@ -387,14 +387,8 @@
           </div>
 
           <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
-              <label class="form-label" for="checkoutAddress" style="margin-bottom: 0;">Delivery Address (Agartala, Tripura) *</label>
-              <button type="button" class="btn-gps-chip" id="btnGpsAddressChip" onclick="handleAutoDetectLocation()" title="Detect my address and calculate delivery fee via GPS">
-                <span class="gps-chip-icon">🎯</span> <span>Track with GPS</span>
-              </button>
-            </div>
+            <label class="form-label" for="checkoutAddress">Delivery Address (Agartala, Tripura) *</label>
             <input type="text" id="checkoutAddress" class="form-input" placeholder="House/Flat No, Lane, Area (e.g. Bhattapukur, Ramnagar, Melarmath)" required oninput="handleAddressDistanceDetection(this.value)">
-            <div id="addressDetectedNotice" class="address-detected-notice" style="display: none;"></div>
           </div>
 
           <div class="form-row-2">
@@ -417,102 +411,45 @@
             <input type="text" id="checkoutNotes" class="form-input" placeholder="e.g. Please ring bell twice or call upon arrival">
           </div>
 
-          <!-- Interactive Customer Location Map & Live Delivery Route Tracing -->
+          <!-- Select Delivery Location on Map -->
           <div class="checkout-map-section">
             <div class="cms-header">
               <div class="cms-title">
                 <span class="cms-live-dot pulse"></span>
-                <strong>📍 Trace Exact Location on Map</strong>
-                <span class="cms-sub">Tap or drag pin to your exact building / doorstep</span>
+                <strong>📍 Select Delivery Location on Map</strong>
+                <span class="cms-sub">Tap or drag pin to your exact building</span>
               </div>
-              <button type="button" class="btn-cms-gps" id="btnMapLocateMe" onclick="handleAutoDetectLocation()" title="Trace your exact coordinates with browser GPS">
-                <span id="mapGpsIcon">🎯</span> <span id="mapGpsText">Trace My Location</span>
+              <button type="button" class="btn-cms-gps" id="btnMapLocateMe" onclick="handleAutoDetectLocation()" title="Trace your coordinates with browser GPS">
+                <span id="mapGpsIcon">🎯</span> <span id="mapGpsText">Locate Me</span>
               </button>
             </div>
             
             <div class="map-container-frame">
               <div id="checkoutDeliveryMap" class="checkout-delivery-map"></div>
-              <div class="map-quick-hint">
-                <span>💡 <strong>Interactive Map:</strong> Tap anywhere or drag the blue pin 📍 right to your doorstep for pinpoint delivery.</span>
+            </div>
+
+            <!-- Clean Calculated Delivery Fee Bar -->
+            <div class="clean-delivery-calc-bar">
+              <div class="cdcb-item">
+                <span class="cdcb-label">📍 Traced Distance:</span>
+                <strong class="cdcb-value" id="mapTracedDistVal">1.5 km</strong>
+              </div>
+              <div class="cdcb-divider"></div>
+              <div class="cdcb-item">
+                <span class="cdcb-label">🚚 Delivery Fee:</span>
+                <strong class="cdcb-value fee" id="mapCalculatedFeeVal">₹35</strong>
               </div>
             </div>
 
-            <!-- Route & Distance Telemetry Bar -->
-            <div class="map-telemetry-bar">
-              <div class="mtb-point">
-                <div class="mtb-icon">🏪</div>
-                <div class="mtb-data">
-                  <span class="mtb-lbl">GrossHub Hub</span>
-                  <strong class="mtb-val">Bhattapukur, Agartala</strong>
-                </div>
-              </div>
-              <div class="mtb-connector">
-                <span class="mtb-line"></span>
-                <span class="mtb-arrow">➔</span>
-                <span class="mtb-dist-pill" id="mtbTracedDistBadge">1.5 km</span>
-              </div>
-              <div class="mtb-point">
-                <div class="mtb-icon">📍</div>
-                <div class="mtb-data">
-                  <span class="mtb-lbl">Your Doorstep</span>
-                  <strong class="mtb-val" id="mtbDoorstepName">Traced on Map</strong>
-                </div>
-              </div>
-            </div>
-
-            <!-- Uber Delivery Rider Fare Live Breakdown Card -->
-            <div class="uber-fare-card" id="uberFareCard">
-              <div class="ufc-header">
-                <div class="ufc-brand">
-                  <div class="ufc-badge">⚡ UBER DELIVERY RIDER PRICING</div>
-                  <strong class="ufc-title" id="ufcTitle">Transparent Rider Delivery Fare</strong>
-                </div>
-                <div class="ufc-pricing">
-                  <div class="ufc-fee" id="dlfAmount">₹35</div>
-                  <div class="ufc-fee-sub" id="ufcDisplayFeeSub">Delivery Fee</div>
-                </div>
-              </div>
-              <div class="ufc-formula" id="ufcFormula">
-                <span>Base Fare: <strong>₹20</strong></span>
-                <span class="ufc-dot">•</span>
-                <span>Distance: <strong id="ufcFormulaKm">1.5 km</strong> × ₹10/km = <strong id="ufcFormulaDistFare">₹15</strong></span>
-                <span class="ufc-dot">•</span>
-                <span class="ufc-min">(Min ₹25)</span>
-              </div>
-              <div class="ufc-free-banner" id="ufcFreeBanner" style="display: none;">
-                🎉 <strong>Free Delivery Unlocked!</strong> GrossHub sponsors 100% of your Uber Rider delivery fee!
-              </div>
-            </div>
-
-            <div id="gpsStatusMessage" class="gps-status-msg" style="display: none;"></div>
-
-            <!-- Quick Locality & Manual Distance Adjustment -->
-            <div class="distance-input-row">
-              <div class="dir-left">
-                <span class="dir-label">Adjust Distance Manually:</span>
-                <div class="dir-stepper-box">
-                  <button type="button" class="btn-dist-step" onclick="changeCustomerDistance(-0.5)" title="Decrease distance">−</button>
-                  <input type="number" id="checkoutCustomDistance" class="form-input dist-input" min="0.1" max="50" step="0.5" value="1.5" oninput="handleCustomerDistanceInput(this.value)">
-                  <span class="dist-unit">km</span>
-                  <button type="button" class="btn-dist-step" onclick="changeCustomerDistance(0.5)" title="Increase distance">+</button>
-                </div>
-              </div>
-              <div style="flex: 1; min-width: 220px;">
-                <select id="checkoutAreaSelect" class="form-select" onchange="handleCustomerAreaSelect(this.value)" style="font-size: 0.85rem;">
-                  <option value="">-- Or jump to Agartala Locality --</option>
-                  <option value="1.5">Bhattapukur, Badharghat, AD Nagar, Pratapgarh (~1.5 km)</option>
-                  <option value="3.5">Melarmath, Banamalipur, Ramnagar, Battala (~3.5 km)</option>
-                  <option value="6.5">Kunjaban, GB Hospital, Indranagar, Amtali (~6.5 km)</option>
-                  <option value="10.0">Khayerpur, Ranirbazar, New Capital Complex (~10 km)</option>
-                  <option value="15.0">Jirania, Sekerkote, Airport Zone (~15 km)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="distance-tiers-list" id="distanceTiersContainer" style="display: none;">
-              <!-- Kept for backward compatibility -->
-            </div>
+            <!-- Hidden compatibility elements -->
+            <input type="hidden" id="checkoutCustomDistance" value="1.5">
             <input type="hidden" id="checkoutSelectedDistance" value="1.5">
+            <div id="addressDetectedNotice" style="display: none;"></div>
+            <div id="gpsStatusMessage" style="display: none;"></div>
+            <div id="distanceTiersContainer" style="display: none;"></div>
+            <div id="dlfAmount" style="display: none;"></div>
+            <div id="mtbTracedDistBadge" style="display: none;"></div>
+            <div id="mtbDoorstepName" style="display: none;"></div>
           </div>
 
           <!-- Payment Selection -->

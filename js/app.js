@@ -993,6 +993,19 @@ function setCustomerDistance(km, source = 'manual') {
   // Update totals and UI
   const totals = updateCheckoutTotals();
 
+  // Update clean delivery fee & distance bar
+  const tracedDistEl = document.getElementById('mapTracedDistVal');
+  if (tracedDistEl) tracedDistEl.textContent = `${numKm} km`;
+
+  const calcFeeEl = document.getElementById('mapCalculatedFeeVal');
+  if (calcFeeEl) {
+    if (totals.feeInfo && totals.feeInfo.isFree) {
+      calcFeeEl.innerHTML = '<span class="clean-fee-free">FREE</span> <small style="font-weight:600; font-size:0.76rem; color:#059669;">(Free Delivery)</small>';
+    } else {
+      calcFeeEl.textContent = `₹${totals.deliveryCharge}`;
+    }
+  }
+
   // Update live fee display badge in the distance box
   const feeDisplay = document.getElementById('dlfAmount');
   if (feeDisplay) {
@@ -1167,11 +1180,7 @@ function handleAddressDistanceDetection(addressText) {
 }
 
 function showAddressDetectionNotice(msg) {
-  const el = document.getElementById('addressDetectedNotice');
-  if (el) {
-    el.innerHTML = `<span>⚡</span> <span>${escapeHTML(msg)}</span>`;
-    el.style.display = 'flex';
-  }
+  // Kept silent for clean uncluttered UI
 }
 
 function hideAddressDetectionNotice() {
