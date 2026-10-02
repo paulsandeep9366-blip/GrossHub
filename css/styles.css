@@ -3082,3 +3082,586 @@ button {
   70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
   100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
 }
+
+
+/* ==========================================================================
+   Swiggy & Zomato Quick-Commerce Delivery Setup Styles
+   ========================================================================== */
+.sz-checkout-modal-container {
+  max-width: 600px;
+  width: 95%;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sz-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sz-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sz-header-icon {
+  font-size: 1.8rem;
+  background: #ecfdf5;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #a7f3d0;
+}
+
+.sz-header-title h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sz-header-sub {
+  font-size: 0.78rem;
+  color: #059669;
+  font-weight: 700;
+}
+
+.sz-modal-body {
+  padding: 16px 20px 24px;
+  overflow-y: auto;
+}
+
+/* Map Section */
+.sz-map-section {
+  margin-bottom: 16px;
+}
+
+.sz-map-wrapper {
+  position: relative;
+  height: 250px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid #cbd5e1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.sz-leaflet-map {
+  width: 100%;
+  height: 100%;
+  background: #e2e8f0;
+  z-index: 1;
+}
+
+/* Search Bar Overlay */
+.sz-map-search-bar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 1000;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  display: flex;
+  align-items: center;
+  padding: 7px 12px;
+  gap: 10px;
+  border: 1.5px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.sz-map-search-bar:focus-within {
+  border-color: #059669;
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.2);
+}
+
+.sz-search-icon {
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.sz-search-input {
+  border: none;
+  outline: none;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #1e293b;
+  width: 100%;
+  background: transparent;
+}
+
+.sz-search-clear-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sz-search-clear-btn:hover {
+  background: #e2e8f0;
+}
+
+.sz-search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.sz-search-result-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s;
+}
+
+.sz-search-result-item:hover {
+  background: #f0fdf4;
+}
+
+.sz-sri-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.sz-sri-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sz-sri-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.sz-sri-dist {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* Floating Center Pin 📍 */
+.sz-center-pin-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sz-map-wrapper.is-dragging .sz-center-pin-container {
+  transform: translate(-50%, -120%) scale(1.08);
+}
+
+.sz-pin-bubble {
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 16px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: szBubblePulse 2s infinite ease-in-out;
+}
+
+.sz-pin-bubble-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.sz-pin-icon-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sz-pin-svg {
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+}
+
+.sz-pin-shadow {
+  width: 14px;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 50%;
+  filter: blur(1.5px);
+  margin-top: -2px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.sz-map-wrapper.is-dragging .sz-pin-shadow {
+  transform: scale(0.6);
+  opacity: 0.35;
+}
+
+@keyframes szBubblePulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Floating GPS Button */
+.sz-floating-gps-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 1000;
+  background: #ffffff;
+  border: 1.5px solid #059669;
+  color: #065f46;
+  border-radius: 24px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sz-floating-gps-btn:hover {
+  background: #ecfdf5;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.25);
+}
+
+.sz-map-drag-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(4px);
+  color: #f8fafc;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  pointer-events: none;
+}
+
+/* Confirmed Location Card (Swiggy / Zomato style) */
+.sz-location-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.sz-loc-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.sz-loc-info {
+  flex: 1;
+}
+
+.sz-loc-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sz-loc-heading h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sz-loc-badge {
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #a7f3d0;
+}
+
+.sz-loc-address {
+  margin: 4px 0 8px 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.sz-loc-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.sz-meta-dot {
+  color: #cbd5e1;
+}
+
+.sz-fee-val {
+  color: #059669;
+  font-weight: 800;
+}
+
+/* Structured Address Section */
+.sz-form-section {
+  margin-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+}
+
+.sz-section-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sz-input {
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sz-input:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+  outline: none;
+}
+
+.sz-select {
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Save Address As Chips */
+.sz-tag-group {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.sz-group-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.sz-chips-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sz-chip {
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.sz-chip:hover {
+  border-color: #94a3b8;
+}
+
+.sz-chip.active {
+  background: #ecfdf5;
+  border-color: #059669;
+  color: #065f46;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.15);
+}
+
+/* Delivery Instructions Chips */
+.sz-inst-chip {
+  border: 1.5px dashed #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.sz-inst-chip:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.sz-inst-chip.active {
+  background: #dcfce7;
+  border: 1.5px solid #16a34a;
+  color: #14532d;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
+}
+
+/* Bill Details Card */
+.sz-bill-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 18px;
+}
+
+.sz-bill-header {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.sz-bill-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.sz-bill-row.text-success {
+  color: #059669;
+  font-weight: 700;
+}
+
+.sz-bill-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 8px 0;
+}
+
+.sz-grand-total-row {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+/* Full Width CTA Button */
+.sz-cta-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 15px 20px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 16px;
+  box-sizing: border-box;
+}
+
+.sz-cta-btn:hover {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.45);
+}
+
+.sz-cta-btn:active {
+  transform: translateY(0);
+}
+
+.sz-cta-price {
+  background: rgba(255, 255, 255, 0.22);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.sz-cta-arrow {
+  font-size: 1.1rem;
+}

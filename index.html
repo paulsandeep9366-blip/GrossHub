@@ -26,7 +26,7 @@
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="css/leaflet.css">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/styles.css?v=2.6.0">
+  <link rel="stylesheet" href="css/styles.css?v=2.7.0">
 </head>
 <body>
 
@@ -366,82 +366,90 @@
     </div>
   </div>
 
-  <!-- Web Checkout Modal -->
+    <!-- Swiggy / Zomato Quick-Commerce Delivery Modal -->
   <div class="modal-overlay" id="checkoutModal">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3>🛍️ Finalize Delivery</h3>
+    <div class="modal-container sz-checkout-modal-container">
+      <div class="modal-header sz-modal-header">
+        <div class="sz-header-title">
+          <span class="sz-header-icon">🛵</span>
+          <div>
+            <h3>Delivery Details</h3>
+            <span class="sz-header-sub">Doorstep delivery in 30-45 mins</span>
+          </div>
+        </div>
         <button class="btn-modal-close" onclick="closeModal('checkoutModal')">✕</button>
       </div>
-      <div class="modal-body">
+
+      <div class="modal-body sz-modal-body">
         <form id="checkoutForm">
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label" for="checkoutName">Your Full Name *</label>
-              <input type="text" id="checkoutName" class="form-input" placeholder="e.g. Bikram Debbarma" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="checkoutPhone">10-Digit Mobile Number *</label>
-              <input type="tel" id="checkoutPhone" class="form-input" placeholder="e.g. 9862272399" maxlength="10" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="checkoutAddress">Delivery Address (Agartala, Tripura) *</label>
-            <input type="text" id="checkoutAddress" class="form-input" placeholder="House/Flat No, Lane, Area (e.g. Bhattapukur, Ramnagar, Melarmath)" required oninput="handleAddressDistanceDetection(this.value)">
-          </div>
-
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label" for="checkoutLandmark">Nearby Landmark</label>
-              <input type="text" id="checkoutLandmark" class="form-input" placeholder="e.g. Near Kali Temple / School">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="checkoutSlotSelect">Preferred Delivery Slot</label>
-              <select id="checkoutSlotSelect" class="form-select">
-                <option value="Instant Delivery (30-45 mins)">⚡ Instant Express (30-45 mins)</option>
-                <option value="Today Evening (6:00 PM - 8:00 PM)">🌆 Today Evening (6:00 PM - 8:00 PM)</option>
-                <option value="Tomorrow Morning (8:00 AM - 10:00 AM)">🌅 Tomorrow Morning (8:00 AM - 10:00 AM)</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="checkoutNotes">Delivery Notes / Instructions</label>
-            <input type="text" id="checkoutNotes" class="form-input" placeholder="e.g. Please ring bell twice or call upon arrival">
-          </div>
-
-          <!-- Select Delivery Location on Map -->
-          <div class="checkout-map-section">
-            <div class="cms-header">
-              <div class="cms-title">
-                <span class="cms-live-dot pulse"></span>
-                <strong>📍 Select Delivery Location on Map</strong>
-                <span class="cms-sub">Tap or drag pin to your exact building</span>
+          
+          <!-- 1. MAP SECTION (Swiggy / Zomato Center-Pin Map) -->
+          <div class="sz-map-section">
+            <div class="sz-map-wrapper">
+              
+              <!-- Map Search Overlay -->
+              <div class="sz-map-search-bar">
+                <span class="sz-search-icon">🔍</span>
+                <input type="text" id="szMapSearchInput" class="sz-search-input" placeholder="Search area, landmark or street in Agartala..." autocomplete="off">
+                <button type="button" class="sz-search-clear-btn" id="szSearchClearBtn" style="display:none;" onclick="clearMapSearch()">✕</button>
+                <div class="sz-search-results-dropdown" id="szSearchResultsDropdown"></div>
               </div>
-              <button type="button" class="btn-cms-gps" id="btnMapLocateMe" onclick="handleAutoDetectLocation()" title="Trace your coordinates with browser GPS">
-                <span id="mapGpsIcon">🎯</span> <span id="mapGpsText">Locate Me</span>
+
+              <!-- Leaflet Map Container -->
+              <div id="checkoutDeliveryMap" class="sz-leaflet-map"></div>
+
+              <!-- Floating Center Pin 📍 (Zomato/Swiggy Signature) -->
+              <div class="sz-center-pin-container" id="szCenterPinContainer">
+                <div class="sz-pin-bubble">
+                  <span class="sz-pin-bubble-dot"></span>
+                  <span class="sz-pin-bubble-text">Order will be delivered here</span>
+                </div>
+                <div class="sz-pin-icon-wrap">
+                  <svg class="sz-pin-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C7.58 2 4 5.58 4 10C4 15.25 12 22 12 22C12 22 20 15.25 20 10C20 5.58 16.42 2 12 2Z" fill="#059669" stroke="#ffffff" stroke-width="1.5"/>
+                    <circle cx="12" cy="9.5" r="3.2" fill="#ffffff"/>
+                  </svg>
+                  <div class="sz-pin-shadow"></div>
+                </div>
+              </div>
+
+              <!-- Floating Locate Me Button -->
+              <button type="button" class="sz-floating-gps-btn" id="btnMapLocateMe" onclick="handleAutoDetectLocation()" title="Use Current GPS Location">
+                <span class="sz-gps-crosshair">🎯</span>
+                <span class="sz-gps-label">Locate Me</span>
               </button>
-            </div>
-            
-            <div class="map-container-frame">
-              <div id="checkoutDeliveryMap" class="checkout-delivery-map"></div>
-            </div>
 
-            <!-- Clean Calculated Delivery Fee Bar -->
-            <div class="clean-delivery-calc-bar">
-              <div class="cdcb-item">
-                <span class="cdcb-label">📍 Traced Distance:</span>
-                <strong class="cdcb-value" id="mapTracedDistVal">1.5 km</strong>
-              </div>
-              <div class="cdcb-divider"></div>
-              <div class="cdcb-item">
-                <span class="cdcb-label">🚚 Delivery Fee:</span>
-                <strong class="cdcb-value fee" id="mapCalculatedFeeVal">₹35</strong>
+              <!-- Map Drag Notice -->
+              <div class="sz-map-drag-hint">
+                <span>Pan or drag map to adjust exact doorstep pin</span>
               </div>
             </div>
 
-            <!-- Hidden compatibility elements -->
+            <!-- Confirmed Location Card (Swiggy / Zomato style) -->
+            <div class="sz-location-card">
+              <div class="sz-loc-icon">📍</div>
+              <div class="sz-loc-info">
+                <div class="sz-loc-heading">
+                  <h4 id="szLocalityName">Bhattapukur, Agartala</h4>
+                  <span class="sz-loc-badge" id="szDeliveryBadge">⚡ 30-45 Mins</span>
+                </div>
+                <p id="szFullAddress" class="sz-loc-address">Bhattapukur, Agartala, Tripura - 799003</p>
+                <div class="sz-loc-meta">
+                  <span class="sz-meta-item">
+                    <span class="sz-meta-icon">📏</span>
+                    <strong id="mapTracedDistVal">1.5 km</strong> from Hub
+                  </span>
+                  <span class="sz-meta-dot">•</span>
+                  <span class="sz-meta-item">
+                    <span class="sz-meta-icon">🚚</span>
+                    Delivery Fee: <strong id="mapCalculatedFeeVal" class="sz-fee-val">₹35</strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden compatibility elements required by app logic -->
+            <input type="hidden" id="checkoutAddress" name="checkoutAddress">
             <input type="hidden" id="checkoutCustomDistance" value="1.5">
             <input type="hidden" id="checkoutSelectedDistance" value="1.5">
             <div id="addressDetectedNotice" style="display: none;"></div>
@@ -452,9 +460,86 @@
             <div id="mtbDoorstepName" style="display: none;"></div>
           </div>
 
-          <!-- Payment Selection -->
-          <div class="form-group" style="margin-top: 20px;">
-            <label class="form-label">Select Payment Method</label>
+          <!-- 2. STRUCTURED ADDRESS DETAILS (Zomato/Swiggy Standard) -->
+          <div class="sz-form-section">
+            <div class="sz-section-title">
+              <span>🏠</span> House / Building Details
+            </div>
+            
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="checkoutHouseNo">House / Flat / Floor / Building No. *</label>
+                <input type="text" id="checkoutHouseNo" class="form-input sz-input" placeholder="e.g. Flat 3B, Sunshine Apts, 2nd Floor" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="checkoutLandmark">Nearby Landmark (Optional)</label>
+                <input type="text" id="checkoutLandmark" class="form-input sz-input" placeholder="e.g. Opposite SBI ATM / Near Temple">
+              </div>
+            </div>
+
+            <!-- Save Address As Chips (Home / Work / Other) -->
+            <div class="sz-tag-group">
+              <label class="sz-group-label">Save Address As</label>
+              <div class="sz-chips-row" id="szAddressTypeChips">
+                <button type="button" class="sz-chip active" data-tag="Home" onclick="selectAddressType('Home')">
+                  <span>🏠</span> Home
+                </button>
+                <button type="button" class="sz-chip" data-tag="Work" onclick="selectAddressType('Work')">
+                  <span>🏢</span> Work
+                </button>
+                <button type="button" class="sz-chip" data-tag="Other" onclick="selectAddressType('Other')">
+                  <span>📍</span> Other
+                </button>
+              </div>
+            </div>
+
+            <!-- Delivery Instructions Chips (Signature Swiggy / Zomato Feature) -->
+            <div class="sz-tag-group">
+              <label class="sz-group-label">Delivery Instructions for Rider</label>
+              <div class="sz-chips-row sz-instruction-chips" id="szInstructionChips">
+                <button type="button" class="sz-inst-chip" data-inst="Avoid calling" onclick="toggleInstruction('Avoid calling')">
+                  <span>🔕</span> Avoid calling
+                </button>
+                <button type="button" class="sz-inst-chip" data-inst="Leave at door" onclick="toggleInstruction('Leave at door')">
+                  <span>🚪</span> Leave at door
+                </button>
+                <button type="button" class="sz-inst-chip" data-inst="Ring bell" onclick="toggleInstruction('Ring bell')">
+                  <span>🔔</span> Ring bell
+                </button>
+                <button type="button" class="sz-inst-chip" data-inst="Contactless delivery" onclick="toggleInstruction('Contactless delivery')">
+                  <span>🛡️</span> Contactless
+                </button>
+              </div>
+              <input type="hidden" id="checkoutNotes" class="form-input" placeholder="e.g. Please ring bell twice">
+            </div>
+
+            <!-- Customer Receiver Info -->
+            <div class="form-row-2" style="margin-top: 14px;">
+              <div class="form-group">
+                <label class="form-label" for="checkoutName">Receiver's Name *</label>
+                <input type="text" id="checkoutName" class="form-input sz-input" placeholder="e.g. Bikram Debbarma" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="checkoutPhone">10-Digit Mobile Number *</label>
+                <input type="tel" id="checkoutPhone" class="form-input sz-input" placeholder="e.g. 9862272399" maxlength="10" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="checkoutSlotSelect">Preferred Delivery Slot</label>
+              <select id="checkoutSlotSelect" class="form-select sz-select">
+                <option value="Instant Delivery (30-45 mins)">⚡ Instant Express (30-45 mins)</option>
+                <option value="Today Evening (6:00 PM - 8:00 PM)">🌆 Today Evening (6:00 PM - 8:00 PM)</option>
+                <option value="Tomorrow Morning (8:00 AM - 10:00 AM)">🌅 Tomorrow Morning (8:00 AM - 10:00 AM)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 3. PAYMENT METHOD SELECTION -->
+          <div class="sz-form-section" style="margin-top: 16px;">
+            <div class="sz-section-title">
+              <span>💳</span> Payment Option
+            </div>
             <div class="payment-selector-grid">
               <div class="payment-option-card selected" data-method="Cash on Delivery" onclick="selectPaymentOption('Cash on Delivery')">
                 <span class="poc-icon">💵</span>
@@ -488,28 +573,35 @@
             </div>
           </div>
 
-          <!-- Mini Summary Inside Checkout Modal -->
-          <div class="bill-summary-box" style="margin-top: 20px;">
-            <div class="bill-row">
-              <span>Items Total:</span>
-              <span id="checkoutSubtotal">₹0</span>
+          <!-- 4. SWIGGY / ZOMATO BILL SUMMARY CARD -->
+          <div class="sz-bill-card">
+            <div class="sz-bill-header">
+              <span>Bill Details</span>
             </div>
-            <div class="bill-row">
-              <span>Delivery Fee:</span>
-              <span id="checkoutDelivery">₹30</span>
+            <div class="sz-bill-row">
+              <span class="sz-bill-label">Item Total</span>
+              <span class="sz-bill-val" id="checkoutSubtotal">₹0</span>
             </div>
-            <div class="bill-row text-success" id="checkoutDiscountRow" style="display: none;">
-              <span>Promo Savings:</span>
-              <span id="checkoutDiscount">-₹0</span>
+            <div class="sz-bill-row">
+              <span class="sz-bill-label">Delivery Partner Fee</span>
+              <span class="sz-bill-val" id="checkoutDelivery">₹35</span>
             </div>
-            <div class="bill-row grand-total">
-              <span>Grand Total Payable:</span>
-              <span id="checkoutGrandTotal">₹0</span>
+            <div class="sz-bill-row text-success" id="checkoutDiscountRow" style="display: none;">
+              <span class="sz-bill-label">Promo Discount</span>
+              <span class="sz-bill-val" id="checkoutDiscount">-₹0</span>
+            </div>
+            <div class="sz-bill-divider"></div>
+            <div class="sz-bill-row sz-grand-total-row">
+              <span class="sz-gt-label">To Pay</span>
+              <span class="sz-gt-val" id="checkoutGrandTotal">₹0</span>
             </div>
           </div>
 
-          <button type="submit" class="btn-checkout-primary" style="margin-top: 10px;">
-            🎉 Place Order with GrossHub
+          <!-- 5. SWIGGY / ZOMATO PROMINENT CTA BUTTON -->
+          <button type="submit" class="sz-cta-btn" id="szSubmitBtn">
+            <span>Proceed to Pay</span>
+            <span class="sz-cta-price" id="szCtaPrice">₹0</span>
+            <span class="sz-cta-arrow">➔</span>
           </button>
         </form>
       </div>
@@ -831,10 +923,10 @@
   <!-- Leaflet Map Engine -->
   <script src="js/leaflet.js"></script>
   <!-- Scripts -->
-  <script src="js/data.js?v=2.6.0"></script>
-  <script src="js/store.js?v=2.6.0"></script>
-  <script src="js/tracking.js?v=2.6.0"></script>
-  <script src="js/app.js?v=2.6.0"></script>
+  <script src="js/data.js?v=2.7.0"></script>
+  <script src="js/store.js?v=2.7.0"></script>
+  <script src="js/tracking.js?v=2.7.0"></script>
+  <script src="js/app.js?v=2.7.0"></script>
 
   <!-- PWA Service Worker Registration -->
   <script>

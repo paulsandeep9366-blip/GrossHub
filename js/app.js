@@ -672,6 +672,7 @@ function getNearestAgartalaAddress(lat, lng) {
   if (minDistance < 1.0) {
     return {
       areaName: nearest.label,
+      label: nearest.label,
       fullAddress: nearest.fullAddress,
       matchedLoc: nearest
     };
@@ -679,10 +680,125 @@ function getNearestAgartalaAddress(lat, lng) {
 
   return {
     areaName: `Near ${nearest.label}`,
+    label: nearest.label,
     fullAddress: `${nearest.label}, Agartala, Tripura`,
     matchedLoc: nearest
   };
 }
+
+
+// --- Swiggy / Zomato Checkout Delivery Experience State & Handlers ---
+let selectedAddressType = 'Home';
+let selectedDeliveryInstructions = [];
+
+function selectAddressType(type) {
+  selectedAddressType = type;
+  document.querySelectorAll('#szAddressTypeChips .sz-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tag === type);
+  });
+}
+window.selectAddressType = selectAddressType;
+
+function toggleInstruction(inst) {
+  const idx = selectedDeliveryInstructions.indexOf(inst);
+  if (idx > -1) {
+    selectedDeliveryInstructions.splice(idx, 1);
+  } else {
+    selectedDeliveryInstructions.push(inst);
+  }
+
+  document.querySelectorAll('#szInstructionChips .sz-inst-chip').forEach(btn => {
+    btn.classList.toggle('active', selectedDeliveryInstructions.includes(btn.dataset.inst));
+  });
+
+  const notesInput = document.getElementById('checkoutNotes');
+  if (notesInput) {
+    notesInput.value = selectedDeliveryInstructions.join(', ');
+  }
+}
+window.toggleInstruction = toggleInstruction;
+
+function initMapAreaSearch() {
+  const input = document.getElementById('szMapSearchInput');
+  const dropdown = document.getElementById('szSearchResultsDropdown');
+  const clearBtn = document.getElementById('szSearchClearBtn');
+  if (!input || !dropdown) return;
+
+  if (input._searchBound) return;
+  input._searchBound = true;
+
+  input.addEventListener('input', (e) => {
+    const val = e.target.value.trim().toLowerCase();
+    if (!val) {
+      dropdown.style.display = 'none';
+      if (clearBtn) clearBtn.style.display = 'none';
+      return;
+    }
+    if (clearBtn) clearBtn.style.display = 'flex';
+
+    const matches = AGARTALA_LOCALITY_DISTANCES.filter(loc => 
+      loc.label.toLowerCase().includes(val) || 
+      loc.names.some(n => n.includes(val)) ||
+      (loc.fullAddress && loc.fullAddress.toLowerCase().includes(val))
+    );
+
+    if (matches.length === 0) {
+      dropdown.innerHTML = '<div style="padding:12px; font-size:0.82rem; color:#64748b; text-align:center;">No matching area in Agartala. Pan map to adjust pin.</div>';
+      dropdown.style.display = 'block';
+      return;
+    }
+
+    dropdown.innerHTML = matches.map(loc => `
+      <div class="sz-search-result-item" onclick="selectSearchedArea('${escapeHTML(loc.label)}')">
+        <div class="sz-sri-main">
+          <span class="sz-sri-name">${escapeHTML(loc.label)}</span>
+          <span class="sz-sri-sub">${escapeHTML(loc.fullAddress || '')}</span>
+        </div>
+        <span class="sz-sri-dist">${loc.km} km</span>
+      </div>
+    `).join('');
+    dropdown.style.display = 'block';
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.style.display = 'none';
+    }
+  });
+}
+
+function selectSearchedArea(label) {
+  const matched = AGARTALA_LOCALITY_DISTANCES.find(l => l.label === label);
+  if (!matched) return;
+
+  const input = document.getElementById('szMapSearchInput');
+  const dropdown = document.getElementById('szSearchResultsDropdown');
+  const clearBtn = document.getElementById('szSearchClearBtn');
+
+  if (input) input.value = matched.label;
+  if (dropdown) dropdown.style.display = 'none';
+  if (clearBtn) clearBtn.style.display = 'flex';
+
+  if (checkoutMap && matched.lat && matched.lng) {
+    checkoutMap.flyTo([matched.lat, matched.lng], 16, { duration: 1.2 });
+    handleMapCustomerLocationChange(matched.lat, matched.lng, 'search_select');
+  }
+}
+window.selectSearchedArea = selectSearchedArea;
+
+function clearMapSearch() {
+  const input = document.getElementById('szMapSearchInput');
+  const dropdown = document.getElementById('szSearchResultsDropdown');
+  const clearBtn = document.getElementById('szSearchClearBtn');
+
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  if (dropdown) dropdown.style.display = 'none';
+  if (clearBtn) clearBtn.style.display = 'none';
+}
+window.clearMapSearch = clearMapSearch;
 
 function initCheckoutDeliveryMap(initialLat, initialLng) {
   const mapContainer = document.getElementById('checkoutDeliveryMap');
@@ -715,29 +831,29 @@ function initCheckoutDeliveryMap(initialLat, initialLng) {
   }
 
   // If address field is blank, immediately set it from the initial pin!
+  const nearest = getNearestAgartalaAddress(custLat, custLng);
   if (addrInput && (!addrInput.value || addrInput.value.trim() === '')) {
-    const nearest = getNearestAgartalaAddress(custLat, custLng);
     addrInput.value = nearest.fullAddress;
   }
+  const szLocalityName = document.getElementById('szLocalityName');
+  if (szLocalityName) szLocalityName.textContent = nearest.label;
+  const szFullAddress = document.getElementById('szFullAddress');
+  if (szFullAddress) szFullAddress.textContent = nearest.fullAddress;
 
   if (checkoutMap) {
-    if (checkoutCustomerMarker) {
-      checkoutCustomerMarker.setLatLng([custLat, custLng]);
-    }
     if (checkoutRoutePolyline) {
       checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [custLat, custLng]]);
     }
-    const bounds = L.latLngBounds([[storeLat, storeLng], [custLat, custLng]]);
-    checkoutMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+    checkoutMap.setView([custLat, custLng], 15);
     setTimeout(() => { if (checkoutMap) checkoutMap.invalidateSize(); }, 200);
     return;
   }
 
-  // Create Leaflet Map
+  // Create Leaflet Map with Swiggy/Zomato settings
   checkoutMap = L.map('checkoutDeliveryMap', {
-    zoomControl: true,
+    zoomControl: false,
     attributionControl: false
-  }).setView([(storeLat + custLat) / 2, (storeLng + custLng) / 2], 14);
+  }).setView([custLat, custLng], 15);
 
   // OpenStreetMap tile layer
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -759,22 +875,6 @@ function initCheckoutDeliveryMap(initialLat, initialLng) {
 
   checkoutStoreMarker.bindPopup('<strong>🏪 GrossHub Hub, Bhattapukur</strong><br>Express Grocery Dispatch Center');
 
-  // Customer Doorstep Marker (Draggable!)
-  const customerIcon = L.divIcon({
-    className: 'leaflet-customer-marker',
-    html: '<div class="map-customer-pin"><span class="pin-head">📍</span><span class="pin-label">Your Doorstep</span></div>',
-    iconSize: [40, 50],
-    iconAnchor: [20, 46]
-  });
-
-  checkoutCustomerMarker = L.marker([custLat, custLng], {
-    icon: customerIcon,
-    draggable: true,
-    autoPan: true
-  }).addTo(checkoutMap);
-
-  checkoutCustomerMarker.bindPopup('<strong>📍 Your Delivery Location</strong><br>Drag pin directly to your doorstep!');
-
   // Route Polyline (Dashed emerald route)
   checkoutRoutePolyline = L.polyline([
     [storeLat, storeLng],
@@ -787,35 +887,33 @@ function initCheckoutDeliveryMap(initialLat, initialLng) {
     lineJoin: 'round'
   }).addTo(checkoutMap);
 
-  const bounds = L.latLngBounds([[storeLat, storeLng], [custLat, custLng]]);
-  checkoutMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+  // Swiggy & Zomato Center-Pin Dynamics
+  checkoutMap.on('movestart', () => {
+    const wrap = document.querySelector('.sz-map-wrapper');
+    if (wrap) wrap.classList.add('is-dragging');
+  });
 
-  // Drag listeners
-  checkoutCustomerMarker.on('drag', (e) => {
-    const pos = e.target.getLatLng();
+  checkoutMap.on('move', () => {
+    const center = checkoutMap.getCenter();
     if (checkoutRoutePolyline) {
-      checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [pos.lat, pos.lng]]);
+      checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [center.lat, center.lng]]);
     }
-    const straightKm = calculateHaversineDistanceKm(storeLat, storeLng, pos.lat, pos.lng);
-    const roadKm = straightKm < 1 ? Math.round(straightKm * 1.1 * 10) / 10 : Math.round(straightKm * 1.25 * 10) / 10;
-    const effectiveKm = Math.max(0.5, Math.min(35, roadKm));
-    
-    const distBadge = document.getElementById('mtbTracedDistBadge');
-    if (distBadge) distBadge.textContent = `${effectiveKm} km`;
   });
 
-  checkoutCustomerMarker.on('dragend', (e) => {
-    const pos = e.target.getLatLng();
-    handleMapCustomerLocationChange(pos.lat, pos.lng, 'map_drag');
+  checkoutMap.on('moveend', () => {
+    const wrap = document.querySelector('.sz-map-wrapper');
+    if (wrap) wrap.classList.remove('is-dragging');
+    const center = checkoutMap.getCenter();
+    handleMapCustomerLocationChange(center.lat, center.lng, 'map_pan');
   });
 
-  // Tap anywhere on map to drop customer pin
+  // Tap anywhere on map to pan smoothly to center
   checkoutMap.on('click', (e) => {
-    if (checkoutCustomerMarker) {
-      checkoutCustomerMarker.setLatLng(e.latlng);
-    }
-    handleMapCustomerLocationChange(e.latlng.lat, e.latlng.lng, 'map_click');
+    checkoutMap.panTo(e.latlng);
   });
+
+  // Initialize Agartala locality search overlay
+  initMapAreaSearch();
 
   setTimeout(() => {
     if (checkoutMap) checkoutMap.invalidateSize();
@@ -847,31 +945,30 @@ function handleMapCustomerLocationChange(lat, lng, source = 'map') {
     timestamp: new Date().toISOString()
   };
 
-  // 3. IMMEDIATELY set the delivery address as selected in map
+  // 3. IMMEDIATELY set the delivery address and location card as selected in map
   const nearest = getNearestAgartalaAddress(lat, lng);
   const addrInput = document.getElementById('checkoutAddress');
   if (addrInput) {
     addrInput.value = nearest.fullAddress;
   }
 
-  // 4. Calculate Distance and set the Delivery Fee using Uber Rider model
+  const szLocalityName = document.getElementById('szLocalityName');
+  if (szLocalityName) szLocalityName.textContent = nearest.label;
+
+  const szFullAddress = document.getElementById('szFullAddress');
+  if (szFullAddress) szFullAddress.textContent = nearest.fullAddress;
+
+  // 4. Calculate Distance and set the Delivery Fee
   setCustomerDistance(effectiveKm, source);
 
-  // 5. Update Telemetry Bar
+  // 5. Update Telemetry and Labels
   const distBadge = document.getElementById('mtbTracedDistBadge');
   if (distBadge) distBadge.textContent = `${effectiveKm} km`;
 
   const doorstepName = document.getElementById('mtbDoorstepName');
   if (doorstepName) doorstepName.textContent = nearest.areaName;
 
-  // 6. Show instant feedback banner
-  const cart = Store.getCart();
-  const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-  const feeInfo = Store.calculateDeliveryFee(effectiveKm, subtotal, activeCoupon);
-  const feeDisplayStr = feeInfo.isFree ? 'FREE (GrossHub Sponsored)' : `₹${feeInfo.fee}`;
-  showAddressDetectionNotice(`📍 Delivery address set from Map: "${nearest.fullAddress}" • Distance: ${effectiveKm} km • Uber Rider Delivery Fee: ${feeDisplayStr}`);
-
-  // 7. Refine with OpenStreetMap Nominatim reverse geocode (async)
+  // 6. Refine with OpenStreetMap Nominatim reverse geocode (async)
   if (checkoutReverseGeoTimer) clearTimeout(checkoutReverseGeoTimer);
   checkoutReverseGeoTimer = setTimeout(() => {
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
@@ -895,9 +992,10 @@ function handleMapCustomerLocationChange(lat, lng, source = 'map') {
           const refinedPlace = (roadPart && !alreadyIncluded) 
             ? `${roadPart}, ${nearest.fullAddress}` 
             : nearest.fullAddress;
-          if (doorstepName) doorstepName.textContent = roadPart || nearest.areaName;
+          
+          if (szLocalityName) szLocalityName.textContent = roadPart || nearest.label;
+          if (szFullAddress) szFullAddress.textContent = refinedPlace;
           if (addrInput) addrInput.value = refinedPlace;
-          showAddressDetectionNotice(`📍 Delivery address set from Map: "${refinedPlace}" • Distance: ${effectiveKm} km • Uber Rider Delivery Fee: ${feeDisplayStr}`);
         }
       }
     })
@@ -916,34 +1014,12 @@ function updateCheckoutMapPosition(lat, lng, accuracy) {
   const storeLat = (storeLoc && storeLoc.lat) ? storeLoc.lat : GROSSHUB_STORE_COORDS.lat;
   const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : GROSSHUB_STORE_COORDS.lng;
 
-  if (checkoutCustomerMarker) {
-    checkoutCustomerMarker.setLatLng([lat, lng]);
-  }
-
   if (checkoutRoutePolyline) {
     checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [lat, lng]]);
   }
 
-  if (accuracy && accuracy < 5000) {
-    if (checkoutAccuracyCircle) {
-      checkoutAccuracyCircle.setLatLng([lat, lng]);
-      checkoutAccuracyCircle.setRadius(accuracy);
-    } else {
-      checkoutAccuracyCircle = L.circle([lat, lng], {
-        radius: accuracy,
-        color: '#059669',
-        fillColor: '#10b981',
-        fillOpacity: 0.15,
-        weight: 1
-      }).addTo(checkoutMap);
-    }
-  }
-
-  const bounds = L.latLngBounds([[storeLat, storeLng], [lat, lng]]);
-  checkoutMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
-
-  const doorstepName = document.getElementById('mtbDoorstepName');
-  if (doorstepName) doorstepName.textContent = 'GPS Traced 🎯';
+  checkoutMap.flyTo([lat, lng], 16, { duration: 1.2 });
+  handleMapCustomerLocationChange(lat, lng, 'gps');
 }
 
 function setCustomerDistance(km, source = 'manual') {
@@ -1256,6 +1332,8 @@ function updateCheckoutTotals() {
   
   setTxt('checkoutDiscount', `-₹${couponDiscount}`);
   setTxt('checkoutGrandTotal', `₹${grandTotal}`);
+  const ctaPrice = document.getElementById('szCtaPrice');
+  if (ctaPrice) ctaPrice.textContent = `₹${grandTotal}`;
 
   const discRow = document.getElementById('checkoutDiscountRow');
   if (discRow) discRow.style.display = couponDiscount > 0 ? 'flex' : 'none';
@@ -1452,12 +1530,12 @@ function handleCheckoutSubmit(e) {
 
   const name = document.getElementById('checkoutName').value.trim();
   const phone = document.getElementById('checkoutPhone').value.trim();
-  const address = document.getElementById('checkoutAddress').value.trim();
-  const landmark = document.getElementById('checkoutLandmark').value.trim();
-  const notes = document.getElementById('checkoutNotes').value.trim();
+  const houseNo = document.getElementById('checkoutHouseNo')?.value.trim() || '';
+  const baseAddress = document.getElementById('checkoutAddress')?.value.trim() || '';
+  const landmark = document.getElementById('checkoutLandmark')?.value.trim() || '';
   const slot = document.getElementById('checkoutSlotSelect').value;
 
-  if (!name || !phone || !address) {
+  if (!name || !phone || !baseAddress) {
     showToast('Please fill in your name, phone number, and delivery address.', 'error');
     return;
   }
@@ -1469,30 +1547,40 @@ function handleCheckoutSubmit(e) {
     return;
   }
 
+  const fullCombinedAddress = `${houseNo ? houseNo + ', ' : ''}${baseAddress}${landmark ? ' (Landmark: ' + landmark + ')' : ''}`;
+  const addrEl = document.getElementById('checkoutAddress');
+  if (addrEl) addrEl.value = fullCombinedAddress;
+
+  const notes = selectedDeliveryInstructions.length > 0 ? selectedDeliveryInstructions.join(', ') : (document.getElementById('checkoutNotes')?.value.trim() || '');
+
   const cart = Store.getCart();
   const totals = updateCheckoutTotals();
   const config = Store.getConfig();
   const tiers = (config.distanceTiers && config.distanceTiers.length) ? config.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers;
   const matchedTier = tiers.find(t => t.id === selectedDistanceTierId) || tiers[0];
 
-  const custLat = lastCustomerGps?.lat || (checkoutCustomerMarker ? checkoutCustomerMarker.getLatLng().lat : 23.8250);
-  const custLng = lastCustomerGps?.lng || (checkoutCustomerMarker ? checkoutCustomerMarker.getLatLng().lng : 91.2780);
+  const mapCenter = checkoutMap ? checkoutMap.getCenter() : null;
+  const custLat = lastCustomerGps?.lat || (mapCenter ? mapCenter.lat : 23.8250);
+  const custLng = lastCustomerGps?.lng || (mapCenter ? mapCenter.lng : 91.2780);
 
-  // Create order with exact traced coordinates & Uber delivery rider fee breakdown
+  // Create order with exact coordinates & Swiggy/Zomato address details
   const order = Store.createOrder({
     customer: { 
       name, 
       phone: cleanPhone, 
-      address, 
-      landmark, 
-      notes,
+      address: fullCombinedAddress,
+      houseNo: houseNo,
+      landmark: landmark, 
+      addressType: selectedAddressType,
+      instructions: selectedDeliveryInstructions.join(', '),
+      notes: notes,
       distanceKm: selectedDistanceKm,
       distanceTierId: selectedDistanceTierId,
       gpsCoords: lastCustomerGps || { lat: custLat, lng: custLng }
     },
     deliverySlot: slot,
     deliveryDistanceKm: selectedDistanceKm,
-    deliveryDistanceLabel: `Uber Rider: ${selectedDistanceKm} km`,
+    deliveryDistanceLabel: `Distance: ${selectedDistanceKm} km`,
     gpsCoords: lastCustomerGps || { lat: custLat, lng: custLng },
     customerLat: custLat,
     customerLng: custLng,
@@ -1507,7 +1595,7 @@ function handleCheckoutSubmit(e) {
   });
 
   // Clear cart
-  Store.clearCart();
+  Store.clearCart();Store.clearCart();
   activeCoupon = null;
   updateCartBadgeAndDrawer();
   closeModal('checkoutModal');
