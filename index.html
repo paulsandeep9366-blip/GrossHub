@@ -31,8 +31,108 @@
 </head>
 <body>
 
-  <!-- Store Window -->
-  <div id="storeWindow">
+  <!-- Customer Entrance & Mobile OTP Login Gate (Customer enters store only after login) -->
+  <div id="storeLoginGate" class="store-login-gate-wrapper">
+    <div class="store-login-gate-card">
+      <!-- Brand Header -->
+      <div class="slg-brand">
+        <img src="icons/icon.svg" alt="GrossHub Logo" class="slg-logo">
+        <h1 class="slg-title">GrossHub</h1>
+        <div class="slg-badge">⚡ Agartala's Express Grocery • 30-45 Mins</div>
+      </div>
+
+      <div class="slg-content">
+        <h2 class="slg-heading">Sign In to Enter Store</h2>
+        <p class="slg-subheading">
+          Enter your 10-digit mobile number to access fresh groceries, wholesale rates, and express local delivery.
+        </p>
+
+        <!-- 5-Minute Session Timeout Re-Login Notice -->
+        <div id="customerTimeoutNotice" class="portal-timeout-alert" style="display: none;">
+          <span class="timeout-icon">⏱️</span>
+          <div>
+            <strong>Session Expired (5-Min Outside Store)</strong>
+            <div>You were away from the store for more than 5 minutes. For security, please sign in to resume shopping.</div>
+          </div>
+        </div>
+
+        <!-- Step 1: Phone & Name Form -->
+        <form id="gatePhoneForm" onsubmit="handleGateSendOtp(event)">
+          <div class="form-group" style="text-align: left; margin-bottom: 14px;">
+            <label class="form-label" for="gateNameInput">Your Full Name *</label>
+            <input type="text" id="gateNameInput" class="form-input" placeholder="Enter your full name" required autocomplete="name">
+          </div>
+
+          <div class="form-group" style="text-align: left; margin-bottom: 18px;">
+            <label class="form-label" for="gatePhoneInput">10-Digit Mobile Number *</label>
+            <div style="display: flex; gap: 8px;">
+              <span style="display: flex; align-items: center; padding: 0 12px; background: #f1f5f9; border: 1.5px solid var(--slate-300); border-radius: var(--radius-md); font-weight: 700; color: var(--slate-700); font-size: 0.95rem;">+91</span>
+              <input type="tel" id="gatePhoneInput" class="form-input" placeholder="Enter 10-digit mobile number" maxlength="10" required autocomplete="tel" style="flex: 1;">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-hero-primary" style="width: 100%; padding: 13px; font-size: 1rem; justify-content: center;">
+            Send Verification Code ➔
+          </button>
+        </form>
+
+        <!-- Step 2: OTP Verification Form -->
+        <div id="gateOtpSection" style="display: none;">
+          <div class="otp-display-pill" style="margin-bottom: 16px;">
+            <span>📲 Sent to <strong id="gateTargetPhone">+91 9862272399</strong></span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px; text-align: left;">
+            <label class="form-label" for="gateOtpInput" style="text-align: center; display: block;">Enter 4-Digit Verification Code</label>
+            <input type="text" id="gateOtpInput" class="form-input" placeholder="••••" maxlength="4" style="font-size: 1.4rem; letter-spacing: 0.35em; text-align: center; font-weight: 800;" autocomplete="one-time-code" oninput="handleGateOtpInput(this)">
+            <div id="gateOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px; text-align: center;"></div>
+          </div>
+
+          <button type="button" class="btn-hero-primary" style="width: 100%; padding: 13px; font-size: 1rem; justify-content: center; margin-bottom: 12px;" onclick="verifyGateOtp()">
+            Verify & Enter Store ➔
+          </button>
+
+          <button type="button" onclick="backToGatePhoneStep()" style="background: none; border: none; color: var(--slate-500); font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
+            ← Change Mobile Number
+          </button>
+        </div>
+      </div>
+
+      <!-- Trust Badges -->
+      <div class="slg-trust-grid">
+        <div class="slg-trust-item">
+          <span>🥬</span>
+          <div>
+            <strong>Farm-Fresh Daily</strong>
+            <small>Direct from local farms</small>
+          </div>
+        </div>
+        <div class="slg-trust-item">
+          <span>⚡</span>
+          <div>
+            <strong>30-45 Mins Delivery</strong>
+            <small>Bhattapukur hub dispatch</small>
+          </div>
+        </div>
+        <div class="slg-trust-item">
+          <span>💵</span>
+          <div>
+            <strong>COD & UPI</strong>
+            <small>Pay at your doorstep</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direct Quick Links for Staff & Delivery Partners -->
+    <div style="margin-top: 18px; text-align: center; font-size: 0.82rem; color: #94a3b8;">
+      <a href="admin.html" style="color: #cbd5e1; text-decoration: none; margin: 0 8px;">🏪 Merchant Admin</a> •
+      <a href="rider.html" style="color: #cbd5e1; text-decoration: none; margin: 0 8px;">🛵 Rider Portal</a>
+    </div>
+  </div>
+
+  <!-- Store Window (Unlocked only after customer login) -->
+  <div id="storeWindow" style="display: none;">
 
 
 

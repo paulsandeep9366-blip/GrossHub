@@ -2347,20 +2347,16 @@ function handleCustomerTimeout(reason = 'outside') {
 }
 
 function checkStoreAccess() {
-  const storeWin = document.getElementById("storeWindow");
   const gate = document.getElementById("storeLoginGate");
-
-  if (storeWin) {
-    storeWin.style.display = "block";
-  }
-  if (gate) {
-    gate.style.display = "none";
-  }
-
-  updateStorefrontCustomerUI();
-
+  const storeWin = document.getElementById("storeWindow");
   const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
+
   if (session && session.phone) {
+    // Customer authenticated: Enter the store
+    if (gate) gate.style.display = "none";
+    if (storeWin) storeWin.style.display = "block";
+    updateStorefrontCustomerUI();
+
     // Auto-fill customer details in checkout if available
     const set = (id, val) => {
       const el = document.getElementById(id);
@@ -2376,14 +2372,24 @@ function checkStoreAccess() {
     if (session.distanceTierId) {
       selectedDistanceTierId = session.distanceTierId;
     }
-  }
 
-  // Auto open account modal if requested via URL (?view=account or #account)
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("view") === "account" || window.location.hash === "#account") {
-    setTimeout(() => {
-      handleAccountClick();
-    }, 150);
+    // Auto open account modal if requested via URL (?view=account or #account)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("view") === "account" || window.location.hash === "#account") {
+      setTimeout(() => {
+        handleAccountClick();
+      }, 150);
+    }
+  } else {
+    // Customer not authenticated: Lock store and show login entrance gate
+    if (gate) gate.style.display = "flex";
+    if (storeWin) storeWin.style.display = "none";
+
+    const saved = (typeof Store !== "undefined" && Store.getCustomer) ? Store.getCustomer() : null;
+    const gateName = document.getElementById("gateNameInput");
+    const gatePhone = document.getElementById("gatePhoneInput");
+    if (gateName && saved?.name && !gateName.value) gateName.value = saved.name;
+    if (gatePhone && saved?.phone && !gatePhone.value) gatePhone.value = saved.phone;
   }
 }
 
@@ -2482,22 +2488,6 @@ function verifyGateOtp() {
 
   if (otpErr) otpErr.style.display = "none";
 
-  const riders = (typeof Store !== 'undefined' && Store.getRiders) ? Store.getRiders() : [];
-  const matchedRider = riders.find(r => r.phone === phone);
-  if (matchedRider) {
-    Store.setRiderSession({
-      id: matchedRider.id,
-      name: matchedRider.name,
-      phone: matchedRider.phone,
-      loginTime: new Date().toISOString()
-    });
-    showToast(`Welcome ${matchedRider.name}! Redirecting to Rider Portal... 🛵`, "success");
-    setTimeout(() => {
-      window.location.replace("rider.html");
-    }, 600);
-    return;
-  }
-
   const session = {
     name: name,
     phone: phone,
@@ -2514,7 +2504,7 @@ function verifyGateOtp() {
   const timeoutNotice = document.getElementById("customerTimeoutNotice");
   if (timeoutNotice) timeoutNotice.style.display = "none";
 
-  // Unlock store window
+  // Customer enters the store!
   checkStoreAccess();
 
   showToast(`Welcome to GrossHub, ${name}! Store unlocked. 🎉`, "success");
@@ -2529,6 +2519,7 @@ function handleCustomerLogout() {
   if (notice) notice.style.display = "none";
   closeModal("customerAccountModal");
   closeModal("customerAuthModal");
-  updateStorefrontCustomerUI();
-  showToast("You have been signed out.", "info");
+  checkStoreAccess();
+  backToGatePhoneStep();
+  showToast("You have been signed out. Please sign in to enter the store.", "info");
 }
