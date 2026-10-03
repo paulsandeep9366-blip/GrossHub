@@ -2034,23 +2034,14 @@ function showToast(message, type = 'info') {
 // =======================================================
 
 function updateStorefrontCustomerUI() {
-  const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
   const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
   const headerAccountLabel = document.getElementById("headerAccountLabel");
   const topNavCustomerLink = document.getElementById("topNavCustomerLink");
-  const adminBanner = document.getElementById("storeAdminModeBanner");
-
-  if (adminBanner) {
-    adminBanner.style.display = isAdmin ? "flex" : "none";
-  }
 
   if (session && session.name) {
     const firstName = session.name.split(" ")[0];
     if (headerAccountLabel) headerAccountLabel.textContent = firstName;
     if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👤 Hi, ${escapeHTML(firstName)}`;
-  } else if (isAdmin) {
-    if (headerAccountLabel) headerAccountLabel.textContent = "Admin";
-    if (topNavCustomerLink) topNavCustomerLink.innerHTML = `🏪 Admin Mode`;
   } else {
     if (headerAccountLabel) headerAccountLabel.textContent = "Sign In";
     if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👤 Sign In / Account`;

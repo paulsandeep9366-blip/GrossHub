@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=3.3.0">
-  <link rel="stylesheet" href="css/admin.css?v=3.3.0">
+  <link rel="stylesheet" href="css/styles.css?v=3.4.0">
+  <link rel="stylesheet" href="css/admin.css?v=3.4.0">
   <style>
     body {
       background: #f1f5f9;
@@ -138,16 +138,7 @@
       </div>
     </a>
     <div class="aph-links">
-      <a href="index.html" class="aph-link-btn" title="View Customer Storefront">
-        🛒 View Store
-      </a>
-      <a href="rider.html" class="aph-link-btn" title="Open Delivery Partner Portal">
-        🛵 Rider Portal
-      </a>
-      <a href="customer.html" class="aph-link-btn" title="Open Customer Account Portal">
-        👤 Customer Portal
-      </a>
-      <button class="aph-link-btn" id="btnAdminTopLogout" style="background:#ef4444; color:#fff; border:none; cursor:pointer;" onclick="AdminPanel.handleLogout()">
+      <button class="aph-link-btn" id="btnAdminTopLogout" style="background:#ef4444; color:#fff; border:none; cursor:pointer; display:none;" onclick="AdminPanel.handleLogout()">
         🚪 Logout
       </button>
     </div>
@@ -687,9 +678,9 @@
 
   <!-- Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=3.3.0"></script>
-  <script src="js/store.js?v=3.3.0"></script>
-  <script src="js/admin.js?v=3.3.0"></script>
+  <script src="js/data.js?v=3.4.0"></script>
+  <script src="js/store.js?v=3.4.0"></script>
+  <script src="js/admin.js?v=3.4.0"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {

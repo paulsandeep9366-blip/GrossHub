@@ -49,21 +49,12 @@ const RiderPanel = {
   },
 
   checkSession() {
-    const isAdmin = (sessionStorage.getItem("grosshub_admin_logged_in") === "true");
-    const adminBar = document.getElementById("riderAdminBar");
-    if (adminBar) adminBar.style.display = isAdmin ? "flex" : "none";
-
-    const adminQuickAccess = document.getElementById("adminRiderQuickAccess");
-    if (adminQuickAccess) adminQuickAccess.style.display = isAdmin ? "block" : "none";
-
+    // Isolated Rider Portal Session Check
     const session = Store.getRiderSession();
     if (session && session.name) {
       this.isAuthenticated = true;
       this.activeRider = session.name;
       this.showDashboard();
-    } else if (isAdmin) {
-      // Auto-unlock in Admin Supervisor mode
-      this.enterAsAdmin();
     } else {
       this.showLogin();
     }

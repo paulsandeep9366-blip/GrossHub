@@ -130,7 +130,7 @@ const AdminPanel = {
     if (isRiderPwd && pwd !== Store.getAdminPassword()) {
       if (errorEl) {
         errorEl.style.display = 'block';
-        errorEl.innerHTML = '🚫 <strong>Rider Access Denied:</strong> Rider accounts can only access the Rider Portal.<br><a href="rider.html" style="color:#0284c7; font-weight:700;">Go to Rider Portal ➔</a>';
+        errorEl.innerHTML = '🚫 <strong>Rider Access Denied:</strong> Rider accounts can only access the Rider Portal (rider.html).';
       }
       showToast('Riders can only access the Rider Portal.', 'error');
       return;
@@ -1478,9 +1478,6 @@ const AdminPanel = {
           </div>
 
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="rider.html" class="btn-xs btn-outline" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-              🛵 Open Rider Dispatch Screen
-            </a>
             <a href="tel:${rider.phone || "9862272399"}" class="btn-xs btn-secondary" style="text-decoration: none;">
               📞 Call Rider
             </a>
