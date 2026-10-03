@@ -180,6 +180,14 @@ let selectedDeliverySlot = 'Instant Delivery (30-45 mins)';
 
 // Document Ready Initialization
 document.addEventListener('DOMContentLoaded', () => {
+  // Rider Restriction: Riders can ONLY access the Rider Portal
+  const riderSession = (typeof Store !== 'undefined' && Store.getRiderSession) ? Store.getRiderSession() : null;
+  const isAdmin = (typeof Store !== 'undefined' && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
+  if (riderSession && riderSession.name && !isAdmin) {
+    window.location.replace('rider.html');
+    return;
+  }
+
   renderStoreHeaderInfo();
   renderCategoryPills();
   renderProducts();
@@ -2158,6 +2166,22 @@ function verifyCustomerOtp() {
 
   if (otpErr) otpErr.style.display = "none";
 
+  const riders = (typeof Store !== 'undefined' && Store.getRiders) ? Store.getRiders() : [];
+  const matchedRider = riders.find(r => r.phone === phone);
+  if (matchedRider) {
+    Store.setRiderSession({
+      id: matchedRider.id,
+      name: matchedRider.name,
+      phone: matchedRider.phone,
+      loginTime: new Date().toISOString()
+    });
+    showToast(`Welcome ${matchedRider.name}! Redirecting to Rider Portal... 🛵`, "success");
+    setTimeout(() => {
+      window.location.replace("rider.html");
+    }, 600);
+    return;
+  }
+
   const session = {
     name: name,
     phone: phone,
@@ -2352,7 +2376,13 @@ function handleCustomerTimeout(reason = 'outside') {
 }
 
 function checkStoreAccess() {
+  const riderSession = (typeof Store !== "undefined" && Store.getRiderSession) ? Store.getRiderSession() : null;
   const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
+
+  if (riderSession && riderSession.name && !isAdmin) {
+    window.location.replace("rider.html");
+    return;
+  }
   const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
   const gate = document.getElementById("storeLoginGate");
   const storeWin = document.getElementById("storeWindow");
@@ -2495,6 +2525,22 @@ function verifyGateOtp() {
   }
 
   if (otpErr) otpErr.style.display = "none";
+
+  const riders = (typeof Store !== 'undefined' && Store.getRiders) ? Store.getRiders() : [];
+  const matchedRider = riders.find(r => r.phone === phone);
+  if (matchedRider) {
+    Store.setRiderSession({
+      id: matchedRider.id,
+      name: matchedRider.name,
+      phone: matchedRider.phone,
+      loginTime: new Date().toISOString()
+    });
+    showToast(`Welcome ${matchedRider.name}! Redirecting to Rider Portal... 🛵`, "success");
+    setTimeout(() => {
+      window.location.replace("rider.html");
+    }, 600);
+    return;
+  }
 
   const session = {
     name: name,

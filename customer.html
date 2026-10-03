@@ -10,8 +10,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script>
-    // Immediate redirect to unified storefront & customer account portal
-    window.location.replace("index.html?view=account");
+    // Security check: Rider can only access rider portal
+    try {
+      const riderSession = localStorage.getItem('grosshub_rider_session');
+      const isAdmin = sessionStorage.getItem('grosshub_admin_logged_in') === 'true';
+      if (riderSession && !isAdmin) {
+        window.location.replace('rider.html');
+      } else {
+        window.location.replace("index.html?view=account");
+      }
+    } catch(e) {
+      window.location.replace("index.html?view=account");
+    }
   </script>
   <style>
     body {

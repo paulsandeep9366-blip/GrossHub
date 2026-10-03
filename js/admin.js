@@ -61,7 +61,15 @@ const AdminPanel = {
   },
 
   checkSession() {
-    if (sessionStorage.getItem('grosshub_admin_logged_in') === 'true') {
+    // Rider Restriction: Riders can ONLY access rider.html
+    const riderSession = (typeof Store !== 'undefined' && Store.getRiderSession) ? Store.getRiderSession() : null;
+    const isAdmin = (sessionStorage.getItem('grosshub_admin_logged_in') === 'true');
+    if (riderSession && riderSession.name && !isAdmin) {
+      window.location.replace('rider.html');
+      return;
+    }
+
+    if (isAdmin) {
       this.isAuthenticated = true;
       this.showDashboard();
     }
@@ -113,6 +121,20 @@ const AdminPanel = {
     const input = document.getElementById('adminPasswordInput');
     const errorEl = document.getElementById('adminLoginError');
     const pwd = input ? input.value.trim() : '';
+
+    // Check if entered credentials belong to a rider
+    const fleetPwd = (typeof Store !== 'undefined' && Store.getRiderPassword) ? Store.getRiderPassword() : (Store.getRiderPin ? Store.getRiderPin() : 'rider123');
+    const riders = (typeof Store !== 'undefined' && Store.getRiders) ? Store.getRiders() : [];
+    const isRiderPwd = (pwd === fleetPwd) || riders.some(r => r.password === pwd);
+
+    if (isRiderPwd && pwd !== Store.getAdminPassword()) {
+      if (errorEl) {
+        errorEl.style.display = 'block';
+        errorEl.innerHTML = '🚫 <strong>Rider Access Denied:</strong> Rider accounts can only access the Rider Portal.<br><a href="rider.html" style="color:#0284c7; font-weight:700;">Go to Rider Portal ➔</a>';
+      }
+      showToast('Riders can only access the Rider Portal.', 'error');
+      return;
+    }
 
     if (pwd === Store.getAdminPassword()) {
       this.isAuthenticated = true;
