@@ -74,6 +74,12 @@
           <button type="submit" class="btn-hero-primary" style="width: 100%; padding: 13px; font-size: 1rem; justify-content: center;">
             Send Verification Code ➔
           </button>
+
+          <div style="margin-top: 14px; text-align: center;">
+            <button type="button" onclick="showGateAdminUnlock()" style="background: none; border: none; color: #0284c7; font-size: 0.84rem; cursor: pointer; text-decoration: underline; font-weight: 600;">
+              👑 Store Administrator? Unlock Here
+            </button>
+          </div>
         </form>
 
         <!-- Step 2: OTP Verification Form -->
@@ -96,6 +102,26 @@
           <button type="button" onclick="backToGatePhoneStep()" style="background: none; border: none; color: var(--slate-500); font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
             ← Change Mobile Number
           </button>
+        </div>
+
+        <!-- Step 3: Admin Quick Unlock Form -->
+        <div id="gateAdminSection" style="display: none;">
+          <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; text-align: left; font-size: 0.85rem; color: #92400e;">
+            👑 <strong>Administrator Store Unlock:</strong> Enter your master password to unlock and manage everything.
+          </div>
+          <form id="gateAdminForm" onsubmit="handleGateAdminUnlock(event)">
+            <div class="form-group" style="text-align: left; margin-bottom: 16px;">
+              <label class="form-label" for="gateAdminPasswordInput">Admin Security Password *</label>
+              <input type="password" id="gateAdminPasswordInput" class="form-input" placeholder="Enter admin password" required autocomplete="current-password">
+              <div id="gateAdminError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px;"></div>
+            </div>
+            <button type="submit" class="btn-hero-primary" style="width: 100%; padding: 13px; font-size: 1rem; justify-content: center; margin-bottom: 12px; background: #0f172a;">
+              Unlock Everything as Admin ➔
+            </button>
+            <button type="button" onclick="backToGatePhoneStep()" style="background: none; border: none; color: var(--slate-500); font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
+              ← Back to Customer Login
+            </button>
+          </form>
         </div>
       </div>
 

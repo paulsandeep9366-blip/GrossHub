@@ -559,13 +559,26 @@ const Store = {
     } catch(e) {}
   },
 
-  // 10. Admin Authentication Status
+  // 10. Admin Authentication Status (Universal Access)
   isAdminLoggedIn() {
     try {
-      return sessionStorage.getItem("grosshub_admin_logged_in") === "true";
+      return (sessionStorage.getItem("grosshub_admin_logged_in") === "true") ||
+             (localStorage.getItem("grosshub_admin_logged_in") === "true");
     } catch(e) {
       return false;
     }
+  },
+
+  setAdminLoggedIn(status) {
+    try {
+      if (status) {
+        sessionStorage.setItem("grosshub_admin_logged_in", "true");
+        localStorage.setItem("grosshub_admin_logged_in", "true");
+      } else {
+        sessionStorage.removeItem("grosshub_admin_logged_in");
+        localStorage.removeItem("grosshub_admin_logged_in");
+      }
+    } catch(e) {}
   },
 
   // Customer alias helper

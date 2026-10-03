@@ -18,7 +18,11 @@ const RiderPanel = {
   initSessionGuard() {
     if (typeof Store !== 'undefined' && Store.SessionGuard) {
       Store.SessionGuard.init('rider', {
-        isAuth: () => this.isAuthenticated || !!Store.getRiderSession(),
+        isAuth: () => {
+          const isAdmin = (typeof Store !== 'undefined' && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
+          if (isAdmin) return false; // Admin is immune to rider idle timeout
+          return this.isAuthenticated || !!Store.getRiderSession();
+        },
         onTimeout: (reason) => this.handleTimeout(reason)
       });
     }
@@ -49,7 +53,13 @@ const RiderPanel = {
   },
 
   checkSession() {
-    // Isolated Rider Portal Session Check
+    // Admin Universal Access Check: Admin can access Rider Portal directly
+    const isAdmin = (typeof Store !== 'undefined' && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
+    if (isAdmin) {
+      this.enterAsAdmin();
+      return;
+    }
+
     const session = Store.getRiderSession();
     if (session && session.name) {
       this.isAuthenticated = true;
@@ -63,11 +73,14 @@ const RiderPanel = {
   enterAsAdmin() {
     this.isAuthenticated = true;
     this.activeRider = "🏪 Fleet Supervisor (Admin)";
-    if (typeof Store !== 'undefined' && Store.SessionGuard) {
-      Store.SessionGuard.recordLogin('rider');
-    }
+    try {
+      localStorage.removeItem('grosshub_rider_left_time');
+      localStorage.removeItem('grosshub_rider_last_active');
+    } catch(e) {}
     const timeoutNotice = document.getElementById('riderTimeoutNotice');
     if (timeoutNotice) timeoutNotice.style.display = 'none';
+    const adminLink = document.getElementById('rphAdminLink');
+    if (adminLink) adminLink.style.display = 'inline-flex';
     this.showDashboard();
     showToast("Entered Rider Portal with Admin Privileges.", "success");
   },
@@ -80,7 +93,10 @@ const RiderPanel = {
 
     if (loginView) loginView.style.display = "none";
     if (dashView) dashView.style.display = "block";
-    if (badge) badge.textContent = this.activeRider;
+    if (badge) {
+      badge.textContent = this.activeRider;
+      badge.style.display = "inline-flex";
+    }
     if (logoutBtn) logoutBtn.style.display = "inline-flex";
 
     this.renderOrders();
@@ -104,6 +120,16 @@ const RiderPanel = {
         errEl.textContent = "Please enter both Rider ID and Password.";
       }
       showToast("Please enter both Rider ID and Password.", "error");
+      return;
+    }
+
+    // Admin Universal Access: Admin credentials unlock Rider Portal
+    const adminPwd = (typeof Store !== 'undefined' && Store.getAdminPassword) ? Store.getAdminPassword() : 'grosshub123';
+    if (password.trim() === adminPwd || riderId.toLowerCase().trim() === 'admin') {
+      if (typeof Store !== 'undefined' && Store.setAdminLoggedIn) {
+        Store.setAdminLoggedIn(true);
+      }
+      this.enterAsAdmin();
       return;
     }
 

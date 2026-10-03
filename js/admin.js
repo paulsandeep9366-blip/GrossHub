@@ -133,7 +133,12 @@ const AdminPanel = {
 
     if (pwd === Store.getAdminPassword()) {
       this.isAuthenticated = true;
-      sessionStorage.setItem('grosshub_admin_logged_in', 'true');
+      if (typeof Store !== 'undefined' && Store.setAdminLoggedIn) {
+        Store.setAdminLoggedIn(true);
+      } else {
+        sessionStorage.setItem('grosshub_admin_logged_in', 'true');
+        localStorage.setItem('grosshub_admin_logged_in', 'true');
+      }
       if (typeof Store !== 'undefined' && Store.SessionGuard) {
         Store.SessionGuard.recordLogin('admin');
       }
@@ -153,7 +158,12 @@ const AdminPanel = {
 
   handleLogout() {
     this.isAuthenticated = false;
-    sessionStorage.removeItem('grosshub_admin_logged_in');
+    if (typeof Store !== 'undefined' && Store.setAdminLoggedIn) {
+      Store.setAdminLoggedIn(false);
+    } else {
+      sessionStorage.removeItem('grosshub_admin_logged_in');
+      localStorage.removeItem('grosshub_admin_logged_in');
+    }
     if (typeof Store !== 'undefined' && Store.SessionGuard) {
       Store.SessionGuard.clear('admin');
     }
