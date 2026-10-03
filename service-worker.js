@@ -1,10 +1,10 @@
 /**
- * GrossHub - Service Worker v3.2.0
+ * GrossHub - Service Worker v3.3.0
  * Network-First for HTML navigation (ensures zero-stale cache on live site)
  * Stale-while-revalidate for static assets
  */
 
-const CACHE_NAME = 'grosshub-v3.2.0';
+const CACHE_NAME = 'grosshub-v3.3.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
