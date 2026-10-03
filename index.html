@@ -26,7 +26,7 @@
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="css/leaflet.css">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/styles.css?v=2.9.0">
+  <link rel="stylesheet" href="css/styles.css?v=3.0.0">
 </head>
 <body>
 
@@ -175,7 +175,7 @@
       </a>
 
       <!-- Swiggy / Zomato Delivery Location Header Widget -->
-      <div class="sz-header-location-bar" onclick="openCheckoutModal()" title="Select Delivery Location">
+      <div class="sz-header-location-bar" onclick="openLocationSelectorModal()" title="Select Delivery Location">
         <div class="sz-hlb-badge">⚡ 30-45 MINS</div>
         <div class="sz-hlb-addr">
           <span class="sz-hlb-pin">📍</span>
@@ -483,7 +483,10 @@
                     Delivery Fee: <strong id="mapCalculatedFeeVal" class="sz-fee-val">₹35</strong>
                   </span>
                 </div>
-                <div class="sz-loc-actions" style="margin-top: 8px;">
+                <div class="sz-loc-actions" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                  <button type="button" class="btn-confirm-pin" id="btnConfirmMapPin" onclick="confirmPinnedDeliveryLocation()" title="Confirm this pinned location">
+                    <span>📍 Confirm Location & Deliver Here</span>
+                  </button>
                   <a href="https://www.google.com/maps?q=23.8188,91.2725" id="szGoogleMapsLink" target="_blank" class="sz-gmaps-link" title="Open this pinned location in Google Maps">
                     <span>🗺️</span> Open in Google Maps ↗
                   </a>
@@ -966,10 +969,10 @@
   <!-- Leaflet Map Engine -->
   <script src="js/leaflet.js"></script>
   <!-- Scripts -->
-  <script src="js/data.js?v=2.9.0"></script>
-  <script src="js/store.js?v=2.9.0"></script>
-  <script src="js/tracking.js?v=2.9.0"></script>
-  <script src="js/app.js?v=2.9.0"></script>
+  <script src="js/data.js?v=3.0.0"></script>
+  <script src="js/store.js?v=3.0.0"></script>
+  <script src="js/tracking.js?v=3.0.0"></script>
+  <script src="js/app.js?v=3.0.0"></script>
 
   <!-- PWA Service Worker Registration -->
   <script>

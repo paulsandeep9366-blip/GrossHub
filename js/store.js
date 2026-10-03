@@ -268,7 +268,10 @@ const Store = {
         name: orderPayload.customer.name || 'Guest Customer',
         phone: orderPayload.customer.phone || '',
         address: orderPayload.customer.address || '',
+        houseNo: orderPayload.customer.houseNo || '',
         landmark: orderPayload.customer.landmark || '',
+        addressType: orderPayload.customer.addressType || 'Home',
+        instructions: orderPayload.customer.instructions || '',
         notes: orderPayload.customer.notes || ''
       },
       deliverySlot: orderPayload.deliverySlot || 'Instant Delivery (30-45 mins)',

@@ -1,9 +1,10 @@
 /**
- * GrossHub - Service Worker
- * Stale-while-revalidate offline caching strategy
+ * GrossHub - Service Worker v3.0.0
+ * Network-First for HTML navigation (ensures zero-stale cache on live site)
+ * Stale-while-revalidate for static assets
  */
 
-const CACHE_NAME = 'grosshub-v2.9.0';
+const CACHE_NAME = 'grosshub-v3.0.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -44,9 +45,30 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests
+  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
+  const url = new URL(event.request.url);
+
+  // Network-First for HTML navigation / document requests (avoids stale home page)
+  if (event.request.mode === 'navigate' || event.request.destination === 'document' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(event.request).then((cached) => {
+          return cached || caches.match('./index.html');
+        });
+      })
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate for other static assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {

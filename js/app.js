@@ -44,6 +44,125 @@ function switchGoogleMapLayer(layerType) {
 }
 window.switchGoogleMapLayer = switchGoogleMapLayer;
 
+let isLocationOnlyMode = false;
+let selectedDistanceKm = 1.5;
+let selectedDistanceTierId = 'tier_1';
+
+function restoreSavedPinnedLocation() {
+  try {
+    const raw = localStorage.getItem('grosshub_pinned_location');
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!saved || !saved.lat || !saved.lng) return;
+
+    lastCustomerGps = {
+      lat: saved.lat,
+      lng: saved.lng,
+      accuracy: 10,
+      calculatedKm: saved.distanceKm || 1.5,
+      effectiveKm: saved.distanceKm || 1.5,
+      timestamp: saved.timestamp || new Date().toISOString()
+    };
+
+    if (saved.locality) {
+      const topHeaderLoc = document.getElementById('topHeaderDeliveryLoc');
+      if (topHeaderLoc) topHeaderLoc.textContent = saved.locality;
+      const drawerLoc = document.getElementById('drawerDeliveryLoc');
+      if (drawerLoc) drawerLoc.textContent = saved.locality;
+      const szLocalityName = document.getElementById('szLocalityName');
+      if (szLocalityName) szLocalityName.textContent = saved.locality;
+    }
+    if (saved.fullAddress) {
+      const szFullAddress = document.getElementById('szFullAddress');
+      if (szFullAddress) szFullAddress.textContent = saved.fullAddress;
+      const addrInput = document.getElementById('checkoutAddress');
+      if (addrInput) addrInput.value = saved.fullAddress;
+    }
+    if (saved.distanceKm) {
+      setCustomerDistance(saved.distanceKm, 'storage_restore');
+    }
+  } catch (e) {
+    console.warn('Failed restoring pinned location:', e);
+  }
+}
+window.restoreSavedPinnedLocation = restoreSavedPinnedLocation;
+
+function confirmPinnedDeliveryLocation(isShoppingOnly = false) {
+  const mapCenter = checkoutMap ? checkoutMap.getCenter() : null;
+  const lat = lastCustomerGps?.lat || (mapCenter ? mapCenter.lat : 23.8250);
+  const lng = lastCustomerGps?.lng || (mapCenter ? mapCenter.lng : 91.2780);
+  const localityEl = document.getElementById('szLocalityName');
+  const locality = localityEl ? localityEl.textContent.trim() : 'Bhattapukur, Agartala';
+  const fullAddressEl = document.getElementById('szFullAddress');
+  const fullAddress = fullAddressEl ? fullAddressEl.textContent.trim() : locality;
+  const feeEl = document.getElementById('mapCalculatedFeeVal');
+  const deliveryFee = feeEl ? (Number(feeEl.textContent.replace(/\D/g, '')) || 35) : 35;
+
+  const savedData = {
+    lat: lat,
+    lng: lng,
+    locality: locality,
+    fullAddress: fullAddress,
+    distanceKm: selectedDistanceKm || 1.5,
+    deliveryFee: deliveryFee,
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    localStorage.setItem('grosshub_pinned_location', JSON.stringify(savedData));
+  } catch (e) {}
+
+  // Update header and cart drawer
+  const topHeaderLoc = document.getElementById('topHeaderDeliveryLoc');
+  if (topHeaderLoc) topHeaderLoc.textContent = locality;
+  const drawerLoc = document.getElementById('drawerDeliveryLoc');
+  if (drawerLoc) drawerLoc.textContent = locality;
+
+  const btn = document.getElementById('btnConfirmMapPin');
+  if (btn) {
+    btn.innerHTML = '<span>✓ Pin Confirmed!</span>';
+    btn.classList.add('confirmed');
+    setTimeout(() => {
+      if (btn) {
+        btn.innerHTML = '<span>📍 Confirm Location & Deliver Here</span>';
+        btn.classList.remove('confirmed');
+      }
+    }, 2500);
+  }
+
+  showToast(`📍 Delivery location set to ${locality}!`, 'success');
+
+  const cart = Store.getCart();
+  if (isShoppingOnly || isLocationOnlyMode || !cart || cart.length === 0) {
+    setTimeout(() => {
+      closeModal('checkoutModal');
+      isLocationOnlyMode = false;
+    }, 600);
+    return;
+  }
+
+  // Smooth scroll down to house no field and focus
+  const houseInput = document.getElementById('checkoutHouseNo');
+  if (houseInput) {
+    houseInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => houseInput.focus(), 350);
+  }
+}
+window.confirmPinnedDeliveryLocation = confirmPinnedDeliveryLocation;
+
+function openLocationSelectorModal() {
+  const cart = Store.getCart();
+  if (cart && cart.length > 0) {
+    isLocationOnlyMode = false;
+    openCheckoutModal(false);
+  } else {
+    isLocationOnlyMode = true;
+    openCheckoutModal(true);
+  }
+}
+window.openLocationSelectorModal = openLocationSelectorModal;
+
+
 /**
  * GrossHub - Main Storefront Application Logic (Phases 1, 2, 5 & 6)
  * Handles catalog browsing, live search, cart drawer, dual WhatsApp & web checkout,
@@ -56,8 +175,8 @@ let currentSort = 'featured';
 let activeCoupon = null; // { code, discount, ... }
 let selectedPaymentMethod = 'Cash on Delivery';
 let selectedDeliverySlot = 'Instant Delivery (30-45 mins)';
-let selectedDistanceKm = 1.5;
-let selectedDistanceTierId = 'tier_1';
+
+
 
 // Document Ready Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,6 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderProducts();
   updateCartBadgeAndDrawer();
   setupStoreListeners();
+
+  // Restore previously pinned customer delivery location
+  restoreSavedPinnedLocation();
 
   // Initialize 5-minute session guard for customer storefront
   initCustomerSessionGuard();
@@ -965,9 +1087,9 @@ function initCheckoutDeliveryMap(initialLat, initialLng) {
     handleMapCustomerLocationChange(center.lat, center.lng, 'map_pan');
   });
 
-  // Tap anywhere on map to pan smoothly to center
+  // Tap anywhere on map to pan smoothly to center and pin location
   checkoutMap.on('click', (e) => {
-    checkoutMap.panTo(e.latlng);
+    checkoutMap.panTo(e.latlng, { animate: true, duration: 0.35 });
   });
 
   // Initialize Agartala locality search overlay
@@ -1496,9 +1618,9 @@ Please confirm this order and dispatch. Thank you!`;
 }
 
 // 8. Web Checkout Modal & UPI QR Engine (Phase 1 & 6)
-function openCheckoutModal() {
+function openCheckoutModal(allowEmpty = false) {
   const cart = Store.getCart();
-  if (cart.length === 0) {
+  if ((!cart || cart.length === 0) && !allowEmpty) {
     showToast('Your cart is empty. Please add items before checking out.', 'warning');
     return;
   }
@@ -1509,15 +1631,25 @@ function openCheckoutModal() {
 
   const sumItems = document.getElementById('checkoutSummaryItems');
   if (sumItems) {
-    sumItems.innerHTML = cart.map(i => `
-      <div class="c-sum-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          ${i.image ? `<img src="${escapeHTML(i.image)}" style="width:28px; height:28px; border-radius:4px; object-fit:cover;" onerror="this.style.display='none';">` : ''}
-          <span>${escapeHTML(i.name)} × ${i.qty}</span>
+    if (!cart || cart.length === 0) {
+      sumItems.innerHTML = `
+        <div class="sz-empty-cart-pin-notice" style="text-align:center; padding:14px; background:#f8fafc; border-radius:10px; border:1.5px dashed #cbd5e1; margin-bottom:8px;">
+          <div style="font-size:1.4rem; margin-bottom:4px;">📍</div>
+          <strong style="color:#0f172a; font-size:0.92rem; display:block; margin-bottom:2px;">Pin Your Delivery Location</strong>
+          <span style="color:#64748b; font-size:0.8rem; line-height:1.4; display:block;">Tap or drag the Google Map below to set your doorstep. Your delivery fee will be calculated automatically!</span>
         </div>
-        <strong>₹${i.price * i.qty}</strong>
-      </div>
-    `).join('');
+      `;
+    } else {
+      sumItems.innerHTML = cart.map(i => `
+        <div class="c-sum-row" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${i.image ? `<img src="${escapeHTML(i.image)}" style="width:28px; height:28px; border-radius:4px; object-fit:cover;" onerror="this.style.display='none';">` : ''}
+            <span>${escapeHTML(i.name)} × ${i.qty}</span>
+          </div>
+          <strong>₹${i.price * i.qty}</strong>
+        </div>
+      `).join('');
+    }
   }
 
   const setTxt = (id, val) => {
@@ -1532,6 +1664,30 @@ function openCheckoutModal() {
 
   const discRow = document.getElementById('checkoutDiscountRow');
   if (discRow) discRow.style.display = totals.couponDiscount > 0 ? 'flex' : 'none';
+
+  // Update CTA button based on empty cart location mode vs checkout
+  const szSubmitBtn = document.getElementById('szSubmitBtn');
+  if (szSubmitBtn) {
+    if (!cart || cart.length === 0) {
+      szSubmitBtn.type = 'button';
+      szSubmitBtn.onclick = (e) => {
+        e.preventDefault();
+        confirmPinnedDeliveryLocation(true);
+      };
+      szSubmitBtn.innerHTML = `
+        <span>📍 Confirm Location & Start Shopping</span>
+        <span class="sz-cta-arrow">➔</span>
+      `;
+    } else {
+      szSubmitBtn.type = 'submit';
+      szSubmitBtn.onclick = null;
+      szSubmitBtn.innerHTML = `
+        <span>Proceed to Pay</span>
+        <span class="sz-cta-price" id="szCtaPrice">₹${totals.grandTotal}</span>
+        <span class="sz-cta-arrow">➔</span>
+      `;
+    }
+  }
 
   // Setup payment view
   selectPaymentOption('Cash on Delivery');
