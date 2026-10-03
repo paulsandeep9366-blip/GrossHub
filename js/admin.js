@@ -61,17 +61,12 @@ const AdminPanel = {
   },
 
   checkSession() {
-    // Rider Restriction: Riders can ONLY access rider.html
-    const riderSession = (typeof Store !== 'undefined' && Store.getRiderSession) ? Store.getRiderSession() : null;
     const isAdmin = (sessionStorage.getItem('grosshub_admin_logged_in') === 'true');
-    if (riderSession && riderSession.name && !isAdmin) {
-      window.location.replace('rider.html');
-      return;
-    }
-
     if (isAdmin) {
       this.isAuthenticated = true;
       this.showDashboard();
+    } else {
+      this.showLogin();
     }
   },
 

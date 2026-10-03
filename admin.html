@@ -114,18 +114,7 @@
       text-align: center;
     }
   </style>
-  <script>
-    // Security Guard: Rider can only access rider portal
-    (function() {
-      try {
-        const riderSession = localStorage.getItem('grosshub_rider_session');
-        const isAdmin = sessionStorage.getItem('grosshub_admin_logged_in') === 'true';
-        if (riderSession && !isAdmin) {
-          window.location.replace('rider.html');
-        }
-      } catch (e) {}
-    })();
-  </script>
+
 </head>
 <body>
 
@@ -138,6 +127,8 @@
       </div>
     </a>
     <div class="aph-links">
+      <a href="index.html" class="aph-link-btn" title="View Customer Storefront">🛒 Storefront</a>
+      <a href="rider.html" class="aph-link-btn" title="Delivery Partner Portal">🛵 Rider Portal</a>
       <button class="aph-link-btn" id="btnAdminTopLogout" style="background:#ef4444; color:#fff; border:none; cursor:pointer; display:none;" onclick="AdminPanel.handleLogout()">
         🚪 Logout
       </button>
@@ -162,7 +153,7 @@
         </div>
       </div>
 
-      <form id="adminLoginForm">
+      <form id="adminLoginForm" onsubmit="event.preventDefault(); AdminPanel.handleLogin();">
         <div class="form-group" style="text-align:left;">
           <label class="form-label" for="adminPasswordInput">Admin Password</label>
           <input type="password" id="adminPasswordInput" class="form-input" placeholder="Enter Admin Password" required>

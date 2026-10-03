@@ -180,14 +180,6 @@ let selectedDeliverySlot = 'Instant Delivery (30-45 mins)';
 
 // Document Ready Initialization
 document.addEventListener('DOMContentLoaded', () => {
-  // Rider Restriction: Riders can ONLY access the Rider Portal
-  const riderSession = (typeof Store !== 'undefined' && Store.getRiderSession) ? Store.getRiderSession() : null;
-  const isAdmin = (typeof Store !== 'undefined' && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
-  if (riderSession && riderSession.name && !isAdmin) {
-    window.location.replace('rider.html');
-    return;
-  }
-
   renderStoreHeaderInfo();
   renderCategoryPills();
   renderProducts();
@@ -2343,82 +2335,55 @@ function handleCustomerTimeout(reason = 'outside') {
   Store.clearCustomerSession();
   closeModal("customerAccountModal");
   closeModal("customerAuthModal");
-  closeModal("checkoutModal");
-  closeModal("activeTrackingModal");
 
-  // Lock store window and show entrance gate
-  checkStoreAccess();
-  backToGatePhoneStep();
+  updateStorefrontCustomerUI();
 
   const notice = document.getElementById("customerTimeoutNotice");
   if (notice) {
-    notice.style.display = "flex";
-    const descEl = notice.querySelector('div div');
-    if (descEl) {
-      if (reason === 'outside') {
-        descEl.textContent = 'You were away from the store for more than 5 minutes. For security, please sign in to resume shopping.';
-      } else {
-        descEl.textContent = 'Your session was idle for more than 5 minutes. For security, please sign in to resume shopping.';
-      }
-    }
+    notice.style.display = "none";
   }
 
-  showToast('Session timed out after 5 minutes outside store. Please sign in.', 'warning');
+  showToast('Customer session ended. Click Sign In to access your account.', 'info');
 }
 
 function checkStoreAccess() {
-  const riderSession = (typeof Store !== "undefined" && Store.getRiderSession) ? Store.getRiderSession() : null;
-  const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
-
-  if (riderSession && riderSession.name && !isAdmin) {
-    window.location.replace("rider.html");
-    return;
-  }
-  const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
-  const gate = document.getElementById("storeLoginGate");
   const storeWin = document.getElementById("storeWindow");
+  const gate = document.getElementById("storeLoginGate");
 
-  if (isAdmin || (session && session.phone)) {
-    if (gate) gate.style.display = "none";
-    if (storeWin) storeWin.style.display = "block";
-    updateStorefrontCustomerUI();
+  if (storeWin) {
+    storeWin.style.display = "block";
+  }
+  if (gate) {
+    gate.style.display = "none";
+  }
 
-    if (session) {
-      // Auto-fill customer details in checkout if available
-      const set = (id, val) => {
-        const el = document.getElementById(id);
-        if (el && val) el.value = val;
-      };
-      set("checkoutName", session.name);
-      set("checkoutPhone", session.phone);
-      set("checkoutAddress", session.address);
-      set("checkoutLandmark", session.landmark);
-      if (session.distanceKm) {
-        selectedDistanceKm = Number(session.distanceKm) || 1.5;
-      }
-      if (session.distanceTierId) {
-        selectedDistanceTierId = session.distanceTierId;
-      }
+  updateStorefrontCustomerUI();
+
+  const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
+  if (session && session.phone) {
+    // Auto-fill customer details in checkout if available
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val) el.value = val;
+    };
+    set("checkoutName", session.name);
+    set("checkoutPhone", session.phone);
+    set("checkoutAddress", session.address);
+    set("checkoutLandmark", session.landmark);
+    if (session.distanceKm) {
+      selectedDistanceKm = Number(session.distanceKm) || 1.5;
     }
-
-    // Auto open account modal if requested via URL (?view=account or #account)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("view") === "account" || window.location.hash === "#account") {
-      setTimeout(() => {
-        handleAccountClick();
-      }, 150);
+    if (session.distanceTierId) {
+      selectedDistanceTierId = session.distanceTierId;
     }
-  } else {
-    // Lock store window and display login entrance gate
-    if (gate) gate.style.display = "flex";
-    if (storeWin) storeWin.style.display = "none";
+  }
 
-    // Pre-populate fields if saved previously
-    const saved = Store.getCustomer();
-    const gateName = document.getElementById("gateNameInput");
-    const gatePhone = document.getElementById("gatePhoneInput");
-    if (gateName && saved?.name && !gateName.value) gateName.value = saved.name;
-    if (gatePhone && saved?.phone && !gatePhone.value) gatePhone.value = saved.phone;
+  // Auto open account modal if requested via URL (?view=account or #account)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("view") === "account" || window.location.hash === "#account") {
+    setTimeout(() => {
+      handleAccountClick();
+    }, 150);
   }
 }
 
@@ -2564,7 +2529,6 @@ function handleCustomerLogout() {
   if (notice) notice.style.display = "none";
   closeModal("customerAccountModal");
   closeModal("customerAuthModal");
-  checkStoreAccess();
-  backToGatePhoneStep();
-  showToast("You have been signed out. Please sign in to enter the store.", "info");
+  updateStorefrontCustomerUI();
+  showToast("You have been signed out.", "info");
 }
