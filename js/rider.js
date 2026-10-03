@@ -179,7 +179,7 @@ const RiderPanel = {
     } else {
       if (errEl) {
         errEl.style.display = "block";
-        errEl.textContent = "Incorrect password. Default demo password is rider123";
+        errEl.textContent = "Incorrect password. Please verify your credentials or contact store admin.";
       }
       showToast("Incorrect password.", "error");
     }

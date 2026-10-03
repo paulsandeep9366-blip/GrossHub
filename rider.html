@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=2.6.0">
-  <link rel="stylesheet" href="css/admin.css?v=2.6.0">
+  <link rel="stylesheet" href="css/styles.css?v=3.1.0">
+  <link rel="stylesheet" href="css/admin.css?v=3.1.0">
   <style>
     body {
       background: #f8fafc;
@@ -201,7 +201,7 @@
 
         <div class="form-group" style="text-align:left; margin-bottom:18px;">
           <label class="form-label" for="riderPasswordInput">Rider Password *</label>
-          <input type="password" id="riderPasswordInput" class="form-input" placeholder="Enter password (default: rider123)" required autocomplete="current-password">
+          <input type="password" id="riderPasswordInput" class="form-input" placeholder="Enter Rider Password" required autocomplete="current-password">
           <div id="riderLoginError" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:6px;"></div>
         </div>
 
@@ -209,12 +209,7 @@
           Sign In to Dispatch Dashboard ➔
         </button>
 
-        <div style="margin-top: 14px; padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.78rem; color: var(--slate-600); text-align: left; line-height: 1.5;">
-          💡 <strong>Rider Credentials:</strong><br>
-          • ID: <code>bikash</code> | Password: <code>rider123</code><br>
-          • ID: <code>rahul</code> | Password: <code>rider123</code><br>
-          • ID: <code>samir</code> | Password: <code>rider123</code>
-        </div>
+
 
         <div id="adminRiderQuickAccess" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--slate-200);">
           <button type="button" class="btn-hero-primary" style="width:100%; padding:10px; font-size:0.88rem; background:#0284c7; justify-content:center;" onclick="RiderPanel.enterAsAdmin()">
@@ -275,9 +270,9 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/data.js?v=2.6.0"></script>
-  <script src="js/store.js?v=2.6.0"></script>
-  <script src="js/rider.js?v=2.6.0"></script>
+  <script src="js/data.js?v=3.1.0"></script>
+  <script src="js/store.js?v=3.1.0"></script>
+  <script src="js/rider.js?v=3.1.0"></script>
   <script>
     function escapeHTML(str) {
       if (!str) return "";

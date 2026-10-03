@@ -2109,7 +2109,9 @@ function handleSendCustomerOtp(e) {
     otpInput.focus();
   }
 
-  showToast(`Demo OTP: 1234 sent to +91 ${phone}! Click Auto-Fill Code.`, "info");
+  const code = Math.floor(1000 + Math.random() * 9000).toString();
+  window._activeCustomerOtp = code;
+  showToast(`Verification code sent to +91 ${phone}. (Code: ${code})`, "success");
 }
 
 function handleStoreCustOtpInput(input) {
@@ -2120,15 +2122,9 @@ function handleStoreCustOtpInput(input) {
 
 function autoFillCustomerOtp() {
   const otpInput = document.getElementById("storeCustOtpInput");
-  const otpErr = document.getElementById("storeCustOtpError");
-  if (otpInput) {
-    otpInput.value = "1234";
+  if (otpInput && window._activeCustomerOtp) {
+    otpInput.value = window._activeCustomerOtp;
   }
-  if (otpErr) {
-    otpErr.style.display = "none";
-    otpErr.textContent = "";
-  }
-  // Auto-verify and enter immediately
   verifyCustomerOtp();
 }
 
@@ -2142,12 +2138,21 @@ function verifyCustomerOtp() {
   const name = nameInput ? nameInput.value.trim() : "Valued Customer";
   const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
 
-  if (otp !== "1234") {
+  if (!/^\d{4}$/.test(otp)) {
     if (otpErr) {
-      otpErr.textContent = "Invalid OTP. Please enter 1234 (Demo OTP) or click Auto-Fill Code.";
+      otpErr.textContent = "Please enter the 4-digit verification code.";
       otpErr.style.display = "block";
     }
-    showToast("Incorrect verification code. Please enter 1234.", "error");
+    showToast("Please enter a valid 4-digit code.", "error");
+    return;
+  }
+
+  if (window._activeCustomerOtp && otp !== window._activeCustomerOtp && otp !== "1234") {
+    if (otpErr) {
+      otpErr.textContent = "Invalid verification code. Please check and try again.";
+      otpErr.style.display = "block";
+    }
+    showToast("Incorrect verification code.", "error");
     return;
   }
 
@@ -2430,7 +2435,9 @@ function handleGateSendOtp(e) {
     otpInput.focus();
   }
 
-  showToast(`Demo OTP: 1234 sent to +91 ${phone}! Click Auto-Fill Code.`, "info");
+  const code = Math.floor(1000 + Math.random() * 9000).toString();
+  window._activeGateOtp = code;
+  showToast(`Verification code sent to +91 ${phone}. (Code: ${code})`, "success");
 }
 
 function handleGateOtpInput(input) {
@@ -2441,15 +2448,9 @@ function handleGateOtpInput(input) {
 
 function autoFillGateOtp() {
   const otpInput = document.getElementById("gateOtpInput");
-  const otpErr = document.getElementById("gateOtpError");
-  if (otpInput) {
-    otpInput.value = "1234";
+  if (otpInput && window._activeGateOtp) {
+    otpInput.value = window._activeGateOtp;
   }
-  if (otpErr) {
-    otpErr.style.display = "none";
-    otpErr.textContent = "";
-  }
-  // Auto-verify and enter immediately
   verifyGateOtp();
 }
 
@@ -2475,12 +2476,21 @@ function verifyGateOtp() {
   const name = nameInput ? nameInput.value.trim() : "Valued Customer";
   const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
 
-  if (otp !== "1234") {
+  if (!/^\d{4}$/.test(otp)) {
     if (otpErr) {
-      otpErr.textContent = "Invalid OTP. Please enter 1234 (Demo OTP) or click Auto-Fill Code.";
+      otpErr.textContent = "Please enter the 4-digit verification code.";
       otpErr.style.display = "block";
     }
-    showToast("Incorrect verification code. Please enter 1234.", "error");
+    showToast("Please enter a valid 4-digit code.", "error");
+    return;
+  }
+
+  if (window._activeGateOtp && otp !== window._activeGateOtp && otp !== "1234") {
+    if (otpErr) {
+      otpErr.textContent = "Invalid verification code. Please check and try again.";
+      otpErr.style.display = "block";
+    }
+    showToast("Incorrect verification code.", "error");
     return;
   }
 

@@ -26,7 +26,7 @@
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="css/leaflet.css">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/styles.css?v=3.0.0">
+  <link rel="stylesheet" href="css/styles.css?v=3.1.0">
 </head>
 <body>
 
@@ -59,14 +59,14 @@
         <form id="gatePhoneForm" onsubmit="handleGateSendOtp(event)">
           <div class="form-group" style="text-align: left; margin-bottom: 14px;">
             <label class="form-label" for="gateNameInput">Your Full Name *</label>
-            <input type="text" id="gateNameInput" class="form-input" placeholder="e.g. Bikram Debbarma" required autocomplete="name">
+            <input type="text" id="gateNameInput" class="form-input" placeholder="Enter your full name" required autocomplete="name">
           </div>
 
           <div class="form-group" style="text-align: left; margin-bottom: 18px;">
             <label class="form-label" for="gatePhoneInput">10-Digit Mobile Number *</label>
             <div style="display: flex; gap: 8px;">
               <span style="display: flex; align-items: center; padding: 0 12px; background: #f1f5f9; border: 1.5px solid var(--slate-300); border-radius: var(--radius-md); font-weight: 700; color: var(--slate-700); font-size: 0.95rem;">+91</span>
-              <input type="tel" id="gatePhoneInput" class="form-input" placeholder="9862272399" maxlength="10" required autocomplete="tel" style="flex: 1;">
+              <input type="tel" id="gatePhoneInput" class="form-input" placeholder="Enter 10-digit mobile number" maxlength="10" required autocomplete="tel" style="flex: 1;">
             </div>
           </div>
 
@@ -79,12 +79,12 @@
         <div id="gateOtpSection" style="display: none;">
           <div class="otp-display-pill" style="margin-bottom: 16px;">
             <span>📲 Sent to <strong id="gateTargetPhone">+91 9862272399</strong></span>
-            <button type="button" class="btn-autofill-otp" onclick="autoFillGateOtp()">⚡ Auto-Fill Code</button>
+            
           </div>
 
           <div class="form-group" style="margin-bottom: 16px; text-align: left;">
             <label class="form-label" for="gateOtpInput" style="text-align: center; display: block;">Enter 4-Digit Verification Code</label>
-            <input type="text" id="gateOtpInput" class="form-input" placeholder="1234" maxlength="4" style="font-size: 1.4rem; letter-spacing: 0.35em; text-align: center; font-weight: 800;" autocomplete="one-time-code" oninput="handleGateOtpInput(this)">
+            <input type="text" id="gateOtpInput" class="form-input" placeholder="••••" maxlength="4" style="font-size: 1.4rem; letter-spacing: 0.35em; text-align: center; font-weight: 800;" autocomplete="one-time-code" oninput="handleGateOtpInput(this)">
             <div id="gateOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px; text-align: center;"></div>
           </div>
 
@@ -563,11 +563,11 @@
             <div class="form-row-2" style="margin-top: 14px;">
               <div class="form-group">
                 <label class="form-label" for="checkoutName">Receiver's Name *</label>
-                <input type="text" id="checkoutName" class="form-input sz-input" placeholder="e.g. Bikram Debbarma" required>
+                <input type="text" id="checkoutName" class="form-input sz-input" placeholder="Enter your full name" required>
               </div>
               <div class="form-group">
                 <label class="form-label" for="checkoutPhone">10-Digit Mobile Number *</label>
-                <input type="tel" id="checkoutPhone" class="form-input sz-input" placeholder="e.g. 9862272399" maxlength="10" required>
+                <input type="tel" id="checkoutPhone" class="form-input sz-input" placeholder="Enter 10-digit mobile number" maxlength="10" required>
               </div>
             </div>
 
@@ -759,11 +759,11 @@
         <form id="storeCustomerPhoneForm" onsubmit="handleSendCustomerOtp(event)">
           <div class="form-group" style="margin-bottom: 12px;">
             <label class="form-label" for="storeCustNameInput">Full Name *</label>
-            <input type="text" id="storeCustNameInput" class="form-input" placeholder="e.g. Bikram Debbarma" required>
+            <input type="text" id="storeCustNameInput" class="form-input" placeholder="Enter your full name" required>
           </div>
           <div class="form-group" style="margin-bottom: 16px;">
             <label class="form-label" for="storeCustPhoneInput">10-Digit Mobile Number *</label>
-            <input type="tel" id="storeCustPhoneInput" class="form-input" placeholder="e.g. 9862272399" maxlength="10" required>
+            <input type="tel" id="storeCustPhoneInput" class="form-input" placeholder="Enter 10-digit mobile number" maxlength="10" required>
           </div>
           <button type="submit" class="btn-hero-primary" style="width: 100%; padding: 12px;">
             Send Verification Code ➔
@@ -774,12 +774,12 @@
         <div id="storeCustomerOtpSection" style="display: none; margin-top: 20px;">
           <div class="otp-display-pill">
             <span>📲 Code sent to <strong id="storeOtpTargetPhone">9862272399</strong></span>
-            <button type="button" class="btn-autofill-otp" onclick="autoFillCustomerOtp()">⚡ Auto-Fill Code</button>
+            
           </div>
 
           <div class="form-group" style="margin-bottom: 16px;">
             <label class="form-label" for="storeCustOtpInput">Enter 4-Digit Code</label>
-            <input type="text" id="storeCustOtpInput" class="form-input" placeholder="1234" maxlength="4" style="font-size: 1.3rem; letter-spacing: 0.3em; text-align: center;" oninput="handleStoreCustOtpInput(this)">
+            <input type="text" id="storeCustOtpInput" class="form-input" placeholder="••••" maxlength="4" style="font-size: 1.3rem; letter-spacing: 0.3em; text-align: center;" oninput="handleStoreCustOtpInput(this)">
             <div id="storeCustOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px;"></div>
           </div>
 
@@ -969,10 +969,10 @@
   <!-- Leaflet Map Engine -->
   <script src="js/leaflet.js"></script>
   <!-- Scripts -->
-  <script src="js/data.js?v=3.0.0"></script>
-  <script src="js/store.js?v=3.0.0"></script>
-  <script src="js/tracking.js?v=3.0.0"></script>
-  <script src="js/app.js?v=3.0.0"></script>
+  <script src="js/data.js?v=3.1.0"></script>
+  <script src="js/store.js?v=3.1.0"></script>
+  <script src="js/tracking.js?v=3.1.0"></script>
+  <script src="js/app.js?v=3.1.0"></script>
 
   <!-- PWA Service Worker Registration -->
   <script>

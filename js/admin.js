@@ -129,7 +129,7 @@ const AdminPanel = {
     } else {
       if (errorEl) {
         errorEl.style.display = 'block';
-        errorEl.textContent = 'Invalid password. Default is grosshub123';
+        errorEl.textContent = 'Invalid administrator password. Please try again.';
       }
     }
   },
