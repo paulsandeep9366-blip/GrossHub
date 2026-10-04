@@ -17,7 +17,7 @@ const DEFAULT_SHOP_CONFIG = {
   freeDeliveryThreshold: 499,
   currency: "₹",
   adminPassword: "grosshub123",
-  riderPin: "1234",
+  riderPin: "rider123",
   riderPassword: "rider123",
   riders: [
     { id: "rider_1", username: "bikash", name: "Rider Bikash", phone: "9862272399", vehicle: "Honda Activa", password: "rider123" },

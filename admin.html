@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css?v=3.4.0">
-  <link rel="stylesheet" href="css/admin.css?v=3.4.0">
+  <link rel="stylesheet" href="css/admin.css?v=3.8.0">
   <style>
     body {
       background: #f1f5f9;
@@ -413,7 +413,7 @@
 
               <div class="form-group" style="margin-top:10px;">
                 <label class="form-label">Rider Fleet Login Password</label>
-                <input type="text" id="adminSetRiderPin" class="form-input" placeholder="1234" maxlength="6" style="max-width:240px;">
+                <input type="text" id="adminSetRiderPin" class="form-input" placeholder="Enter Fleet Password" maxlength="16" style="max-width:240px;">
                 <small class="text-muted">Delivery riders use their Rider ID and this password to log into their Rider Dispatch Portal.</small>
               </div>
 
@@ -437,7 +437,7 @@
             </div>
             <div class="kpi-card products">
               <span class="kpi-label">Fleet Login Password</span>
-              <span class="kpi-value" id="adminDisplayRiderPin" style="font-family: monospace; letter-spacing: 0.1em;">1234</span>
+              <span class="kpi-value" id="adminDisplayRiderPin" style="font-family: monospace; letter-spacing: 0.1em;">••••</span>
             </div>
           </div>
 
@@ -671,7 +671,7 @@
   <script src="js/html2pdf.bundle.min.js"></script>
   <script src="js/data.js?v=3.4.0"></script>
   <script src="js/store.js?v=3.4.0"></script>
-  <script src="js/admin.js?v=3.4.0"></script>
+  <script src="js/admin.js?v=3.8.0"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {

@@ -489,7 +489,7 @@ const Store = {
 
   // 8. Rider Authentication & Session
   getRiderPin() {
-    return localStorage.getItem(this.KEYS.RIDER_PIN) || this.getConfig().riderPin || "1234";
+    return localStorage.getItem(this.KEYS.RIDER_PIN) || this.getConfig().riderPin || "rider123";
   },
 
   setRiderPin(pin) {

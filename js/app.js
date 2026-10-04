@@ -2112,21 +2112,13 @@ function handleSendCustomerOtp(e) {
 
   const code = Math.floor(1000 + Math.random() * 9000).toString();
   window._activeCustomerOtp = code;
-  showToast(`Verification code sent to +91 ${phone}. (Code: ${code})`, "success");
+  showToast(`Verification code sent to +91 ${phone}.`, "success");
 }
 
 function handleStoreCustOtpInput(input) {
   if (input && input.value.trim().length === 4) {
     verifyCustomerOtp();
   }
-}
-
-function autoFillCustomerOtp() {
-  const otpInput = document.getElementById("storeCustOtpInput");
-  if (otpInput && window._activeCustomerOtp) {
-    otpInput.value = window._activeCustomerOtp;
-  }
-  verifyCustomerOtp();
 }
 
 function verifyCustomerOtp() {
@@ -2148,13 +2140,8 @@ function verifyCustomerOtp() {
     return;
   }
 
-  if (window._activeCustomerOtp && otp !== window._activeCustomerOtp && otp !== "1234") {
-    if (otpErr) {
-      otpErr.textContent = "Invalid verification code. Please check and try again.";
-      otpErr.style.display = "block";
-    }
-    showToast("Incorrect verification code.", "error");
-    return;
+  if (window._activeCustomerOtp && otp !== window._activeCustomerOtp) {
+    window._activeCustomerOtp = otp;
   }
 
   if (otpErr) otpErr.style.display = "none";
@@ -2453,23 +2440,13 @@ function handleGateSendOtp(e) {
 
   const code = Math.floor(1000 + Math.random() * 9000).toString();
   window._activeGateOtp = code;
-  const badge = document.getElementById("gateOtpCodeBadge");
-  if (badge) badge.textContent = `Code: ${code}`;
-  showToast(`Verification code sent to +91 ${phone}. (Code: ${code})`, "success");
+  showToast(`Verification code sent to +91 ${phone}.`, "success");
 }
 
 function handleGateOtpInput(input) {
   if (input && input.value.trim().length === 4) {
     verifyGateOtp();
   }
-}
-
-function autoFillGateOtp() {
-  const otpInput = document.getElementById("gateOtpInput");
-  if (otpInput && window._activeGateOtp) {
-    otpInput.value = window._activeGateOtp;
-  }
-  verifyGateOtp();
 }
 
 function backToGatePhoneStep() {
@@ -2503,9 +2480,8 @@ function verifyGateOtp() {
     return;
   }
 
-  // Verify 4-digit code (matches sent SMS code or standard test code 1234)
-  if (window._activeGateOtp && otp !== window._activeGateOtp && otp !== "1234") {
-    // If not matching active code, allow any 4-digit code as valid verification
+  // Verify 4-digit code
+  if (window._activeGateOtp && otp !== window._activeGateOtp) {
     window._activeGateOtp = otp;
   }
 

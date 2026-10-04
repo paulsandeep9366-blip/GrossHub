@@ -6,7 +6,7 @@
 
 const RiderPanel = {
   isAuthenticated: false,
-  activeRider: "Rider Bikash",
+  activeRider: "",
   activeTab: "active", // "active" or "completed"
 
   init() {
@@ -153,7 +153,7 @@ const RiderPanel = {
     if (!matchedRider) {
       if (errEl) {
         errEl.style.display = "block";
-        errEl.textContent = "Rider ID not found. Use username (e.g. bikash) or phone number.";
+        errEl.textContent = "Rider ID not found. Please verify your credentials or contact administrator.";
       }
       showToast("Rider ID not recognized.", "error");
       return;
@@ -165,9 +165,7 @@ const RiderPanel = {
 
     const isPwdValid = (cleanInputPwd === individualPassword) ||
                        (cleanInputPwd === fleetPassword) ||
-                       (cleanInputPwd === "rider123") ||
-                       (cleanInputPwd === "1234") ||
-                       (cleanInputPwd === `${cleanId}123`);
+                       (cleanInputPwd === "rider123");
 
     if (isPwdValid) {
       this.isAuthenticated = true;
@@ -223,16 +221,7 @@ const RiderPanel = {
       });
     }
 
-    const riderSelect = document.getElementById("riderSelectProfile");
-    if (riderSelect) {
-      riderSelect.addEventListener("change", (e) => {
-        this.activeRider = e.target.value;
-        Store.setRiderSession({ name: e.target.value, loginTime: new Date().toISOString() });
-        const badge = document.getElementById("riderActiveBadge");
-        if (badge) badge.textContent = this.activeRider;
-        this.renderOrders();
-      });
-    }
+
   },
 
   switchTab(tab) {

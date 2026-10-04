@@ -26,7 +26,7 @@
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="css/leaflet.css">
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/styles.css?v=3.6.0">
+  <link rel="stylesheet" href="css/styles.css?v=3.8.0">
 
 </head>
 <body>
@@ -78,9 +78,8 @@
 
         <!-- Step 2: OTP Verification Form -->
         <div id="gateOtpSection" style="display: none;">
-          <div class="otp-display-pill" style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-            <span>📲 Sent to <strong id="gateTargetPhone">+91 9862272399</strong></span>
-            <span id="gateOtpCodeBadge" style="font-size: 0.78rem; background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Code: 1234</span>
+          <div class="otp-display-pill" style="margin-bottom: 16px; display: flex; align-items: center; justify-content: center; text-align: center;">
+            <span>📲 Verification code sent to <strong id="gateTargetPhone">your mobile number</strong></span>
           </div>
 
           <div class="form-group" style="margin-bottom: 16px; text-align: left;">
@@ -755,9 +754,8 @@
 
         <!-- Step 2: OTP Verification Section -->
         <div id="storeCustomerOtpSection" style="display: none; margin-top: 20px;">
-          <div class="otp-display-pill">
-            <span>📲 Code sent to <strong id="storeOtpTargetPhone">9862272399</strong></span>
-            
+          <div class="otp-display-pill" style="text-align: center;">
+            <span>📲 Verification code sent to <strong id="storeOtpTargetPhone">your mobile number</strong></span>
           </div>
 
           <div class="form-group" style="margin-bottom: 16px;">

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css?v=3.4.0">
-  <link rel="stylesheet" href="css/admin.css?v=3.7.0">
+  <link rel="stylesheet" href="css/admin.css?v=3.8.0">
   <style>
     body {
       background: #f8fafc;
@@ -153,9 +153,7 @@
 
     <div class="rph-controls">
       <!-- Active Rider Profile Badge (shown when logged in) -->
-      <span class="live-pulse-badge" id="riderActiveBadge" style="display:none; font-size:0.8rem; padding:5px 12px;">
-        Rider Bikash
-      </span>
+      <span class="live-pulse-badge" id="riderActiveBadge" style="display:none; font-size:0.8rem; padding:5px 12px;"></span>
 
       <button class="rph-link-btn" id="btnRiderLogout" style="background:#ef4444; color:#fff; border:none; cursor:pointer; display:none;" onclick="RiderPanel.handleLogout()">
         🚪 Logout
@@ -184,7 +182,7 @@
       <form id="riderLoginForm">
         <div class="form-group" style="text-align:left; margin-bottom:16px;">
           <label class="form-label" for="riderIdInput">Rider ID or Registered Phone *</label>
-          <input type="text" id="riderIdInput" class="form-input" placeholder="e.g. bikash, rahul, or 9862272399" required autocomplete="username">
+          <input type="text" id="riderIdInput" class="form-input" placeholder="Enter Rider ID or Mobile Number" required autocomplete="username">
         </div>
 
         <div class="form-group" style="text-align:left; margin-bottom:18px;">
@@ -211,11 +209,6 @@
           <span class="live-pulse-dot"></span> Live Dispatch Feed
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <select id="riderSelectProfile" class="rider-profile-select" style="padding:4px 8px; font-size:0.8rem;">
-            <option value="Rider Bikash">Switch: Bikash</option>
-            <option value="Rider Rahul">Switch: Rahul</option>
-            <option value="Rider Samir">Switch: Samir</option>
-          </select>
           <button class="btn-xs btn-outline" onclick="RiderPanel.renderOrders(); showToast('Orders refreshed! 🔄', 'info');">
             🔄 Refresh
           </button>
@@ -250,7 +243,7 @@
   <!-- Scripts -->
   <script src="js/data.js?v=3.4.0"></script>
   <script src="js/store.js?v=3.4.0"></script>
-  <script src="js/rider.js?v=3.7.0"></script>
+  <script src="js/rider.js?v=3.8.0"></script>
   <script>
     function escapeHTML(str) {
       if (!str) return "";

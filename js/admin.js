@@ -329,9 +329,7 @@ const AdminPanel = {
         <td>
           <select class="admin-rider-select" onchange="AdminPanel.handleAssignRider('${order.id}', this.value)">
             <option value="Pending Assignment" ${order.rider === 'Pending Assignment' ? 'selected' : ''}>Unassigned</option>
-            <option value="Rider Bikash" ${order.rider === 'Rider Bikash' ? 'selected' : ''}>Rider Bikash</option>
-            <option value="Rider Rahul" ${order.rider === 'Rider Rahul' ? 'selected' : ''}>Rider Rahul</option>
-            <option value="Rider Samir" ${order.rider === 'Rider Samir' ? 'selected' : ''}>Rider Samir</option>
+            ${(Store.getRiders ? Store.getRiders() : []).map(r => `<option value="${escapeHTML(r.name)}" ${order.rider === r.name ? 'selected' : ''}>${escapeHTML(r.name)}</option>`).join('')}
           </select>
         </td>
         <td>
@@ -376,9 +374,12 @@ const AdminPanel = {
   },
 
   handleAssignRider(orderId, riderName) {
+    const riders = (Store.getRiders && Store.getRiders()) || [];
+    const matched = riders.find(r => r.name === riderName);
+    const phone = matched ? matched.phone : '';
     Store.updateOrderStatus(orderId, Store.getOrder(orderId).status, {
       rider: riderName,
-      riderPhone: riderName === 'Rider Bikash' ? '9862272399' : '6009430922'
+      riderPhone: phone
     }, `Assigned to ${riderName}`);
     showToast(`Order ${orderId} assigned to ${riderName}`, 'info');
     this.renderOrders();
