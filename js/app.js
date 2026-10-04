@@ -55,6 +55,14 @@ function restoreSavedPinnedLocation() {
     const saved = JSON.parse(raw);
     if (!saved || !saved.lat || !saved.lng) return;
 
+    if (saved.locality && saved.locality.includes('Bhattapukur') && (!saved.fullAddress || saved.fullAddress.includes('799003'))) {
+      saved.locality = 'Battala, Agartala';
+      saved.fullAddress = 'Battala, Agartala, Tripura - 799001';
+      saved.lat = 23.8245;
+      saved.lng = 91.2760;
+      try { localStorage.setItem('grosshub_pinned_location', JSON.stringify(saved)); } catch (e) {}
+    }
+
     lastCustomerGps = {
       lat: saved.lat,
       lng: saved.lng,
@@ -92,7 +100,7 @@ function confirmPinnedDeliveryLocation(isShoppingOnly = false) {
   const lat = lastCustomerGps?.lat || (mapCenter ? mapCenter.lat : 23.8250);
   const lng = lastCustomerGps?.lng || (mapCenter ? mapCenter.lng : 91.2780);
   const localityEl = document.getElementById('szLocalityName');
-  const locality = localityEl ? localityEl.textContent.trim() : 'Bhattapukur, Agartala';
+  const locality = localityEl ? localityEl.textContent.trim() : 'Battala, Agartala';
   const fullAddressEl = document.getElementById('szFullAddress');
   const fullAddress = fullAddressEl ? fullAddressEl.textContent.trim() : locality;
   const feeEl = document.getElementById('mapCalculatedFeeVal');
@@ -610,7 +618,7 @@ function removeCoupon() {
   updateCartBadgeAndDrawer();
 }
 
-// Distance Engine & GPS Calculation (Agartala, Bhattapukur)
+// Distance Engine & GPS Calculation (Agartala, Battala)
 function calculateHaversineDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371; // Earth radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -664,8 +672,8 @@ function handleAutoDetectLocation() {
 
       const config = Store.getConfig();
       const storeLoc = config.storeLocation || DEFAULT_SHOP_CONFIG.storeLocation;
-      const storeLat = (storeLoc && storeLoc.lat) ? storeLoc.lat : 23.8188;
-      const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : 91.2725;
+      const storeLat = (storeLoc && storeLoc.lat) ? storeLoc.lat : 23.8245;
+      const storeLng = (storeLoc && storeLoc.lng) ? storeLoc.lng : 91.2760;
 
       const straightDistanceKm = calculateHaversineDistanceKm(storeLat, storeLng, userLat, userLng);
       
@@ -732,7 +740,7 @@ function handleAutoDetectLocation() {
           msgEl.innerHTML = `
             <span>📍</span>
             <div>
-              <strong>GPS Locked: ~${effectiveKm} km</strong> from GrossHub Hub (${storeLoc.name || 'Bhattapukur'}) ${accuracy ? `(±${accuracy}m)` : ''}.<br>
+              <strong>GPS Locked: ~${effectiveKm} km</strong> from GrossHub Hub (${storeLoc.name || 'Battala'}) ${accuracy ? `(±${accuracy}m)` : ''}.<br>
               <small>Delivery fee automatically calculated & applied to total bill!</small>
             </div>
           `;
@@ -771,11 +779,11 @@ function handleAutoDetectLocation() {
   );
 }
 
-// Agartala Localities and approximate distance from Bhattapukur Store
+// Agartala Localities and approximate distance from Battala Store
 const GROSSHUB_STORE_COORDS = {
-  lat: 23.8188,
-  lng: 91.2725,
-  name: "GrossHub Hub, Bhattapukur"
+  lat: 23.8245,
+  lng: 91.2760,
+  name: "GrossHub Hub, Battala"
 };
 
 const DEFAULT_AGARTALA_CUSTOMER_COORDS = {
@@ -793,8 +801,8 @@ let checkoutReverseGeoTimer = null;
 
 const AGARTALA_LOCALITY_DISTANCES = [
   // 0 - 2 km (Local Zone)
-  { names: ['bhattapukur', 'bhatta pukur', 'badharghat', 'badhar ghat', 'arundhutinagar', 'arundhuti nagar', 'ad nagar', 'a.d. nagar', 'pratapgarh', 'dashamighat', 'bypass road'], km: 1.5, lat: 23.8188, lng: 91.2725, label: 'Bhattapukur, Agartala', fullAddress: 'Bhattapukur, Agartala, Tripura - 799003' },
-  { names: ['battala', 'dashamighat', 'battala bazar'], km: 2.0, lat: 23.8245, lng: 91.2760, label: 'Battala, Agartala', fullAddress: 'Battala, Agartala, Tripura - 799001' },
+  { names: ['battala', 'dashamighat', 'battala bazar'], km: 0.5, lat: 23.8245, lng: 91.2760, label: 'Battala, Agartala', fullAddress: 'Battala, Agartala, Tripura - 799001' },
+  { names: ['bhattapukur', 'bhatta pukur', 'badharghat', 'badhar ghat', 'arundhutinagar', 'arundhuti nagar', 'ad nagar', 'a.d. nagar', 'pratapgarh', 'dashamighat', 'bypass road'], km: 1.8, lat: 23.8188, lng: 91.2725, label: 'Bhattapukur, Agartala', fullAddress: 'Bhattapukur, Agartala, Tripura - 799003' },
   { names: ['bordowali', 'arundhutinagar 12'], km: 2.2, lat: 23.8110, lng: 91.2750, label: 'Bordowali, Agartala', fullAddress: 'Bordowali, Agartala, Tripura - 799003' },
 
   // 2 - 5 km (City Core Zone)
@@ -1053,7 +1061,7 @@ function initCheckoutDeliveryMap(initialLat, initialLng) {
     interactive: true
   }).addTo(checkoutMap);
 
-  checkoutStoreMarker.bindPopup('<strong>🏪 GrossHub Hub, Bhattapukur</strong><br>Express Grocery Dispatch Center');
+  checkoutStoreMarker.bindPopup('<strong>🏪 GrossHub Hub, Battala</strong><br>Express Grocery Dispatch Center');
 
   // Route Polyline (Dashed emerald route)
   checkoutRoutePolyline = L.polyline([
@@ -1111,7 +1119,7 @@ function handleMapCustomerLocationChange(lat, lng, source = 'map') {
     checkoutRoutePolyline.setLatLngs([[storeLat, storeLng], [lat, lng]]);
   }
 
-  // 2. Calculate Road Distance from Bhattapukur Store Hub
+  // 2. Calculate Road Distance from Battala Store Hub
   const straightKm = calculateHaversineDistanceKm(storeLat, storeLng, lat, lng);
   const roadKm = straightKm < 1 ? Math.round(straightKm * 1.1 * 10) / 10 : Math.round(straightKm * 1.25 * 10) / 10;
   const effectiveKm = Math.max(0.5, Math.min(35, roadKm));
@@ -1383,7 +1391,7 @@ function handleCustomerAreaSelect(val) {
       if (checkoutMap) {
         const config = Store.getConfig();
         const storeLoc = config.storeLocation || GROSSHUB_STORE_COORDS;
-        const bounds = L.latLngBounds([[storeLoc.lat || 23.8188, storeLoc.lng || 91.2725], [matched.lat, matched.lng]]);
+        const bounds = L.latLngBounds([[storeLoc.lat || 23.8245, storeLoc.lng || 91.2760], [matched.lat, matched.lng]]);
         checkoutMap.fitBounds(bounds, { padding: [40, 40] });
       }
     } else {
@@ -1422,7 +1430,7 @@ function handleAddressDistanceDetection(addressText) {
           if (checkoutRoutePolyline) {
             const config = Store.getConfig();
             const storeLoc = config.storeLocation || GROSSHUB_STORE_COORDS;
-            checkoutRoutePolyline.setLatLngs([[storeLoc.lat || 23.8188, storeLoc.lng || 91.2725], [loc.lat, loc.lng]]);
+            checkoutRoutePolyline.setLatLngs([[storeLoc.lat || 23.8245, storeLoc.lng || 91.2760], [loc.lat, loc.lng]]);
           }
           if (checkoutMap) {
             checkoutMap.panTo([loc.lat, loc.lng]);
@@ -1546,7 +1554,7 @@ function proceedToWhatsAppOrder(chosenNumber = null) {
   const savedCust = Store.getCustomer() || {};
   const customerName = savedCust.name || prompt('Please enter your full name:') || 'Customer';
   const customerPhone = savedCust.phone || prompt('Please enter your 10-digit phone number:') || '';
-  const customerAddress = savedCust.address || prompt('Please enter your delivery address in Agartala:') || 'Bhattapukur, Agartala';
+  const customerAddress = savedCust.address || prompt('Please enter your delivery address in Agartala:') || 'Battala, Agartala';
 
   // Choose phone number (primary: 9862272399 or fallback 6009430922)
   const targetNumber = chosenNumber || config.whatsappNumber || '919862272399';
@@ -1581,7 +1589,7 @@ function proceedToWhatsAppOrder(chosenNumber = null) {
   const message = 
 `🛒 *NEW GROCERY ORDER — GROSSHUB*
 *Order ID:* ${order.id}
-*Store Base:* Bhattapukur, Agartala
+*Store Base:* Battala, Agartala
 
 👤 *Customer Details:*
 • *Name:* ${customerName}

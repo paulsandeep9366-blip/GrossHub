@@ -24,6 +24,12 @@ const Store = {
       const saved = localStorage.getItem(this.KEYS.CONFIG);
       if (saved) {
         const parsed = JSON.parse(saved);
+        if (parsed.address && parsed.address.includes('Bhattapukur')) {
+          parsed.address = DEFAULT_SHOP_CONFIG.address;
+        }
+        if (parsed.storeLocation && ((parsed.storeLocation.name && parsed.storeLocation.name.includes('Bhattapukur')) || (parsed.storeLocation.address && parsed.storeLocation.address.includes('Bhattapukur')))) {
+          parsed.storeLocation = DEFAULT_SHOP_CONFIG.storeLocation;
+        }
         return {
           ...DEFAULT_SHOP_CONFIG,
           ...parsed,

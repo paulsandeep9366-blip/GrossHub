@@ -317,7 +317,7 @@ const AdminPanel = {
         </td>
         <td>
           <small class="addr-clamp" title="${escapeHTML(order.customer?.address || '')}">
-            ${escapeHTML(order.customer?.address || 'Bhattapukur, Agartala')}
+            ${escapeHTML(order.customer?.address || 'Battala, Agartala')}
           </small>
           ${order.deliveryDistanceKm ? `<br><span style="font-size:0.75rem; color:#047857; font-weight:700;">🛵 ${order.deliveryDistanceKm} km</span>` : ''}
           ${(order.customerLat && order.customerLng) ? ` • <a href="https://www.google.com/maps?q=${order.customerLat},${order.customerLng}" target="_blank" style="font-size:0.72rem; color:#0284c7; font-weight:700; text-decoration:none;">📍 Map Pin</a>` : ''}
@@ -862,7 +862,7 @@ const AdminPanel = {
         <div class="inv-header">
           <div class="inv-brand">
             <h2>🥬 GrossHub</h2>
-            <p><strong>GrossHub Quick Commerce Private Limited</strong> • Bhattapukur Hub, Agartala - 799003</p>
+            <p><strong>GrossHub Quick Commerce Private Limited</strong> • Battala Hub, Agartala - 799001</p>
             <p>GSTIN: <strong>16AABCG1234F1Z0</strong> • FSSAI: <strong>21623001000452</strong> • Helpline: <strong>+91 98622 72399</strong></p>
           </div>
           <div class="inv-meta">
@@ -892,7 +892,7 @@ const AdminPanel = {
           </div>
           <div>
             <div class="inv-block-title">Dispatch & Fulfillment:</div>
-            <div style="font-size: 0.76rem; color: #334155;"><strong>Hub:</strong> GrossHub Bhattapukur Hub, Agartala</div>
+            <div style="font-size: 0.76rem; color: #334155;"><strong>Hub:</strong> GrossHub Battala Hub, Agartala</div>
             <div style="font-size: 0.76rem; color: #334155; margin-top: 1px;"><strong>Rider:</strong> ${escapeHTML(order.rider || "Unassigned")} ${order.riderPhone ? `(📞 ${order.riderPhone})` : ""}</div>
             <div style="font-size: 0.76rem; color: #334155; margin-top: 1px;"><strong>Distance:</strong> ${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km` : "Standard Zone"} • <strong>Status:</strong> <span style="text-transform: uppercase; font-weight: 700; color: #064e3b;">${order.status.replace("_", " ")}</span></div>
             <div style="font-size: 0.76rem; color: #334155; margin-top: 1px;"><strong>Payment Mode:</strong> ${escapeHTML(order.paymentMethod || "COD")}</div>
@@ -1258,7 +1258,7 @@ const AdminPanel = {
           <div class="inv-brand">
             <h2>🥬 GrossHub</h2>
             <p><strong>GrossHub Administration & Operations Management</strong></p>
-            <p>Fulfillment Centre: Bhattapukur, Agartala, Tripura West - 799003</p>
+            <p>Fulfillment Centre: Battala, Agartala, Tripura - 799001</p>
             <p>Helpline: +91 98622 72399 • GSTIN: 16AABCG1234F1Z0</p>
           </div>
           <div class="inv-meta">
@@ -1616,7 +1616,7 @@ const AdminPanel = {
           <div class="inv-brand">
             <h2>🥬 GrossHub</h2>
             <p><strong>GrossHub Customer Accounts & Billing Statement</strong></p>
-            <p>Fulfillment Hub: Bhattapukur, Agartala, Tripura West - 799003</p>
+            <p>Fulfillment Hub: Battala, Agartala, Tripura - 799001</p>
             <p>GSTIN: 16AABCG1234F1Z0 • Helpline: +91 98622 72399</p>
           </div>
           <div class="inv-meta">

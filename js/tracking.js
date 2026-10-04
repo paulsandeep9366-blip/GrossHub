@@ -8,7 +8,7 @@ const Tracking = {
   STAGES: [
     { key: 'placed', label: 'Order Placed', desc: 'Order received & logged', icon: '📝' },
     { key: 'confirmed', label: 'Order Confirmed', desc: 'Verified by store manager', icon: '✅' },
-    { key: 'preparing', label: 'Packing Items', desc: 'Being packed at Bhattapukur hub', icon: '📦' },
+    { key: 'preparing', label: 'Packing Items', desc: 'Being packed at Battala hub', icon: '📦' },
     { key: 'out_for_delivery', label: 'Out for Delivery', desc: 'Rider is on the way to you', icon: '🛵' },
     { key: 'delivered', label: 'Delivered', desc: 'Delivered to your address', icon: '🎉' }
   ],
@@ -131,7 +131,7 @@ const Tracking = {
         <div class="rider-details">
           <div class="rider-title">Delivery Partner</div>
           <div class="rider-name"><strong>${escapeHTML(order.rider)}</strong></div>
-          <div class="rider-eta">ETA: 15-25 mins • Bhattapukur Route</div>
+          <div class="rider-eta">ETA: 15-25 mins • Battala Route</div>
         </div>
         ${order.riderPhone ? `<a href="tel:${order.riderPhone}" class="btn-call-rider">📞 Call</a>` : ''}
       </div>
@@ -229,8 +229,9 @@ const Tracking = {
       this._trackingMapInstance = null;
     }
 
-    const storeLat = 23.8188;
-    const storeLng = 91.2725;
+    const config = (typeof Store !== 'undefined' && Store.getConfig) ? Store.getConfig() : null;
+    const storeLat = (config && config.storeLocation && config.storeLocation.lat) ? config.storeLocation.lat : 23.8245;
+    const storeLng = (config && config.storeLocation && config.storeLocation.lng) ? config.storeLocation.lng : 91.2760;
     const custLat = Number(order.customerLat || order.gpsCoords?.lat || 23.8315);
     const custLng = Number(order.customerLng || order.gpsCoords?.lng || 91.2825);
 
@@ -255,7 +256,7 @@ const Tracking = {
       iconAnchor: [20, 20]
     });
     L.marker([storeLat, storeLng], { icon: storeIcon }).addTo(map)
-      .bindPopup('<strong>🏪 GrossHub Bhattapukur Hub</strong><br>Dispatch Center');
+      .bindPopup('<strong>🏪 GrossHub Battala Hub</strong><br>Dispatch Center');
 
     // Customer Doorstep Pin
     const custIcon = L.divIcon({
@@ -465,7 +466,7 @@ const CustomerInvoice = {
           <div class="inv-brand">
             <h2>🥬 GrossHub</h2>
             <p><strong>GrossHub Quick Commerce Private Limited</strong></p>
-            <p>Fulfillment Hub: Bhattapukur, Agartala, Tripura West - 799003</p>
+            <p>Fulfillment Hub: Battala, Agartala, Tripura - 799001</p>
             <p>GSTIN: <strong>16AABCG1234F1Z0</strong> • FSSAI Lic: <strong>21623001000452</strong></p>
             <p>Helpline: <strong>+91 98622 72399</strong> • Email: support@grosshub.in</p>
           </div>
@@ -498,7 +499,7 @@ const CustomerInvoice = {
           </div>
           <div>
             <div class="inv-block-title">Delivery & Dispatch Details:</div>
-            <div style="font-size: 0.85rem; color: #334155;"><strong>Fulfillment Hub:</strong> Bhattapukur Main Store, Agartala</div>
+            <div style="font-size: 0.85rem; color: #334155;"><strong>Fulfillment Hub:</strong> Battala Main Store, Agartala</div>
             <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Assigned Rider:</strong> ${escapeHTML(order.rider || 'GrossHub Fleet Partner')}</div>
             <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Rider Contact:</strong> ${order.riderPhone ? `📞 ${order.riderPhone}` : 'Assigned on Dispatch'}</div>
             <div style="font-size: 0.85rem; color: #334155; margin-top: 2px;"><strong>Delivery Distance:</strong> ${order.deliveryDistanceKm ? `${order.deliveryDistanceKm} km (${order.deliveryDistanceLabel || 'Calculated'})` : 'Standard City Delivery Zone'}</div>
@@ -579,7 +580,7 @@ const CustomerInvoice = {
           <div style="text-align: right;">
             <p style="margin: 0; font-weight: 700; color: #0f172a;">GrossHub Fulfillment Centre</p>
             <div style="font-family: monospace; font-size: 0.78rem; color: #64748b; margin: 3px 0;">[VERIFIED-CUSTOMER-INVOICE]</div>
-            <p style="margin: 0; font-size: 0.72rem; color: #64748b;">Bhattapukur, Agartala - 799003</p>
+            <p style="margin: 0; font-size: 0.72rem; color: #64748b;">Battala, Agartala - 799001</p>
           </div>
         </div>
       </div>
