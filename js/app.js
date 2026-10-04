@@ -2035,20 +2035,18 @@ function showToast(message, type = 'info') {
 
 function updateStorefrontCustomerUI() {
   const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
-  const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
   const headerAccountLabel = document.getElementById("headerAccountLabel");
   const topNavCustomerLink = document.getElementById("topNavCustomerLink");
   const topAnnouncementBar = document.querySelector(".top-announcement-bar span");
 
-  if (isAdmin) {
-    if (headerAccountLabel) headerAccountLabel.textContent = "Admin";
-    if (topNavCustomerLink) {
-      topNavCustomerLink.innerHTML = `👑 <strong>Admin Mode</strong> • <a href="admin.html" style="color:var(--accent-400); text-decoration:underline;">Admin Dashboard ➔</a>`;
-    }
-    if (topAnnouncementBar) {
-      topAnnouncementBar.innerHTML = `👑 <strong>Merchant Admin Mode Active:</strong> Full Store Access Enabled • <a href="admin.html" style="color:#fde047; text-decoration:underline; font-weight:700;">Admin Control Center ➔</a> • <a href="rider.html" style="color:#7dd3fc; text-decoration:underline; font-weight:700;">Rider Dispatch ➔</a>`;
-    }
-  } else if (session && session.name) {
+  // Keep top announcement bar clean and consistent with store branding
+  const config = (typeof Store !== "undefined" && Store.getConfig) ? Store.getConfig() : null;
+  const threshold = config ? (config.freeDeliveryThreshold || 499) : 499;
+  if (topAnnouncementBar) {
+    topAnnouncementBar.innerHTML = `⚡ <strong>30-45 Min Express Delivery</strong> in Agartala • Free Delivery above <span id="bannerFreeThreshold">₹${threshold}</span>!`;
+  }
+
+  if (session && session.name) {
     const firstName = session.name.split(" ")[0];
     if (headerAccountLabel) headerAccountLabel.textContent = firstName;
     if (topNavCustomerLink) topNavCustomerLink.innerHTML = `👤 Hi, ${escapeHTML(firstName)}`;
@@ -2312,8 +2310,6 @@ function initCustomerSessionGuard() {
   if (typeof Store !== 'undefined' && Store.SessionGuard) {
     Store.SessionGuard.init('customer', {
       isAuth: () => {
-        const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
-        if (isAdmin) return false;
         const session = Store.getCustomerSession();
         return !!(session && session.phone);
       },
@@ -2323,9 +2319,6 @@ function initCustomerSessionGuard() {
 }
 
 function handleCustomerTimeout(reason = 'outside') {
-  const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
-  if (isAdmin) return;
-
   Store.clearCustomerSession();
   if (typeof Store !== 'undefined' && Store.SessionGuard) {
     Store.SessionGuard.clear('customer');
@@ -2381,15 +2374,17 @@ function checkStoreAccess() {
       const el = document.getElementById(id);
       if (el && val) el.value = val;
     };
-    set("checkoutName", session.name);
-    set("checkoutPhone", session.phone);
-    set("checkoutAddress", session.address);
-    set("checkoutLandmark", session.landmark);
-    if (session.distanceKm) {
-      selectedDistanceKm = Number(session.distanceKm) || 1.5;
-    }
-    if (session.distanceTierId) {
-      selectedDistanceTierId = session.distanceTierId;
+    if (session) {
+      set("checkoutName", session.name);
+      set("checkoutPhone", session.phone);
+      set("checkoutAddress", session.address);
+      set("checkoutLandmark", session.landmark);
+      if (session.distanceKm) {
+        selectedDistanceKm = Number(session.distanceKm) || 1.5;
+      }
+      if (session.distanceTierId) {
+        selectedDistanceTierId = session.distanceTierId;
+      }
     }
 
     // Auto open account modal if requested via URL (?view=account or #account)
@@ -2531,43 +2526,4 @@ function handleCustomerLogout() {
   showToast("You have been signed out. Please sign in to enter the store.", "info");
 }
 
-// Admin Store Gate Quick Unlock Handlers
-function showGateAdminUnlock() {
-  const phoneForm = document.getElementById("gatePhoneForm");
-  const otpSec = document.getElementById("gateOtpSection");
-  const adminSec = document.getElementById("gateAdminSection");
-  if (phoneForm) phoneForm.style.display = "none";
-  if (otpSec) otpSec.style.display = "none";
-  if (adminSec) {
-    adminSec.style.display = "block";
-    const pwdInput = document.getElementById("gateAdminPasswordInput");
-    if (pwdInput) {
-      pwdInput.value = "";
-      pwdInput.focus();
-    }
-  }
-}
-
-function handleGateAdminUnlock(e) {
-  if (e) e.preventDefault();
-  const pwdInput = document.getElementById("gateAdminPasswordInput");
-  const errEl = document.getElementById("gateAdminError");
-  const pwd = pwdInput ? pwdInput.value.trim() : "";
-  const adminPwd = (typeof Store !== "undefined" && Store.getAdminPassword) ? Store.getAdminPassword() : "grosshub123";
-
-  if (pwd === adminPwd) {
-    if (typeof Store !== "undefined" && Store.setAdminLoggedIn) {
-      Store.setAdminLoggedIn(true);
-    }
-    if (errEl) errEl.style.display = "none";
-    if (pwdInput) pwdInput.value = "";
-    checkStoreAccess();
-    showToast("Welcome Administrator! Full store and control center access unlocked. 👑", "success");
-  } else {
-    if (errEl) {
-      errEl.style.display = "block";
-      errEl.textContent = "Invalid administrator password. Please try again.";
-    }
-    showToast("Incorrect admin password.", "error");
-  }
-}
+// Customer Gate Initialized
