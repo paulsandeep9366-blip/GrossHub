@@ -79,8 +79,6 @@ const RiderPanel = {
     } catch(e) {}
     const timeoutNotice = document.getElementById('riderTimeoutNotice');
     if (timeoutNotice) timeoutNotice.style.display = 'none';
-    const adminLink = document.getElementById('rphAdminLink');
-    if (adminLink) adminLink.style.display = 'inline-flex';
     this.showDashboard();
     showToast("Entered Rider Portal with Admin Privileges.", "success");
   },
