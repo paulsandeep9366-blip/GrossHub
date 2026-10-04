@@ -532,14 +532,10 @@ const Store = {
     localStorage.removeItem(this.KEYS.RIDER_SESSION);
   },
 
-  // 9. Customer Authentication & Session (Session-only: automatically cleared when customer leaves site)
+  // 9. Customer Authentication & Session (Protected by 5-minute outside-portal guard)
   getCustomerSession() {
     try {
-      // Purge any legacy persistent localStorage session
-      if (localStorage.getItem(this.KEYS.CUSTOMER_SESSION)) {
-        localStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
-      }
-      const s = sessionStorage.getItem(this.KEYS.CUSTOMER_SESSION);
+      const s = localStorage.getItem(this.KEYS.CUSTOMER_SESSION) || sessionStorage.getItem(this.KEYS.CUSTOMER_SESSION);
       if (s) return JSON.parse(s);
     } catch(e) {}
     return null;
@@ -547,7 +543,9 @@ const Store = {
 
   setCustomerSession(customer) {
     try {
-      sessionStorage.setItem(this.KEYS.CUSTOMER_SESSION, JSON.stringify(customer));
+      const val = JSON.stringify(customer);
+      localStorage.setItem(this.KEYS.CUSTOMER_SESSION, val);
+      sessionStorage.setItem(this.KEYS.CUSTOMER_SESSION, val);
     } catch(e) {}
     this.saveCustomer(customer);
   },
@@ -645,9 +643,7 @@ const Store = {
               timedOut = true;
               reason = 'outside';
             }
-          }
-
-          if (!timedOut && activeStr) {
+          } else if (activeStr) {
             const lastActive = parseInt(activeStr, 10);
             if (lastActive && (now - lastActive >= this.TIMEOUT_MS)) {
               timedOut = true;
@@ -716,8 +712,11 @@ const Store = {
         checkTimeout();
       });
 
-      // Page hide (tab close or navigating away)
+      // Page hide & beforeunload (tab close or navigating away)
       window.addEventListener('pagehide', () => {
+        recordLeave();
+      });
+      window.addEventListener('beforeunload', () => {
         recordLeave();
       });
 

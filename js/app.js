@@ -2317,6 +2317,8 @@ function initCustomerSessionGuard() {
   if (typeof Store !== 'undefined' && Store.SessionGuard) {
     Store.SessionGuard.init('customer', {
       isAuth: () => {
+        const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
+        if (isAdmin) return false;
         const session = Store.getCustomerSession();
         return !!(session && session.phone);
       },
@@ -2326,18 +2328,45 @@ function initCustomerSessionGuard() {
 }
 
 function handleCustomerTimeout(reason = 'outside') {
+  const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
+  if (isAdmin) return;
+
   Store.clearCustomerSession();
+  if (typeof Store !== 'undefined' && Store.SessionGuard) {
+    Store.SessionGuard.clear('customer');
+  }
+
+  // Close all customer modals & cart drawer
   closeModal("customerAccountModal");
   closeModal("customerAuthModal");
+  closeModal("trackingModal");
+  closeModal("customerInvoiceModal");
+  closeModal("checkoutModal");
+  if (typeof closeCartDrawer === "function") {
+    closeCartDrawer();
+  }
+
+  // Lock storefront and display login entrance gate
+  checkStoreAccess();
+  backToGatePhoneStep();
+
+  // Display 5-minute session timeout alert banner on the gate
+  const notice = document.getElementById("customerTimeoutNotice");
+  if (notice) {
+    notice.style.display = "flex";
+    const descEl = notice.querySelector("div div");
+    if (descEl) {
+      if (reason === "outside") {
+        descEl.textContent = "You were away from the website for more than 5 minutes. For security, please sign in to enter the store.";
+      } else {
+        descEl.textContent = "Your session was inactive for more than 5 minutes. For security, please sign in to enter the store.";
+      }
+    }
+  }
 
   updateStorefrontCustomerUI();
 
-  const notice = document.getElementById("customerTimeoutNotice");
-  if (notice) {
-    notice.style.display = "none";
-  }
-
-  showToast('Customer session ended. Click Sign In to access your account.', 'info');
+  showToast("Your session expired after 5 minutes. Please sign in to enter the store.", "warning");
 }
 
 function checkStoreAccess() {
