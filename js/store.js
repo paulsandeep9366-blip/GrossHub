@@ -36,7 +36,14 @@ const Store = {
           storeLocation: parsed.storeLocation || DEFAULT_SHOP_CONFIG.storeLocation,
           distanceTiers: (parsed.distanceTiers && parsed.distanceTiers.length) ? parsed.distanceTiers : DEFAULT_SHOP_CONFIG.distanceTiers,
           riderPin: parsed.riderPin || DEFAULT_SHOP_CONFIG.riderPin,
-          riders: (parsed.riders && parsed.riders.length) ? parsed.riders : DEFAULT_SHOP_CONFIG.riders
+          riders: (parsed.riders || []).filter(r => {
+            const id = (r.id || '').toLowerCase();
+            const un = (r.username || '').toLowerCase();
+            const name = (r.name || '').toLowerCase();
+            return id !== 'rider_1' && id !== 'rider_2' && id !== 'rider_3' &&
+                   un !== 'bikash' && un !== 'rahul' && un !== 'samir' &&
+                   name !== 'rider bikash' && name !== 'rider rahul' && name !== 'rider samir';
+          })
         };
       }
     } catch (e) {
@@ -519,7 +526,55 @@ const Store = {
   },
 
   getRiders() {
-    return this.getConfig().riders || DEFAULT_SHOP_CONFIG.riders;
+    const config = this.getConfig();
+    return (config.riders || []).filter(r => {
+      const id = (r.id || '').toLowerCase();
+      const un = (r.username || '').toLowerCase();
+      const name = (r.name || '').toLowerCase();
+      return id !== 'rider_1' && id !== 'rider_2' && id !== 'rider_3' &&
+             un !== 'bikash' && un !== 'rahul' && un !== 'samir' &&
+             name !== 'rider bikash' && name !== 'rider rahul' && name !== 'rider samir';
+    });
+  },
+
+  deleteRider(riderId) {
+    const config = this.getConfig();
+    config.riders = (config.riders || []).filter(r => r.id !== riderId);
+    this.saveConfig(config);
+    return config.riders;
+  },
+
+  purgeDemoData() {
+    try {
+      // Clear demo/test orders
+      localStorage.removeItem(this.KEYS.ORDERS);
+      localStorage.setItem(this.KEYS.ORDERS, JSON.stringify([]));
+
+      // Clear customer session and active cart
+      localStorage.removeItem(this.KEYS.CUSTOMER);
+      localStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
+      try { sessionStorage.removeItem(this.KEYS.CUSTOMER_SESSION); } catch(e) {}
+      localStorage.removeItem(this.KEYS.CART);
+      localStorage.removeItem(this.KEYS.RIDER_SESSION);
+
+      // Clean config riders of any legacy demo riders
+      const saved = localStorage.getItem(this.KEYS.CONFIG);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        parsed.riders = (parsed.riders || []).filter(r => {
+          const id = (r.id || '').toLowerCase();
+          const un = (r.username || '').toLowerCase();
+          const name = (r.name || '').toLowerCase();
+          return id !== 'rider_1' && id !== 'rider_2' && id !== 'rider_3' &&
+                 un !== 'bikash' && un !== 'rahul' && un !== 'samir' &&
+                 name !== 'rider bikash' && name !== 'rider rahul' && name !== 'rider samir';
+        });
+        localStorage.setItem(this.KEYS.CONFIG, JSON.stringify(parsed));
+      }
+      localStorage.setItem('grosshub_demo_purged_v4_1', 'true');
+    } catch(e) {
+      console.error('Error purging demo data:', e);
+    }
   },
 
   getRiderSession() {
@@ -765,3 +820,10 @@ const Store = {
     }
   }
 };
+
+// Automatically ensure zero demo data across all portals
+try {
+  if (typeof localStorage !== 'undefined' && localStorage.getItem('grosshub_demo_purged_v4_1') !== 'true') {
+    Store.purgeDemoData();
+  }
+} catch(e) {}

@@ -19,11 +19,7 @@ const DEFAULT_SHOP_CONFIG = {
   adminPassword: "grosshub123",
   riderPin: "rider123",
   riderPassword: "rider123",
-  riders: [
-    { id: "rider_1", username: "bikash", name: "Rider Bikash", phone: "9862272399", vehicle: "Honda Activa", password: "rider123" },
-    { id: "rider_2", username: "rahul", name: "Rider Rahul", phone: "6009430922", vehicle: "Hero Splendor", password: "rider123" },
-    { id: "rider_3", username: "samir", name: "Rider Samir", phone: "9876543210", vehicle: "TVS Jupiter", password: "rider123" }
-  ],
+  riders: [],
   upiId: "9862272399@upi",
   serviceStatus: "open", // 'open' or 'closed'
   estimatedDeliveryTime: "30-45 mins",

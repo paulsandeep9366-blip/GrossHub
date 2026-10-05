@@ -1451,6 +1451,22 @@ const AdminPanel = {
     const fleetActiveEl = document.getElementById("kpiFleetActive");
     if (fleetActiveEl) fleetActiveEl.textContent = activeDeliveries.length;
 
+    if (!riders || riders.length === 0) {
+      container.innerHTML = `
+        <div style="background: var(--white); border: 1px dashed var(--slate-300); border-radius: var(--radius-md); padding: 36px 20px; text-align: center;">
+          <span style="font-size: 2.6rem; display: block; margin-bottom: 8px;">🛵</span>
+          <h4 style="margin: 0 0 6px 0; color: var(--slate-800); font-size: 1.1rem;">No Delivery Riders Registered</h4>
+          <p style="color: var(--slate-500); font-size: 0.88rem; max-width: 420px; margin: 0 auto 16px auto;">
+            Your delivery fleet is currently empty. Add your store's delivery riders to assign orders, track active dispatches, and enable rider mobile logins.
+          </p>
+          <button type="button" class="btn-xs btn-hero-primary" onclick="AdminPanel.handleAddNewRider()" style="padding: 8px 18px; font-size: 0.88rem;">
+            ➕ Add First Delivery Rider
+          </button>
+        </div>
+      `;
+      return;
+    }
+
     container.innerHTML = riders.map(rider => {
       const assigned = orders.filter(o => o.assignedRider === rider.name && o.status !== "delivered" && o.status !== "cancelled");
       const deliveredCount = orders.filter(o => o.assignedRider === rider.name && o.status === "delivered").length;
@@ -1483,13 +1499,16 @@ const AdminPanel = {
             <div>Assigned Order IDs: <strong>${assigned.map(o => o.id).join(", ") || "None currently"}</strong></div>
           </div>
 
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
             <a href="tel:${rider.phone || "9862272399"}" class="btn-xs btn-secondary" style="text-decoration: none;">
               📞 Call Rider
             </a>
             <a href="https://wa.me/91${(rider.phone || "9862272399").replace(/\D/g, "")}" target="_blank" class="btn-xs btn-outline" style="text-decoration: none; color: #15803d; border-color: #86efac;">
               💬 WhatsApp
             </a>
+            <button class="btn-xs btn-outline" style="color: #dc2626; border-color: #fca5a5; margin-left: auto;" onclick="AdminPanel.handleDeleteRider('${rider.id}')" title="Remove Rider from Fleet">
+              🗑️ Remove Rider
+            </button>
           </div>
         </div>
       `;
@@ -1504,6 +1523,23 @@ const AdminPanel = {
       showToast(`Rider PIN updated to ${pin.trim()}!`, "success");
       this.renderRidersTab();
     }
+  },
+
+  handleDeleteRider(riderId) {
+    if (!confirm("Are you sure you want to remove this rider from the fleet?")) return;
+    Store.deleteRider(riderId);
+    showToast("Rider removed from fleet.", "info");
+    this.renderRidersTab();
+  },
+
+  handlePurgeDemoData() {
+    if (!confirm("Are you sure you want to remove all demo and test data from all portals?\n\nThis will clear all test orders, demo sessions, and reset order counters to 0.")) return;
+    Store.purgeDemoData();
+    this.renderMetrics();
+    this.renderOrders();
+    if (this.renderCustomersTab) this.renderCustomersTab();
+    if (this.renderRidersTab) this.renderRidersTab();
+    showToast("All demo and test data cleared successfully across all portals!", "success");
   },
 
   handleAddNewRider() {

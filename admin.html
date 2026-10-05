@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=3.9.1">
-  <link rel="stylesheet" href="css/admin.css?v=3.9.1">
+  <link rel="stylesheet" href="css/styles.css?v=4.1.0">
+  <link rel="stylesheet" href="css/admin.css?v=4.1.0">
   <style>
     body {
       background: #f1f5f9;
@@ -421,6 +421,21 @@
                 💾 Save Store Settings
               </button>
             </form>
+
+            <!-- Data Management & Demo Purge -->
+            <div style="margin-top: 30px; padding: 22px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: var(--radius-md);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h4 style="margin: 0 0 6px 0; color: #9f1239; font-size: 1.05rem;">🧹 Data Management & Demo Data Reset</h4>
+                  <p style="font-size: 0.85rem; color: #881337; margin: 0; max-width: 540px; line-height: 1.5;">
+                    Remove all test orders, demo sessions, and sample records across all customer, admin, and rider dispatch portals.
+                  </p>
+                </div>
+                <button type="button" class="btn-xs" style="background: #e11d48; color: #ffffff; border: none; padding: 9px 18px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onclick="AdminPanel.handlePurgeDemoData()">
+                  🗑️ Purge All Demo Data
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -429,7 +444,7 @@
           <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
             <div class="kpi-card orders">
               <span class="kpi-label">Active Fleet Size</span>
-              <span class="kpi-value" id="kpiFleetTotal">3</span>
+              <span class="kpi-value" id="kpiFleetTotal">0</span>
             </div>
             <div class="kpi-card pending">
               <span class="kpi-label">On-Road Deliveries</span>
@@ -669,9 +684,9 @@
 
   <!-- Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=3.9.1"></script>
-  <script src="js/store.js?v=3.9.1"></script>
-  <script src="js/admin.js?v=3.9.1"></script>
+  <script src="js/data.js?v=4.1.0"></script>
+  <script src="js/store.js?v=4.1.0"></script>
+  <script src="js/admin.js?v=4.1.0"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {

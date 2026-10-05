@@ -4,7 +4,7 @@
  * Stale-while-revalidate for static assets
  */
 
-const CACHE_NAME = 'grosshub-v4.0.0';
+const CACHE_NAME = 'grosshub-v4.1.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
