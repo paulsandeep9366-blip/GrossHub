@@ -1729,51 +1729,7 @@ button {
   }
 }
 
-@media (max-width: 600px) {
-  .header-container {
-    padding: 10px 14px;
-    gap: 10px;
-  }
-  .search-wrapper {
-    order: 3;
-    max-width: 100%;
-    width: 100%;
-    margin-top: 6px;
-  }
-  .header-container {
-    flex-wrap: wrap;
-  }
-  .top-bar-links {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 4px;
-    font-size: 0.75rem;
-  }
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  .product-emoji {
-    font-size: 3rem;
-  }
-  .card-visual {
-    height: 110px;
-  }
-  .card-title {
-    font-size: 0.92rem;
-  }
-  .current-price {
-    font-size: 1.05rem;
-  }
-  .btn-add-cart {
-    padding: 4px 10px;
-    font-size: 0.8rem;
-  }
-  .footer-container {
-    grid-template-columns: 1fr;
-  }
-}
+/* Replaced by master mobile responsive stylesheet */
 
 
 /* ==========================================================================
@@ -2049,17 +2005,7 @@ button {
   margin-bottom: 2px;
 }
 
-@media (max-width: 768px) {
-  .mobile-bottom-nav {
-    display: flex;
-  }
-  body {
-    padding-bottom: 64px;
-  }
-  .floating-cart-bar {
-    bottom: 68px;
-  }
-}
+/* Replaced by master mobile responsive stylesheet */
 
 
 /* Customer Auth & Account Modal Styles */
@@ -3811,14 +3757,7 @@ button {
   font-weight: 800;
 }
 
-@media (max-width: 768px) {
-  .sz-header-location-bar {
-    order: 3;
-    width: 100%;
-    margin-top: 6px;
-    padding: 6px 12px;
-  }
-}
+/* Replaced by master mobile responsive stylesheet */
 
 
 /* Google Maps Layer Switcher & Pin Crosshair Target */
@@ -3941,4 +3880,936 @@ button {
 .btn-confirm-pin.confirmed {
   background: #0f172a;
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.3);
+}
+
+
+/* ==========================================================================
+   GrossHub Premium Mobile Experience & Responsive Architecture
+   (Optimized for Smartphones, iOS Safari & Android Chrome Viewports)
+   ========================================================================== */
+
+/* Mobile Safe Areas and Base Utilities */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --header-mobile-h: 96px;
+  --bottom-nav-h: 58px;
+}
+
+@media (max-width: 768px) {
+  /* Prevent horizontal scroll bleed & elastic stretch bugs */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Body clearance for bottom bar & floating cart pill */
+  body {
+    padding-bottom: calc(140px + var(--safe-area-inset-bottom)) !important;
+  }
+
+  /* ----------------------------------------------------
+     1. Announcement Ticker Bar
+     ---------------------------------------------------- */
+  .top-announcement-bar {
+    padding: 7px 12px !important;
+    font-size: 0.76rem !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    justify-content: center !important;
+  }
+
+  .top-bar-links {
+    display: none !important;
+  }
+
+  /* ----------------------------------------------------
+     2. Streamlined Mobile Header (2-Row Compact Grid)
+     ---------------------------------------------------- */
+  .main-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .header-container {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    grid-template-areas:
+      "brand location actions"
+      "search search search" !important;
+    row-gap: 8px !important;
+    column-gap: 8px !important;
+    padding: 8px 12px 10px !important;
+    align-items: center !important;
+  }
+
+  .brand-logo-wrap {
+    grid-area: brand !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .brand-logo-img {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 8px !important;
+  }
+
+  .brand-info h1 {
+    font-size: 1.25rem !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .brand-info > div {
+    display: none !important; /* Hide redundant address text on small screens */
+  }
+
+  /* Header Delivery Location Pill */
+  .sz-header-location-bar {
+    grid-area: location !important;
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    cursor: pointer !important;
+  }
+
+  .sz-hlb-badge {
+    font-size: 0.62rem !important;
+    font-weight: 800 !important;
+    color: #059669 !important;
+    letter-spacing: 0.02em !important;
+    line-height: 1.1 !important;
+  }
+
+  .sz-hlb-addr {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+  }
+
+  .sz-hlb-addr strong {
+    max-width: 100px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: inline-block !important;
+  }
+
+  /* Header Quick Action Icons */
+  .header-actions {
+    grid-area: actions !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-left: auto !important;
+  }
+
+  /* Hide redundant desktop buttons (handled in bottom nav) */
+  .header-actions .btn-account,
+  .header-actions .btn-track {
+    display: none !important;
+  }
+
+  .header-actions .btn-header-wa {
+    padding: 7px 10px !important;
+    font-size: 0.85rem !important;
+    border-radius: 20px !important;
+    background: var(--whatsapp) !important;
+    color: #fff !important;
+  }
+
+  .header-actions .btn-header-wa span {
+    display: none !important;
+  }
+
+  .header-actions .btn-cart-trigger {
+    padding: 7px 11px !important;
+    font-size: 0.85rem !important;
+    border-radius: 20px !important;
+    background: var(--primary-600) !important;
+    color: #fff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  .header-actions .btn-cart-trigger span:first-of-type {
+    display: none !important;
+  }
+
+  /* Full-Width Search Bar */
+  .search-wrapper {
+    grid-area: search !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    position: relative !important;
+  }
+
+  .search-input {
+    width: 100% !important;
+    padding: 9px 14px 9px 38px !important;
+    font-size: 0.88rem !important;
+    border-radius: 12px !important;
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+  }
+
+  .search-icon {
+    left: 12px !important;
+    font-size: 0.95rem !important;
+  }
+
+  /* ----------------------------------------------------
+     3. Compact Hero Banner
+     ---------------------------------------------------- */
+  .hero-section {
+    margin: 10px auto 14px !important;
+    padding: 0 12px !important;
+  }
+
+  .hero-banner-card {
+    grid-template-columns: 1fr !important;
+    padding: 18px 16px !important;
+    border-radius: 16px !important;
+    gap: 10px !important;
+    box-shadow: 0 8px 24px -6px rgba(6, 78, 59, 0.3) !important;
+  }
+
+  .hero-image-wrap {
+    display: none !important;
+  }
+
+  .hero-badge-pill {
+    font-size: 0.72rem !important;
+    padding: 4px 10px !important;
+    margin-bottom: 6px !important;
+    gap: 6px !important;
+  }
+
+  .hero-title {
+    font-size: 1.45rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 6px !important;
+    font-weight: 800 !important;
+  }
+
+  .hero-subtitle {
+    font-size: 0.82rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 12px !important;
+    max-width: 100% !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .hero-features-list {
+    gap: 6px 12px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .hf-item {
+    font-size: 0.76rem !important;
+  }
+
+  .hero-cta-group {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .btn-hero-primary,
+  .btn-hero-wa {
+    padding: 10px 14px !important;
+    font-size: 0.84rem !important;
+    flex: 1 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+  }
+
+  /* ----------------------------------------------------
+     4. Category Horizontal Scrolling Bar
+     ---------------------------------------------------- */
+  .category-section {
+    margin: 8px auto 6px !important;
+    padding: 0 12px !important;
+  }
+
+  .category-pills-bar {
+    gap: 8px !important;
+    padding: 4px 2px 8px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .category-pills-bar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .cat-pill {
+    padding: 7px 13px !important;
+    font-size: 0.82rem !important;
+    border-radius: 20px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* ----------------------------------------------------
+     5. Catalog Header & Controls
+     ---------------------------------------------------- */
+  .main-content {
+    padding: 0 12px !important;
+  }
+
+  .catalog-header-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 12px !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .catalog-title-group h2 {
+    font-size: 1.15rem !important;
+    margin: 0 !important;
+    font-weight: 800 !important;
+  }
+
+  .catalog-title-group span {
+    font-size: 0.75rem !important;
+    color: var(--slate-500) !important;
+  }
+
+  .catalog-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .catalog-controls label {
+    display: none !important;
+  }
+
+  .sort-select {
+    padding: 6px 10px !important;
+    font-size: 0.78rem !important;
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #fff !important;
+  }
+
+  /* ----------------------------------------------------
+     6. Products 2-Column Responsive Grid
+     ---------------------------------------------------- */
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .product-card {
+    border-radius: 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    background: #ffffff !important;
+  }
+
+  .card-visual {
+    height: 120px !important;
+    border-radius: 14px 14px 0 0 !important;
+    position: relative !important;
+    background: #f8fafc !important;
+  }
+
+  .product-emoji {
+    font-size: 2.8rem !important;
+  }
+
+  .product-badge {
+    top: 6px !important;
+    left: 6px !important;
+    font-size: 0.62rem !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+  }
+
+  .discount-badge {
+    top: 6px !important;
+    right: 6px !important;
+    font-size: 0.64rem !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+  }
+
+  .card-body {
+    padding: 10px 10px 12px !important;
+  }
+
+  .card-cat {
+    font-size: 0.66rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  .card-title {
+    font-size: 0.86rem !important;
+    line-height: 1.25 !important;
+    height: 2.5em !important;
+    margin-bottom: 3px !important;
+    font-weight: 700 !important;
+    -webkit-line-clamp: 2 !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .card-unit {
+    font-size: 0.74rem !important;
+    margin-bottom: 8px !important;
+    color: #64748b !important;
+  }
+
+  .card-footer {
+    padding-top: 8px !important;
+    border-top: 1px solid #f1f5f9 !important;
+    align-items: center !important;
+  }
+
+  .price-box {
+    gap: 4px !important;
+  }
+
+  .current-price {
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+  }
+
+  .original-price {
+    font-size: 0.74rem !important;
+  }
+
+  .btn-add-cart {
+    padding: 5px 12px !important;
+    font-size: 0.8rem !important;
+    min-height: 32px !important;
+    border-radius: 16px !important;
+    font-weight: 700 !important;
+  }
+
+  .qty-stepper {
+    padding: 2px 4px !important;
+    border-radius: 16px !important;
+    gap: 2px !important;
+  }
+
+  .qty-stepper .btn-step {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1.2rem !important;
+    cursor: pointer !important;
+  }
+
+  .qty-stepper .qty-num {
+    min-width: 22px !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+  }
+
+  /* ----------------------------------------------------
+     7. Mobile Bottom Navigation Bar
+     ---------------------------------------------------- */
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 58px !important;
+    padding: 6px 6px max(6px, var(--safe-area-inset-bottom)) !important;
+    background: rgba(255, 255, 255, 0.97) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.9) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06) !important;
+    z-index: 1000 !important;
+  }
+
+  .mbn-item {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    color: var(--slate-600) !important;
+    padding: 4px 2px !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 8px !important;
+    position: relative !important;
+  }
+
+  .mbn-item.active {
+    color: var(--primary-700) !important;
+  }
+
+  .mbn-icon {
+    font-size: 1.25rem !important;
+    margin-bottom: 1px !important;
+    line-height: 1 !important;
+  }
+
+  .mbn-text {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+  }
+
+  .mbn-cart-badge {
+    position: absolute !important;
+    top: 1px !important;
+    right: 14px !important;
+    min-width: 17px !important;
+    height: 17px !important;
+    font-size: 0.66rem !important;
+    line-height: 17px !important;
+    font-weight: 800 !important;
+    border-radius: 9px !important;
+    background: var(--accent-500) !important;
+    color: #0f172a !important;
+    text-align: center !important;
+    padding: 0 4px !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  /* ----------------------------------------------------
+     8. Floating Cart Pill (Floats cleanly ABOVE Bottom Nav)
+     ---------------------------------------------------- */
+  .floating-cart-bar {
+    position: fixed !important;
+    bottom: calc(66px + var(--safe-area-inset-bottom)) !important;
+    left: 12px !important;
+    right: 12px !important;
+    max-width: calc(100% - 24px) !important;
+    margin: 0 auto !important;
+    z-index: 999 !important;
+    padding: 12px 18px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px -4px rgba(6, 78, 59, 0.45) !important;
+    background: linear-gradient(135deg, #064e3b 0%, #047857 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(180%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .floating-cart-bar.visible {
+    transform: translateY(0) !important;
+  }
+
+  /* ----------------------------------------------------
+     9. Slide-Out Cart Drawer (Full Screen Experience)
+     ---------------------------------------------------- */
+  .cart-drawer {
+    width: 100vw !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    z-index: 1100 !important;
+  }
+
+  .drawer-header {
+    padding: 14px 16px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+  }
+
+  .sz-drawer-delivery-strip {
+    padding: 10px 14px !important;
+    margin: 10px 14px 4px !important;
+    border-radius: 12px !important;
+  }
+
+  .free-delivery-meter {
+    padding: 8px 14px !important;
+    margin: 0 14px !important;
+  }
+
+  .cart-drawer-body {
+    padding: 10px 14px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .cart-drawer-footer {
+    padding: 14px 16px max(16px, var(--safe-area-inset-bottom)) !important;
+  }
+
+  .coupon-input {
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
+    padding: 10px 12px !important;
+  }
+
+  .sz-drawer-checkout-btn,
+  .btn-checkout-wa {
+    min-height: 48px !important;
+    border-radius: 14px !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+  }
+
+  
+  /* Modal Overlay sits above mobile bottom nav (1000) and floating cart bar (999) */
+  .modal-overlay {
+    z-index: 2000 !important;
+  }
+
+  .cart-drawer-backdrop {
+    z-index: 1500 !important;
+  }
+
+  .cart-drawer {
+    z-index: 1600 !important;
+  }
+
+  /* When modal or drawer is active, hide the floating cart bar */
+  body.modal-open .floating-cart-bar,
+  body.drawer-open .floating-cart-bar,
+  body:has(.modal-overlay.active) .floating-cart-bar,
+  body:has(.cart-drawer.open) .floating-cart-bar {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* ----------------------------------------------------
+     10. Delivery & Location Modal (Native Bottom Sheet)
+     ---------------------------------------------------- */
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-container,
+  .sz-checkout-modal-container,
+  #checkoutModal.modal-overlay .modal-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 22px 22px 0 0 !important;
+    max-height: 92vh !important;
+    margin: 0 !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  /* Drag indicator bar for mobile bottom sheets */
+  .modal-container::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #cbd5e1;
+    border-radius: 2px;
+    margin: 8px auto 2px;
+    flex-shrink: 0;
+  }
+
+  .sz-modal-header {
+    padding: 10px 16px 12px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+  }
+
+  .sz-modal-body,
+  #checkoutModal .sz-modal-body {
+    padding: 12px 16px 20px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .sz-map-wrapper {
+    height: 200px !important;
+    border-radius: 12px !important;
+  }
+
+  .sz-map-search-bar {
+    top: 8px !important;
+    left: 8px !important;
+    right: 8px !important;
+    padding: 6px 10px !important;
+    font-size: 0.82rem !important;
+    border-radius: 8px !important;
+  }
+
+  .sz-gmap-layer-switch {
+    top: 48px !important;
+    right: 8px !important;
+    border-radius: 6px !important;
+  }
+
+  .sz-gls-btn {
+    padding: 4px 8px !important;
+    font-size: 0.7rem !important;
+  }
+
+  .sz-pin-bubble {
+    font-size: 0.68rem !important;
+    padding: 3px 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .sz-floating-gps-btn {
+    bottom: 8px !important;
+    right: 8px !important;
+    padding: 5px 10px !important;
+    font-size: 0.74rem !important;
+    border-radius: 16px !important;
+  }
+
+  .sz-map-drag-hint {
+    bottom: 8px !important;
+    left: 8px !important;
+    font-size: 0.66rem !important;
+    padding: 3px 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .sz-location-card {
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .sz-loc-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+  }
+
+  .btn-confirm-pin,
+  .sz-gmaps-link {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 38px !important;
+    border-radius: 12px !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Single Column Form on Mobile - Prevents Squashed Fields */
+  .form-row-2 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .form-input,
+  .sz-input,
+  .sz-select,
+  .form-select {
+    font-size: 16px !important; /* Crucial: Prevents iOS auto-zoom on input focus */
+    padding: 11px 14px !important;
+    border-radius: 10px !important;
+  }
+
+  .sz-chips-row {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .sz-chip,
+  .sz-inst-chip {
+    padding: 7px 12px !important;
+    font-size: 0.8rem !important;
+    border-radius: 10px !important;
+  }
+
+  .payment-selector-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .payment-option-card {
+    padding: 11px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .sz-cta-btn {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 20 !important;
+    min-height: 52px !important;
+    font-size: 1rem !important;
+    border-radius: 14px !important;
+    margin-top: 14px !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  /* ----------------------------------------------------
+     11. Store Login Gate
+     ---------------------------------------------------- */
+  .store-login-gate-wrapper {
+    min-height: 100vh !important;
+    padding: 12px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .store-login-gate-wrapper[style*="display: none"] {
+    display: none !important;
+  }
+
+  .store-login-gate-card {
+    border-radius: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .slg-brand {
+    padding: 24px 20px 18px !important;
+  }
+
+  .slg-logo {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .slg-title {
+    font-size: 1.6rem !important;
+  }
+
+  .slg-content {
+    padding: 22px 18px !important;
+  }
+
+  .slg-heading {
+    font-size: 1.25rem !important;
+  }
+
+  .slg-subheading {
+    font-size: 0.84rem !important;
+    margin-bottom: 16px !important;
+  }
+
+  .slg-trust-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 14px 16px !important;
+  }
+
+  .slg-trust-item {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    text-align: left !important;
+  }
+
+  .slg-trust-item span {
+    font-size: 1.3rem !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* ----------------------------------------------------
+     12. Account, Tracking & Invoice Modals
+     ---------------------------------------------------- */
+  #customerAuthModal .modal-container,
+  #customerAccountModal .modal-container,
+  #trackingModal .modal-container,
+  #orderSuccessModal .modal-container,
+  #customerInvoiceModal .modal-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92vh !important;
+    margin: 0 !important;
+  }
+
+  #customerInvoiceModal .modal-body {
+    padding: 8px !important;
+    overflow-x: auto !important;
+  }
+
+  #customerInvoicePrintContainer {
+    overflow-x: auto !important;
+    min-width: 480px;
+  }
+
+  /* ----------------------------------------------------
+     13. Store Footer Responsive
+     ---------------------------------------------------- */
+  .store-footer {
+    padding: 30px 16px 20px !important;
+  }
+
+  .footer-container {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+
+  .footer-col h4 {
+    font-size: 1rem !important;
+    margin-bottom: 10px !important;
+  }
+
+  .footer-bottom {
+    flex-direction: column !important;
+    gap: 8px !important;
+    text-align: center !important;
+    margin-top: 24px !important;
+  }
+}
+
+/* Extra small devices (<= 380px) */
+@media (max-width: 380px) {
+  .brand-info h1 {
+    font-size: 1.1rem !important;
+  }
+
+  .sz-hlb-addr strong {
+    max-width: 75px !important;
+  }
+
+  .products-grid {
+    gap: 8px !important;
+  }
+
+  .card-visual {
+    height: 105px !important;
+  }
+
+  .product-emoji {
+    font-size: 2.4rem !important;
+  }
+
+  .current-price {
+    font-size: 0.95rem !important;
+  }
+
+  .btn-add-cart {
+    padding: 4px 8px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .hero-title {
+    font-size: 1.25rem !important;
+  }
 }

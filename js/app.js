@@ -1969,6 +1969,7 @@ function openCartDrawer() {
   const backdrop = document.getElementById('cartDrawerBackdrop');
   if (drawer) drawer.classList.add('open');
   if (backdrop) backdrop.classList.add('open');
+  document.body.classList.add('drawer-open');
 }
 
 function closeCartDrawer() {
@@ -1976,6 +1977,7 @@ function closeCartDrawer() {
   const backdrop = document.getElementById('cartDrawerBackdrop');
   if (drawer) drawer.classList.remove('open');
   if (backdrop) backdrop.classList.remove('open');
+  document.body.classList.remove('drawer-open');
 }
 
 function openModal(modalId) {
@@ -1983,6 +1985,7 @@ function openModal(modalId) {
   if (modal) {
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
   }
 }
 
@@ -1991,6 +1994,9 @@ function closeModal(modalId) {
   if (modal) {
     modal.classList.remove('active');
     document.body.style.overflow = '';
+    if (!document.querySelector('.modal-overlay.active')) {
+      document.body.classList.remove('modal-open');
+    }
   }
 }
 
