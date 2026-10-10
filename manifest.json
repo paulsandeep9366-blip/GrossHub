@@ -1,13 +1,27 @@
 {
   "name": "GrossHub - Agartala Grocery Express",
   "short_name": "GrossHub",
-  "description": "Fresh groceries and daily essentials delivered in 30-45 minutes in Agartala, Tripura.",
+  "description": "Fresh groceries, daily essentials and local produce delivered in 30-45 minutes in Agartala, Tripura.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#064e3b",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "background_color": "#ffffff",
   "theme_color": "#064e3b",
   "orientation": "portrait-primary",
   "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "icons/icon.svg",
       "sizes": "192x192 512x512",
@@ -15,5 +29,28 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["shopping", "food", "lifestyle"]
+  "categories": ["shopping", "food", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Browse Store",
+      "short_name": "Store",
+      "description": "Shop groceries and daily essentials",
+      "url": "./index.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Track Live Order",
+      "short_name": "Track",
+      "description": "Track your active delivery status",
+      "url": "./index.html?view=track",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Rider Dispatch",
+      "short_name": "Rider",
+      "description": "Delivery Partner Portal",
+      "url": "./rider.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
 }

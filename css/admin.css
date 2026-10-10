@@ -1097,3 +1097,363 @@ input:checked + .slider:before {
   font-size: 0.72rem;
   margin-top: 2px;
 }
+
+
+/* ==========================================================================
+   GrossHub Mobile Optimization Overhaul — Admin & Rider Portals (v4.2.0)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Prevent horizontal bleed on mobile */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* --------------------------------------------------------------------------
+     1. Delivery Rider Portal Mobile Optimizations (Phone-First)
+     -------------------------------------------------------------------------- */
+  .rider-page-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .rph-brand h1 {
+    font-size: 1.05rem;
+  }
+
+  .rph-brand .logo-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 1.2rem;
+  }
+
+  .rph-controls {
+    gap: 6px;
+  }
+
+  .rph-link-btn {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+  }
+
+  .rider-standalone-container {
+    max-width: 100%;
+    margin: 8px auto;
+    padding: 0 10px;
+  }
+
+  .rider-login-card {
+    max-width: 100%;
+    margin: 20px auto;
+    padding: 24px 18px;
+    border-radius: 16px;
+  }
+
+  .rider-login-card h2 {
+    font-size: 1.25rem;
+  }
+
+  .rider-card-wrapper {
+    border-radius: 16px;
+  }
+
+  .rider-tab-nav {
+    display: flex;
+    width: 100%;
+  }
+
+  .rider-tab-btn {
+    flex: 1;
+    padding: 12px 6px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: center;
+    border-bottom: 3px solid transparent;
+  }
+
+  .rider-tab-btn.active {
+    border-bottom-color: var(--accent-500);
+    background: #f1f5f9;
+  }
+
+  .rider-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .rider-order-card {
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .roc-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .roc-top > div:first-child {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .roc-amount-box {
+    align-self: flex-start;
+    padding: 4px 10px;
+  }
+
+  .roc-customer-block {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .cust-quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .btn-rider-tool {
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    border-radius: 10px;
+  }
+
+  .btn-rider-action {
+    width: 100%;
+    min-height: 48px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 12px;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+  }
+
+  .btn-rider-action:active {
+    transform: scale(0.98);
+  }
+
+  /* --------------------------------------------------------------------------
+     2. Merchant Admin Portal Mobile Optimizations
+     -------------------------------------------------------------------------- */
+  .admin-page-header {
+    padding: 10px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .aph-brand h1 {
+    font-size: 1.05rem;
+  }
+
+  .aph-links {
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .aph-link-btn {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .admin-standalone-wrapper {
+    max-width: 100%;
+    margin: 8px auto;
+    padding: 0 8px;
+  }
+
+  .admin-card-container {
+    border-radius: 16px;
+  }
+
+  .admin-login-fullscreen {
+    max-width: 100%;
+    margin: 20px auto;
+    padding: 24px 16px;
+    border-radius: 16px;
+  }
+
+  .admin-top-bar {
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .admin-top-bar h3 {
+    font-size: 1.05rem;
+  }
+
+  .admin-top-bar > div {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .admin-top-bar .btn-xs {
+    flex: 1 1 calc(50% - 6px);
+    text-align: center;
+    justify-content: center;
+    padding: 7px 8px;
+    font-size: 0.78rem;
+  }
+
+  /* Smooth horizontally scrollable tabs */
+  .admin-nav-tabs {
+    padding: 6px 8px;
+    gap: 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .admin-nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-nav-item {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    border-bottom: none;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .admin-nav-item.active {
+    background: var(--primary-600);
+    color: var(--white);
+    border-bottom: none;
+  }
+
+  .admin-content-viewport {
+    padding: 12px 10px;
+  }
+
+  /* 2-column KPI Grid on Mobile */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .kpi-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .kpi-label {
+    font-size: 0.68rem;
+    margin-bottom: 4px;
+  }
+
+  .kpi-value {
+    font-size: 1.35rem;
+  }
+
+  /* Full-width filter controls */
+  .admin-table-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .admin-table-controls > div {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .admin-search-input,
+  .sort-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
+    padding: 10px 12px !important;
+  }
+
+  .table-responsive {
+    border-radius: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-table {
+    min-width: 620px;
+    font-size: 0.82rem;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 10px 10px;
+  }
+
+  /* Mobile Bottom-sheet Modals */
+  #adminProductModal .modal-container,
+  #adminCancelOrderModal .modal-container,
+  #adminInvoiceModal .modal-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92vh !important;
+    position: fixed !important;
+    bottom: 0 !important;
+  }
+
+  #adminProductModal .modal-body,
+  #adminCancelOrderModal .modal-body,
+  #adminInvoiceModal .modal-body {
+    padding: 14px !important;
+    overflow-y: auto !important;
+  }
+
+  .form-row-2 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .form-input,
+  .form-select {
+    font-size: 16px !important; /* Prevents iOS zoom */
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .rph-brand h1 {
+    font-size: 0.95rem;
+  }
+  
+  .btn-rider-tool {
+    font-size: 0.82rem;
+  }
+}

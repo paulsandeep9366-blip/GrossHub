@@ -4,7 +4,7 @@
  * Stale-while-revalidate for static assets
  */
 
-const CACHE_NAME = 'grosshub-v4.1.0';
+const CACHE_NAME = 'grosshub-v4.2.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -23,6 +23,9 @@ const ASSETS_TO_CACHE = [
   './js/app.js',
   './manifest.json',
   './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png',
   './images/hero-basket.jpg'
 ];
 

@@ -21,6 +21,15 @@ Each portal is completely isolated with its own dedicated direct URL:
 - 🏪 **Merchant Admin Control Center**: [https://paulsandeep9366-blip.github.io/GrossHub/admin.html](https://paulsandeep9366-blip.github.io/GrossHub/admin.html)
 
 ### 3. Local Development (`localhost:8080`)
+
+**1-Click Launch (Terminal / Double-Click):**
+```bash
+./start.sh
+# or
+python3 start.py
+```
+This automatically starts the local HTTP server, detects an open port, and opens your browser.
+
 - 🛒 **Customer Storefront**: [http://localhost:8080/](http://localhost:8080/)
 - 👤 **Customer Account Direct**: [http://localhost:8080/customer.html](http://localhost:8080/customer.html)
 - 🛵 **Rider Dispatch Portal**: [http://localhost:8080/rider.html](http://localhost:8080/rider.html)
