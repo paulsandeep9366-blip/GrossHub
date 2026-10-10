@@ -138,7 +138,6 @@
   <div class="top-announcement-bar">
     <span>⚡ <strong>30-45 Min Express Delivery</strong> in Agartala • Free Delivery above <span id="bannerFreeThreshold">₹499</span>!</span>
     <div class="top-bar-links">
-      <a href="javascript:void(0)" onclick="openMobileConnectModal()">📱 Open on Phone</a>
       <a href="javascript:void(0)" onclick="handleAccountClick()" id="topNavCustomerLink">👤 Sign In / Account</a>
       <a href="https://wa.me/919862272399?text=Hello%20GrossHub%20Support" target="_blank">💬 WhatsApp Help</a>
       <a href="tel:9862272399">📞 Call: 9862272399</a>
@@ -803,25 +802,6 @@
           </button>
         </div>
 
-        <!-- Mobile App Quick Actions -->
-        <div style="background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-size:1.6rem;">📲</span>
-            <div>
-              <strong style="font-size:0.9rem; color:#14532d; display:block;">GrossHub Mobile App</strong>
-              <small style="color:#166534; font-size:0.78rem;">Install on phone for 1-tap ordering</small>
-            </div>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button type="button" class="btn-xs btn-hero-primary" style="padding:6px 12px;" onclick="PWAInstallManager.triggerInstall()">
-              📲 Install App
-            </button>
-            <button type="button" class="btn-xs btn-secondary" style="padding:6px 12px;" onclick="openMobileConnectModal()">
-              📷 Phone QR
-            </button>
-          </div>
-        </div>
-
         <!-- Orders Section -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h4 style="margin: 0; font-size: 1.05rem;">📦 Past & Active Orders</h4>
@@ -853,69 +833,6 @@
       <div class="modal-body" style="padding: 12px; overflow-y: auto; background: #e2e8f0;">
         <div id="customerInvoicePrintContainer">
           <!-- Rendered dynamically -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- iOS Safari App Install Instructions Modal -->
-  <div class="modal-overlay" id="iosInstallGuideModal">
-    <div class="modal-container ios-guide-container">
-      <div class="modal-header">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <img src="icons/icon-192.png" style="width:28px; height:28px; border-radius:6px;" alt="Logo">
-          <h3 style="margin:0; font-size:1.1rem; color:#fff;">Install GrossHub on iPhone</h3>
-        </div>
-        <button class="btn-modal-close" onclick="closeModal('iosInstallGuideModal')">✕</button>
-      </div>
-      <div class="modal-body" style="padding: 20px;">
-        <div class="ios-step-card">
-          <div class="ios-step-num">1</div>
-          <div class="ios-step-info">
-            <strong>Tap Safari Share Button</strong>
-            <p>At the bottom of your Safari screen, tap the Share icon (<span style="font-size:1.1rem;">⎋</span> or square with arrow).</p>
-          </div>
-        </div>
-        <div class="ios-step-card">
-          <div class="ios-step-num">2</div>
-          <div class="ios-step-info">
-            <strong>Select "Add to Home Screen"</strong>
-            <p>Scroll down the share options and tap <strong>Add to Home Screen ➕</strong>.</p>
-          </div>
-        </div>
-        <div class="ios-step-card">
-          <div class="ios-step-num">3</div>
-          <div class="ios-step-info">
-            <strong>Tap "Add" in Top-Right Corner</strong>
-            <p>GrossHub will appear directly on your home screen with its app icon for instant 1-tap grocery orders!</p>
-          </div>
-        </div>
-        <button type="button" class="btn-hero-primary" style="width:100%; margin-top:14px; justify-content:center;" onclick="closeModal('iosInstallGuideModal')">
-          Got It! 👍
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Mobile Phone Connect / QR Modal -->
-  <div class="modal-overlay" id="mobileConnectModal">
-    <div class="modal-container" style="max-width: 420px; text-align: center;">
-      <div class="modal-header">
-        <h3 style="margin:0; font-size:1.1rem; color:#fff;">📱 Open on Your Mobile Phone</h3>
-        <button class="btn-modal-close" onclick="closeModal('mobileConnectModal')">✕</button>
-      </div>
-      <div class="modal-body" style="padding: 22px;">
-        <p style="color:var(--slate-600); font-size:0.88rem; margin-bottom:14px;">
-          Scan this QR code with your mobile camera to open GrossHub instantly on your phone:
-        </p>
-        <div id="mobileConnectQrWrap" style="background:#ffffff; padding:14px; border-radius:12px; display:inline-block; border:1.5px solid #e2e8f0; margin-bottom:14px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-          <!-- Rendered dynamically -->
-        </div>
-        <div id="mobileConnectUrlBox" style="font-family:monospace; background:#f1f5f9; padding:8px 12px; border-radius:8px; font-size:0.82rem; color:#0f172a; word-break:break-all;">
-          <!-- URL -->
-        </div>
-        <div style="font-size:0.75rem; color:#64748b; margin-top:10px;">
-          💡 Tip: Ensure your phone and computer are on the same Wi-Fi network.
         </div>
       </div>
     </div>
@@ -1008,21 +925,6 @@
       <span>Designed with care for speed & freshness.</span>
     </div>
   </footer>
-
-  <!-- Mobile PWA App Install Promotion Bar -->
-  <div id="mobileAppInstallBanner" class="mobile-app-install-banner" style="display: none;">
-    <div class="maib-content">
-      <img src="icons/icon-192.png" alt="GrossHub App" class="maib-icon">
-      <div class="maib-text">
-        <strong>Install GrossHub App</strong>
-        <small>Instant 1-tap grocery delivery</small>
-      </div>
-    </div>
-    <div class="maib-actions">
-      <button type="button" class="btn-maib-install" id="btnInstallApp" onclick="PWAInstallManager.triggerInstall()">Install</button>
-      <button type="button" class="btn-maib-dismiss" id="btnDismissInstall" onclick="PWAInstallManager.dismissBanner()" aria-label="Dismiss">✕</button>
-    </div>
-  </div>
 
   <!-- Mobile Bottom Navigation Bar -->
   <nav class="mobile-bottom-nav">
