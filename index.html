@@ -90,17 +90,12 @@
           </div>
 
           <!-- SMS Status Card -->
-          <div id="gateSmsStatusCard" style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; text-align: center;">
-            <div style="font-size: 0.78rem; color: #166534; font-weight: 700; margin-bottom: 3px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-              <span>📩</span> <span id="gateSmsModeBadge">SMS DISPATCHED TO MOBILE</span>
+          <div id="gateSmsStatusCard" style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; text-align: center;">
+            <div style="font-size: 0.8rem; color: #166534; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>📩</span> <span id="gateSmsModeBadge">REAL SMS DISPATCHED TO MOBILE</span>
             </div>
-            <div id="gateSmsNoticeText" style="font-size: 0.78rem; color: #15803d; line-height: 1.4;">
-              Please check your phone Messages inbox for the verification code.
-            </div>
-            <!-- Simulation helper badge (shown if Firebase credentials are pending in Admin) -->
-            <div id="gateOtpCodeCard" style="margin-top: 8px; display: none; background: #ecfdf5; border: 1px dashed #10b981; border-radius: 8px; padding: 6px 10px;">
-              <span style="font-size: 0.72rem; color: #047857;">Demo / Setup Code: <strong id="gateOtpGeneratedCode" style="font-size: 1.15rem; letter-spacing: 2px;">----</strong></span>
-              <button type="button" onclick="autoFillGateOtp()" style="background: #16a34a; color: #fff; border: none; border-radius: 4px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; margin-left: 6px; cursor: pointer;">Auto-fill</button>
+            <div id="gateSmsNoticeText" style="font-size: 0.8rem; color: #15803d; line-height: 1.4;">
+              A 6-digit verification code has been dispatched via SMS. Please check your phone Messages inbox!
             </div>
           </div>
 

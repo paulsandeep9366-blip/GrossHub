@@ -2133,13 +2133,11 @@ async function handleSendCustomerOtp(e) {
   if (typeof SMSGateway !== "undefined") {
     res = await SMSGateway.sendOtpSms(phone, name, "recaptcha-container");
   } else {
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    res = { success: true, code, mode: "demo_fallback" };
+    res = { success: false, error: "SMS Gateway service unavailable." };
   }
 
   if (res && res.success) {
-    window._activeCustomerOtp = res.code;
-    showToast(`SMS Verification code sent to +91 ${phone}. 📲`, "success");
+    showToast(`Real SMS OTP dispatched to +91 ${phone}. Check your messages! 📲`, "success");
   } else {
     showToast(res?.error || "Failed to send SMS.", "error");
   }
@@ -2186,12 +2184,7 @@ async function verifyCustomerOtp() {
   if (typeof SMSGateway !== "undefined") {
     verifyResult = await SMSGateway.verifyOtpSms(otp);
   } else {
-    if (window._activeCustomerOtp && otp === window._activeCustomerOtp) {
-      window._activeCustomerOtp = null;
-      verifyResult = { success: true };
-    } else {
-      verifyResult = { success: false, error: "❌ Incorrect OTP! Access denied." };
-    }
+    verifyResult = { success: false, error: "❌ SMS Gateway service unavailable." };
   }
 
   // STRICT REJECTION: Incorrect OTP cannot login
@@ -2508,8 +2501,7 @@ async function handleGateSendOtp(e) {
   if (typeof SMSGateway !== "undefined") {
     res = await SMSGateway.sendOtpSms(phone, name, "recaptcha-container");
   } else {
-    const demoCode = Math.floor(100000 + Math.random() * 900000).toString();
-    res = { success: true, mode: "demo_fallback", code: demoCode };
+    res = { success: false, error: "SMS Gateway service unavailable." };
   }
 
   if (submitBtn) {
@@ -2536,45 +2528,15 @@ async function handleGateSendOtp(e) {
     otpInput.focus();
   }
 
-  // Update SMS status banner & simulation helper
+  // Update SMS status banner
   const modeBadge = document.getElementById("gateSmsModeBadge");
   const noticeText = document.getElementById("gateSmsNoticeText");
-  const codeCard = document.getElementById("gateOtpCodeCard");
-  const codeDisplay = document.getElementById("gateOtpGeneratedCode");
 
-  if (res.mode === "firebase_live") {
-    if (modeBadge) modeBadge.textContent = "REAL SMS DISPATCHED TO PHONE";
-    if (noticeText) noticeText.textContent = `A real SMS with your unique 6-digit verification code has been sent to +91 ${phone}. Please check your phone messages!`;
-    if (codeCard) codeCard.style.display = "none";
-    showToast(`SMS OTP sent to +91 ${phone}! Check your messages. 📲`, "success");
-  } else {
-    window._activeGateOtp = res.code;
-    if (modeBadge) modeBadge.textContent = "SMS GATEWAY (SETUP MODE)";
-    if (noticeText) noticeText.textContent = `Live SMS active when Firebase keys are entered in Admin Settings. Code sent to phone:`;
-    if (codeCard) codeCard.style.display = "block";
-    if (codeDisplay) codeDisplay.textContent = res.code;
-    // Keep input empty so user has to enter the code
-    if (otpInput) otpInput.value = "";
-    showToast(`Verification code sent to +91 ${phone}.`, "info");
-  }
+  if (modeBadge) modeBadge.textContent = "REAL SMS DISPATCHED TO PHONE";
+  if (noticeText) noticeText.textContent = `A real SMS with your 6-digit verification code has been sent to +91 ${phone}. Please check your phone SMS inbox!`;
+  showToast(`SMS OTP dispatched to +91 ${phone}! Check your messages. 📲`, "success");
 
   startGateResendTimer();
-}
-
-function autoFillGateOtp() {
-  const code = (typeof SMSGateway !== "undefined" && SMSGateway.fallbackOtp) ? SMSGateway.fallbackOtp : window._activeGateOtp;
-  if (!code) return;
-  const otpInput = document.getElementById("gateOtpInput");
-  if (otpInput) {
-    otpInput.value = code;
-    otpInput.focus();
-    // Clear previous error styles
-    const otpErr = document.getElementById("gateOtpError");
-    if (otpErr) otpErr.style.display = "none";
-    otpInput.style.borderColor = "";
-    otpInput.style.backgroundColor = "";
-    otpInput.style.boxShadow = "";
-  }
 }
 
 function handleGateOtpInput(input) {
@@ -2716,12 +2678,7 @@ async function verifyGateOtp() {
   if (typeof SMSGateway !== "undefined") {
     verifyResult = await SMSGateway.verifyOtpSms(otp);
   } else {
-    if (window._activeGateOtp && otp === window._activeGateOtp) {
-      window._activeGateOtp = null;
-      verifyResult = { success: true };
-    } else {
-      verifyResult = { success: false, error: "❌ Incorrect OTP! Access denied." };
-    }
+    verifyResult = { success: false, error: "❌ SMS Gateway service unavailable." };
   }
 
   if (verifyBtn) {
