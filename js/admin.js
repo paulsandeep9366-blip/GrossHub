@@ -199,7 +199,7 @@ const AdminPanel = {
       el.classList.toggle('active', el.dataset.tab === tabName);
     });
 
-    const panels = ['overview', 'orders', 'products', 'riders', 'customers', 'settings', 'reports'];
+    const panels = ['overview', 'orders', 'products', 'riders', 'customers', 'firebase', 'settings', 'reports'];
     panels.forEach(p => {
       const panel = document.getElementById(`adminPanel-${p}`);
       if (panel) panel.style.display = (p === tabName ? 'block' : 'none');
@@ -210,7 +210,7 @@ const AdminPanel = {
     if (tabName === 'products') this.renderProducts();
     if (tabName === 'riders') this.renderRidersTab();
     if (tabName === 'customers') this.renderCustomersTab();
-    if (tabName === 'settings') this.loadSettingsForm();
+    if (tabName === 'settings' || tabName === 'firebase') this.loadSettingsForm();
   },
 
   // 1. Metrics & Overview
@@ -711,25 +711,35 @@ const AdminPanel = {
       statusToggle.checked = config.serviceStatus !== 'closed';
     }
 
-    // Populate Firebase SMS Gateway settings
+    // Populate Firebase SMS Gateway settings (both in settings & dedicated tab)
     const fbCfg = (Store.getFirebaseConfig ? Store.getFirebaseConfig() : (DEFAULT_SHOP_CONFIG.firebaseConfig || {})) || {};
     set('adminFbApiKey', fbCfg.apiKey || '');
     set('adminFbProjectId', fbCfg.projectId || '');
     set('adminFbAuthDomain', fbCfg.authDomain || '');
     set('adminFbAppId', fbCfg.appId || '');
 
-    const badge = document.getElementById('adminFbStatusBadge');
-    if (badge) {
-      if (Store.isFirebaseConfigured && Store.isFirebaseConfigured()) {
-        badge.textContent = '🟢 Live SMS Active (Firebase)';
-        badge.style.background = '#dcfce7';
-        badge.style.color = '#15803d';
+    set('adminFbApiKeyDedicated', fbCfg.apiKey || '');
+    set('adminFbProjectIdDedicated', fbCfg.projectId || '');
+    set('adminFbAuthDomainDedicated', fbCfg.authDomain || '');
+    set('adminFbAppIdDedicated', fbCfg.appId || '');
+    set('adminFbStorageBucketDedicated', fbCfg.storageBucket || '');
+    set('adminFbSenderIdDedicated', fbCfg.messagingSenderId || '');
+
+    const isLive = Store.isFirebaseConfigured && Store.isFirebaseConfigured();
+    const updateBadge = badgeEl => {
+      if (!badgeEl) return;
+      if (isLive) {
+        badgeEl.textContent = '🟢 Live SMS Active (Firebase Connected)';
+        badgeEl.style.background = '#dcfce7';
+        badgeEl.style.color = '#15803d';
       } else {
-        badge.textContent = '🟡 Simulation Mode (Setup Required)';
-        badge.style.background = '#fef3c7';
-        badge.style.color = '#92400e';
+        badgeEl.textContent = '🟡 Simulation Mode (Test OTPs Only)';
+        badgeEl.style.background = '#fef3c7';
+        badgeEl.style.color = '#92400e';
       }
-    }
+    };
+    updateBadge(document.getElementById('adminFbStatusBadge'));
+    updateBadge(document.getElementById('adminFbDedicatedBadge'));
   },
 
   handleSaveSettings() {
@@ -786,16 +796,26 @@ const AdminPanel = {
 
   handleSaveFirebaseSettings(e) {
     if (e && e.preventDefault) e.preventDefault();
-    const apiKey = document.getElementById('adminFbApiKey')?.value.trim() || '';
-    const projectId = document.getElementById('adminFbProjectId')?.value.trim() || '';
-    const authDomain = document.getElementById('adminFbAuthDomain')?.value.trim() || '';
-    const appId = document.getElementById('adminFbAppId')?.value.trim() || '';
+    const apiKey = (document.getElementById('adminFbApiKeyDedicated')?.value || document.getElementById('adminFbApiKey')?.value || '').trim();
+    const projectId = (document.getElementById('adminFbProjectIdDedicated')?.value || document.getElementById('adminFbProjectId')?.value || '').trim();
+    const authDomain = (document.getElementById('adminFbAuthDomainDedicated')?.value || document.getElementById('adminFbAuthDomain')?.value || '').trim();
+    const appId = (document.getElementById('adminFbAppIdDedicated')?.value || document.getElementById('adminFbAppId')?.value || '').trim();
+    const storageBucket = (document.getElementById('adminFbStorageBucketDedicated')?.value || '').trim();
+    const messagingSenderId = (document.getElementById('adminFbSenderIdDedicated')?.value || '').trim();
+
+    if (!apiKey || !projectId) {
+      if (!confirm('Notice: Firebase Web API Key or Project ID is empty. Cellular SMS will remain in simulation mode. Save changes anyway?')) {
+        return;
+      }
+    }
 
     Store.saveFirebaseConfig({
       apiKey,
       projectId,
       authDomain,
-      appId
+      appId,
+      storageBucket,
+      messagingSenderId
     });
 
     if (typeof SMSGateway !== 'undefined') {
@@ -803,7 +823,121 @@ const AdminPanel = {
     }
 
     this.loadSettingsForm();
-    showToast('SMS Gateway credentials updated successfully! 📱', 'success');
+    if (apiKey && projectId) {
+      showToast('Firebase credentials saved! Live SMS active 📱', 'success');
+    } else {
+      showToast('Settings saved. Running in SMS simulation mode.', 'info');
+    }
+  },
+
+  toggleApiKeyVisibility() {
+    const input = document.getElementById('adminFbApiKeyDedicated');
+    if (input) {
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+  },
+
+  handleAutoParseFirebaseSnippet() {
+    const raw = (document.getElementById('adminFbPasteSnippet')?.value || '').trim();
+    if (!raw) {
+      showToast('Please paste your Firebase configuration snippet or JSON first.', 'error');
+      return;
+    }
+
+    let parsed = {};
+
+    try {
+      // 1. Try direct JSON
+      parsed = JSON.parse(raw);
+    } catch (_) {
+      // 2. Try JavaScript snippet / key-value regex extraction
+      const extract = key => {
+        const regex = new RegExp(key + '\\s*:\\s*["\'`]([^"\'`]+)["\'`]', 'i');
+        const match = raw.match(regex);
+        return match ? match[1].trim() : '';
+      };
+
+      parsed = {
+        apiKey: extract('apiKey'),
+        projectId: extract('projectId'),
+        authDomain: extract('authDomain'),
+        appId: extract('appId'),
+        storageBucket: extract('storageBucket'),
+        messagingSenderId: extract('messagingSenderId')
+      };
+
+      // In case just raw API key starting with AIza was pasted
+      if (!parsed.apiKey && raw.startsWith('AIzaSy')) {
+        parsed.apiKey = raw;
+      }
+    }
+
+    if (!parsed.apiKey && !parsed.projectId) {
+      showToast('Could not find apiKey or projectId in pasted text. Please verify the snippet.', 'error');
+      return;
+    }
+
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined) el.value = val;
+    };
+
+    if (parsed.apiKey) {
+      set('adminFbApiKeyDedicated', parsed.apiKey);
+      set('adminFbApiKey', parsed.apiKey);
+    }
+    if (parsed.projectId) {
+      set('adminFbProjectIdDedicated', parsed.projectId);
+      set('adminFbProjectId', parsed.projectId);
+    }
+    if (parsed.authDomain) {
+      set('adminFbAuthDomainDedicated', parsed.authDomain);
+      set('adminFbAuthDomain', parsed.authDomain);
+    }
+    if (parsed.appId) {
+      set('adminFbAppIdDedicated', parsed.appId);
+      set('adminFbAppId', parsed.appId);
+    }
+    if (parsed.storageBucket) {
+      set('adminFbStorageBucketDedicated', parsed.storageBucket);
+    }
+    if (parsed.messagingSenderId) {
+      set('adminFbSenderIdDedicated', parsed.messagingSenderId);
+    }
+
+    showToast('Firebase credentials extracted! Click "Save SMS Gateway Credentials" to activate.', 'success');
+  },
+
+  handleClearFirebaseSettings() {
+    if (!confirm('Are you sure you want to clear Firebase credentials and revert to local simulation mode?')) {
+      return;
+    }
+    Store.saveFirebaseConfig({
+      apiKey: '',
+      projectId: '',
+      authDomain: '',
+      appId: '',
+      storageBucket: '',
+      messagingSenderId: ''
+    });
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    };
+    set('adminFbApiKeyDedicated', '');
+    set('adminFbProjectIdDedicated', '');
+    set('adminFbAuthDomainDedicated', '');
+    set('adminFbAppIdDedicated', '');
+    set('adminFbStorageBucketDedicated', '');
+    set('adminFbSenderIdDedicated', '');
+    set('adminFbPasteSnippet', '');
+    set('adminFbApiKey', '');
+    set('adminFbProjectId', '');
+    set('adminFbAuthDomain', '');
+    set('adminFbAppId', '');
+
+    this.loadSettingsForm();
+    showToast('Firebase credentials cleared. Reverted to simulation mode.', 'info');
   },
 
   async handleTestSmsPrompt() {

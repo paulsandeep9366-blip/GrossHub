@@ -32,6 +32,16 @@ const SMSGateway = {
       if (!firebase.apps || firebase.apps.length === 0) {
         firebase.initializeApp(cfg);
         console.log("[SMSGateway] Firebase Phone Auth initialized successfully.");
+      } else {
+        const currentApp = firebase.app();
+        if (currentApp.options && (currentApp.options.apiKey !== cfg.apiKey || currentApp.options.projectId !== cfg.projectId)) {
+          currentApp.delete().then(() => {
+            firebase.initializeApp(cfg);
+            console.log("[SMSGateway] Firebase Phone Auth re-initialized with updated credentials.");
+          }).catch(e => {
+            console.warn("[SMSGateway] Firebase re-init note:", e);
+          });
+        }
       }
       return true;
     } catch (e) {
