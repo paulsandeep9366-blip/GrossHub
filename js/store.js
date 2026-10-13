@@ -39,7 +39,8 @@ const Store = {
           riders: (parsed.riders || []).filter(r => {
             const id = (r.id || '').toLowerCase();
             return id !== 'rider_1' && id !== 'rider_2' && id !== 'rider_3';
-          })
+          }),
+          firebaseConfig: parsed.firebaseConfig || DEFAULT_SHOP_CONFIG.firebaseConfig
         };
       }
     } catch (e) {
@@ -666,6 +667,27 @@ const Store = {
   // Customer alias helper
   setCustomer(customer) {
     this.saveCustomer(customer);
+  },
+
+  // 12. Firebase Phone Auth & SMS Gateway Settings
+  getFirebaseConfig() {
+    const config = this.getConfig();
+    return config.firebaseConfig || DEFAULT_SHOP_CONFIG.firebaseConfig;
+  },
+
+  saveFirebaseConfig(newFirebaseConfig) {
+    const config = this.getConfig();
+    config.firebaseConfig = {
+      ...(config.firebaseConfig || DEFAULT_SHOP_CONFIG.firebaseConfig),
+      ...newFirebaseConfig
+    };
+    this.saveConfig(config);
+    return config.firebaseConfig;
+  },
+
+  isFirebaseConfigured() {
+    const cfg = this.getFirebaseConfig();
+    return !!(cfg && cfg.apiKey && cfg.projectId && cfg.apiKey.trim().length > 5);
   },
 
   // 11. Multi-Portal Session Inactivity & Outside-Portal Guard (5-minute timeout)

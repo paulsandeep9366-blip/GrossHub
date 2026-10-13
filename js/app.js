@@ -2088,7 +2088,7 @@ function handleAccountClick() {
   }
 }
 
-function handleSendCustomerOtp(e) {
+async function handleSendCustomerOtp(e) {
   if (e) e.preventDefault();
   const nameInput = document.getElementById("storeCustNameInput");
   const phoneInput = document.getElementById("storeCustPhoneInput");
@@ -2117,23 +2117,49 @@ function handleSendCustomerOtp(e) {
   if (phoneForm) phoneForm.style.display = "none";
 
   const otpInput = document.getElementById("storeCustOtpInput");
+  const otpErr = document.getElementById("storeCustOtpError");
   if (otpInput) {
     otpInput.value = "";
+    otpInput.style.borderColor = "";
+    otpInput.style.boxShadow = "";
     otpInput.focus();
   }
+  if (otpErr) {
+    otpErr.style.display = "none";
+    otpErr.textContent = "";
+  }
 
-  const code = Math.floor(1000 + Math.random() * 9000).toString();
-  window._activeCustomerOtp = code;
-  showToast(`Verification code sent to +91 ${phone}.`, "success");
+  let res;
+  if (typeof SMSGateway !== "undefined") {
+    res = await SMSGateway.sendOtpSms(phone, name, "recaptcha-container");
+  } else {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    res = { success: true, code, mode: "demo_fallback" };
+  }
+
+  if (res && res.success) {
+    window._activeCustomerOtp = res.code;
+    showToast(`SMS Verification code sent to +91 ${phone}. 📲`, "success");
+  } else {
+    showToast(res?.error || "Failed to send SMS.", "error");
+  }
 }
 
 function handleStoreCustOtpInput(input) {
-  if (input && input.value.trim().length === 4) {
-    verifyCustomerOtp();
+  if (input) {
+    const val = input.value.trim();
+    const otpErr = document.getElementById("storeCustOtpError");
+    if (otpErr && val.length < 6) {
+      otpErr.style.display = "none";
+      input.style.borderColor = "";
+    }
+    if (val.length === 6 && /^\d{6}$/.test(val)) {
+      verifyCustomerOtp();
+    }
   }
 }
 
-function verifyCustomerOtp() {
+async function verifyCustomerOtp() {
   const otpInput = document.getElementById("storeCustOtpInput");
   const otpErr = document.getElementById("storeCustOtpError");
   const nameInput = document.getElementById("storeCustNameInput");
@@ -2143,17 +2169,54 @@ function verifyCustomerOtp() {
   const name = nameInput ? nameInput.value.trim() : "Valued Customer";
   const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
 
-  if (!/^\d{4}$/.test(otp)) {
+  if (!otp || !/^\d{6}$/.test(otp)) {
     if (otpErr) {
-      otpErr.textContent = "Please enter the 4-digit verification code.";
+      otpErr.textContent = "Please enter the complete 6-digit SMS verification code.";
       otpErr.style.display = "block";
     }
-    showToast("Please enter a valid 4-digit code.", "error");
+    if (otpInput) {
+      otpInput.style.borderColor = "#dc2626";
+      otpInput.focus();
+    }
+    showToast("Please enter a valid 6-digit code.", "error");
     return;
   }
 
-  if (window._activeCustomerOtp && otp !== window._activeCustomerOtp) {
-    window._activeCustomerOtp = otp;
+  let verifyResult;
+  if (typeof SMSGateway !== "undefined") {
+    verifyResult = await SMSGateway.verifyOtpSms(otp);
+  } else {
+    if (window._activeCustomerOtp && otp === window._activeCustomerOtp) {
+      window._activeCustomerOtp = null;
+      verifyResult = { success: true };
+    } else {
+      verifyResult = { success: false, error: "❌ Incorrect OTP! Access denied." };
+    }
+  }
+
+  // STRICT REJECTION: Incorrect OTP cannot login
+  if (!verifyResult || !verifyResult.success) {
+    const errMsg = verifyResult?.error || "❌ Incorrect OTP! Access denied.";
+    if (otpErr) {
+      otpErr.textContent = errMsg;
+      otpErr.style.display = "block";
+      otpErr.style.color = "#dc2626";
+    }
+    if (otpInput) {
+      otpInput.style.borderColor = "#dc2626";
+      otpInput.style.backgroundColor = "#fff1f2";
+      otpInput.animate([
+        { transform: 'translateX(-6px)' },
+        { transform: 'translateX(6px)' },
+        { transform: 'translateX(-4px)' },
+        { transform: 'translateX(4px)' },
+        { transform: 'translateX(0px)' }
+      ], { duration: 300 });
+      otpInput.focus();
+      otpInput.select();
+    }
+    showToast(errMsg, "error");
+    return;
   }
 
   if (otpErr) otpErr.style.display = "none";
@@ -2176,7 +2239,7 @@ function verifyCustomerOtp() {
   if (chkName && !chkName.value) chkName.value = name;
   if (chkPhone && !chkPhone.value) chkPhone.value = phone;
 
-  showToast(`Welcome, ${name}! Signed in successfully.`, "success");
+  showToast(`Welcome, ${name}! Signed in successfully. 🎉`, "success");
 
   // Open the unified account modal immediately
   openCustomerAccountModal();
@@ -2413,10 +2476,11 @@ function checkStoreAccess() {
   }
 }
 
-function handleGateSendOtp(e) {
+async function handleGateSendOtp(e) {
   if (e) e.preventDefault();
   const nameInput = document.getElementById("gateNameInput");
   const phoneInput = document.getElementById("gatePhoneInput");
+  const submitBtn = document.querySelector("#gatePhoneForm button[type='submit']");
 
   const name = nameInput ? nameInput.value.trim() : "";
   const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
@@ -2433,6 +2497,31 @@ function handleGateSendOtp(e) {
     return;
   }
 
+  const originalBtnHtml = submitBtn ? submitBtn.innerHTML : "Send Verification Code ➔";
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span>⏳ Sending SMS to +91 ${phone}...</span>`;
+  }
+
+  // Dispatch real SMS OTP via SMSGateway (Google Firebase Phone Auth)
+  let res;
+  if (typeof SMSGateway !== "undefined") {
+    res = await SMSGateway.sendOtpSms(phone, name, "recaptcha-container");
+  } else {
+    const demoCode = Math.floor(100000 + Math.random() * 900000).toString();
+    res = { success: true, mode: "demo_fallback", code: demoCode };
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnHtml;
+  }
+
+  if (!res.success) {
+    showToast(res.error || "Failed to send SMS to this mobile number.", "error");
+    return;
+  }
+
   const targetEl = document.getElementById("gateTargetPhone");
   if (targetEl) targetEl.textContent = `+91 ${phone}`;
 
@@ -2441,35 +2530,69 @@ function handleGateSendOtp(e) {
   if (otpSection) otpSection.style.display = "block";
   if (phoneForm) phoneForm.style.display = "none";
 
-  const code = Math.floor(1000 + Math.random() * 9000).toString();
-  window._activeGateOtp = code;
-
-  // Display code in the card for instant verification
-  const codeDisplay = document.getElementById("gateOtpGeneratedCode");
-  if (codeDisplay) codeDisplay.textContent = code;
-
   const otpInput = document.getElementById("gateOtpInput");
   if (otpInput) {
-    otpInput.value = code; // Auto-filled for effortless 1-tap entry!
+    otpInput.value = "";
     otpInput.focus();
   }
 
-  showToast(`Verification code sent to +91 ${phone}. Code: ${code}`, "success");
+  // Update SMS status banner & simulation helper
+  const modeBadge = document.getElementById("gateSmsModeBadge");
+  const noticeText = document.getElementById("gateSmsNoticeText");
+  const codeCard = document.getElementById("gateOtpCodeCard");
+  const codeDisplay = document.getElementById("gateOtpGeneratedCode");
+
+  if (res.mode === "firebase_live") {
+    if (modeBadge) modeBadge.textContent = "REAL SMS DISPATCHED TO PHONE";
+    if (noticeText) noticeText.textContent = `A real SMS with your unique 6-digit verification code has been sent to +91 ${phone}. Please check your phone messages!`;
+    if (codeCard) codeCard.style.display = "none";
+    showToast(`SMS OTP sent to +91 ${phone}! Check your messages. 📲`, "success");
+  } else {
+    window._activeGateOtp = res.code;
+    if (modeBadge) modeBadge.textContent = "SMS GATEWAY (SETUP MODE)";
+    if (noticeText) noticeText.textContent = `Live SMS active when Firebase keys are entered in Admin Settings. Code sent to phone:`;
+    if (codeCard) codeCard.style.display = "block";
+    if (codeDisplay) codeDisplay.textContent = res.code;
+    // Keep input empty so user has to enter the code
+    if (otpInput) otpInput.value = "";
+    showToast(`Verification code sent to +91 ${phone}.`, "info");
+  }
+
+  startGateResendTimer();
 }
 
 function autoFillGateOtp() {
-  const code = window._activeGateOtp || "1234";
+  const code = (typeof SMSGateway !== "undefined" && SMSGateway.fallbackOtp) ? SMSGateway.fallbackOtp : window._activeGateOtp;
+  if (!code) return;
   const otpInput = document.getElementById("gateOtpInput");
   if (otpInput) {
     otpInput.value = code;
     otpInput.focus();
+    // Clear previous error styles
+    const otpErr = document.getElementById("gateOtpError");
+    if (otpErr) otpErr.style.display = "none";
+    otpInput.style.borderColor = "";
+    otpInput.style.backgroundColor = "";
+    otpInput.style.boxShadow = "";
   }
-  verifyGateOtp();
 }
 
 function handleGateOtpInput(input) {
-  if (input && input.value.trim().length === 4) {
-    verifyGateOtp();
+  if (input) {
+    const val = input.value.trim();
+    const otpErr = document.getElementById("gateOtpError");
+    // Clear error styling on input change
+    if (otpErr && otpErr.style.display !== "none") {
+      otpErr.style.display = "none";
+      otpErr.textContent = "";
+      input.style.borderColor = "";
+      input.style.backgroundColor = "";
+      input.style.boxShadow = "";
+    }
+    // Auto submit STRICTLY when all 6 digits are typed
+    if (val.length === 6 && /^\d{6}$/.test(val)) {
+      verifyGateOtp();
+    }
   }
 }
 
@@ -2477,39 +2600,188 @@ function backToGatePhoneStep() {
   const otpSection = document.getElementById("gateOtpSection");
   const phoneForm = document.getElementById("gatePhoneForm");
   const otpErr = document.getElementById("gateOtpError");
+  const otpInput = document.getElementById("gateOtpInput");
   if (otpSection) otpSection.style.display = "none";
   if (phoneForm) phoneForm.style.display = "block";
+  if (otpInput) {
+    otpInput.value = "";
+    otpInput.style.borderColor = "";
+    otpInput.style.backgroundColor = "";
+    otpInput.style.boxShadow = "";
+  }
   if (otpErr) {
     otpErr.style.display = "none";
     otpErr.textContent = "";
   }
 }
 
-function verifyGateOtp() {
+let _gateResendInterval = null;
+function startGateResendTimer() {
+  const btn = document.getElementById("btnGateResendOtp");
+  if (!btn) return;
+  if (_gateResendInterval) clearInterval(_gateResendInterval);
+
+  let countdown = 30;
+  btn.disabled = true;
+  btn.textContent = `⏱️ Resend SMS in ${countdown}s`;
+
+  _gateResendInterval = setInterval(() => {
+    countdown -= 1;
+    if (countdown <= 0) {
+      clearInterval(_gateResendInterval);
+      btn.disabled = false;
+      btn.textContent = "🔄 Resend SMS Code";
+    } else {
+      btn.textContent = `⏱️ Resend SMS in ${countdown}s`;
+    }
+  }, 1000);
+}
+
+function handleGateResendOtp() {
+  const phone = document.getElementById("gatePhoneInput")?.value?.trim().replace(/\D/g, "");
+  const name = document.getElementById("gateNameInput")?.value?.trim() || "Customer";
+  const otpInput = document.getElementById("gateOtpInput");
+  const otpErr = document.getElementById("gateOtpError");
+  const codeDisplay = document.getElementById("gateOtpGeneratedCode");
+
+  if (otpInput) {
+    otpInput.value = "";
+    otpInput.style.borderColor = "";
+    otpInput.style.backgroundColor = "";
+    otpInput.style.boxShadow = "";
+    otpInput.focus();
+  }
+  if (otpErr) {
+    otpErr.style.display = "none";
+    otpErr.textContent = "";
+  }
+
+  if (phone && phone.length >= 10) {
+    showToast(`Generating new unique SMS code for +91 ${phone}...`, "info");
+    if (typeof SMSGateway !== "undefined") {
+      SMSGateway.sendOtpSms(phone, name, "recaptcha-container").then(res => {
+        if (res.success) {
+          if (res.mode === "demo_fallback") {
+            window._activeGateOtp = res.code;
+            if (codeDisplay) codeDisplay.textContent = res.code;
+          }
+          showToast(`Fresh unique SMS code sent to +91 ${phone}! 📲`, "success");
+          startGateResendTimer();
+        } else {
+          showToast(res.error || "Failed to resend SMS.", "error");
+        }
+      });
+    }
+  }
+}
+
+async function verifyGateOtp() {
   const otpInput = document.getElementById("gateOtpInput");
   const otpErr = document.getElementById("gateOtpError");
   const nameInput = document.getElementById("gateNameInput");
   const phoneInput = document.getElementById("gatePhoneInput");
+  const verifyBtn = document.getElementById("btnGateVerify");
 
   const otp = otpInput ? otpInput.value.trim() : "";
   const name = nameInput ? nameInput.value.trim() : "Valued Customer";
   const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
 
-  if (!/^\d{4}$/.test(otp)) {
+  // Strictly enforce 6 digits
+  if (!otp || !/^\d{6}$/.test(otp)) {
     if (otpErr) {
-      otpErr.textContent = "Please enter the 4-digit verification code.";
+      otpErr.innerHTML = "⚠️ Please enter the complete 6-digit SMS verification code.";
       otpErr.style.display = "block";
+      otpErr.style.color = "#dc2626";
+      otpErr.style.background = "#fee2e2";
+      otpErr.style.padding = "10px 14px";
+      otpErr.style.borderRadius = "8px";
+      otpErr.style.border = "1px solid #fca5a5";
+      otpErr.style.marginTop = "10px";
     }
-    showToast("Please enter a valid 4-digit code.", "error");
+    if (otpInput) {
+      otpInput.style.borderColor = "#dc2626";
+      otpInput.focus();
+    }
+    showToast("Please enter a valid 6-digit verification code.", "error");
     return;
   }
 
-  // Verify 4-digit code
-  if (window._activeGateOtp && otp !== window._activeGateOtp) {
-    window._activeGateOtp = otp;
+  const originalVerifyText = verifyBtn ? verifyBtn.innerHTML : "Verify & Enter Store ➔";
+  if (verifyBtn) {
+    verifyBtn.disabled = true;
+    verifyBtn.innerHTML = "<span>⏳ Verifying SMS Code...</span>";
   }
 
-  if (otpErr) otpErr.style.display = "none";
+  let verifyResult;
+  if (typeof SMSGateway !== "undefined") {
+    verifyResult = await SMSGateway.verifyOtpSms(otp);
+  } else {
+    if (window._activeGateOtp && otp === window._activeGateOtp) {
+      window._activeGateOtp = null;
+      verifyResult = { success: true };
+    } else {
+      verifyResult = { success: false, error: "❌ Incorrect OTP! Access denied." };
+    }
+  }
+
+  if (verifyBtn) {
+    verifyBtn.disabled = false;
+    verifyBtn.innerHTML = originalVerifyText;
+  }
+
+  // STRICT REJECTION: If incorrect OTP, CANNOT LOGIN AND CANNOT OPEN STORE
+  if (!verifyResult || !verifyResult.success) {
+    const errMsg = verifyResult?.error || "❌ Incorrect OTP verification code! Access denied.";
+    if (otpErr) {
+      otpErr.innerHTML = `<span style="font-weight:700;">${escapeHTML(errMsg)}</span>`;
+      otpErr.style.display = "block";
+      otpErr.style.color = "#dc2626";
+      otpErr.style.background = "#fee2e2";
+      otpErr.style.padding = "10px 14px";
+      otpErr.style.borderRadius = "8px";
+      otpErr.style.border = "1px solid #fca5a5";
+      otpErr.style.marginTop = "10px";
+    }
+    if (otpInput) {
+      otpInput.style.borderColor = "#dc2626";
+      otpInput.style.backgroundColor = "#fff1f2";
+      otpInput.style.boxShadow = "0 0 0 3px rgba(220, 38, 38, 0.25)";
+      // Shake animation to visually communicate denial
+      otpInput.animate([
+        { transform: 'translateX(-8px)' },
+        { transform: 'translateX(8px)' },
+        { transform: 'translateX(-6px)' },
+        { transform: 'translateX(6px)' },
+        { transform: 'translateX(-3px)' },
+        { transform: 'translateX(3px)' },
+        { transform: 'translateX(0px)' }
+      ], { duration: 350 });
+      otpInput.focus();
+      otpInput.select();
+    }
+    showToast(errMsg, "error");
+
+    // Strictly ensure store remains locked and entrance gate remains visible
+    const gate = document.getElementById("storeLoginGate");
+    const storeWin = document.getElementById("storeWindow");
+    if (gate) gate.style.display = "flex";
+    if (storeWin) storeWin.style.display = "none";
+    return; // STOP! Never opens store on incorrect OTP
+  }
+
+  // CORRECT OTP VERIFIED:
+  if (otpErr) {
+    otpErr.style.display = "none";
+    otpErr.textContent = "";
+  }
+  if (otpInput) {
+    otpInput.style.borderColor = "#16a34a";
+    otpInput.style.backgroundColor = "#f0fdf4";
+    otpInput.style.boxShadow = "0 0 0 3px rgba(22, 163, 74, 0.2)";
+  }
+
+  // Consume active OTP so it cannot be reused
+  window._activeGateOtp = null;
 
   const session = {
     name: name,
@@ -2530,7 +2802,7 @@ function verifyGateOtp() {
   // Customer enters the store!
   checkStoreAccess();
 
-  showToast(`Welcome to GrossHub, ${name}! Store unlocked. 🎉`, "success");
+  showToast(`Welcome to GrossHub, ${name}! Mobile verified via SMS. 🎉`, "success");
 }
 
 function handleCustomerLogout() {

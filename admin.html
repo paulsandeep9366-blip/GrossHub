@@ -429,6 +429,67 @@
               </button>
             </form>
 
+            <!-- Customer SMS Gateway (Firebase Phone Auth) -->
+            <div style="margin-top: 30px; padding: 22px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-md);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+                <div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <h4 style="margin: 0; font-size: 1.05rem; color: var(--slate-900);">📱 Customer SMS Gateway (Firebase Phone Auth)</h4>
+                    <span id="adminFbStatusBadge" class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.72rem; padding: 3px 8px; border-radius: 999px; font-weight: 700;">Checking...</span>
+                  </div>
+                  <p style="font-size: 0.85rem; color: var(--slate-600); margin: 6px 0 0 0; line-height: 1.5; max-width: 620px;">
+                    Send real 6-digit verification OTP codes to customer mobile phones (+91) via cellular SMS upon storefront login. Free 10,000 SMS/month provided by Google Firebase with zero backend server required.
+                  </p>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <button type="button" class="btn-xs" style="background: #0284c7; color:#fff; border:none; padding:8px 14px; border-radius:var(--radius-sm); font-weight:600; cursor:pointer;" onclick="AdminPanel.handleTestSmsPrompt()">
+                    📲 Send Test SMS
+                  </button>
+                </div>
+              </div>
+
+              <form id="adminFirebaseForm" onsubmit="AdminPanel.handleSaveFirebaseSettings(event)">
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.82rem; font-weight:600;">Firebase Web API Key (apiKey)</label>
+                    <input type="text" id="adminFbApiKey" class="form-input" placeholder="AIzaSy..." style="font-family: monospace; font-size: 0.85rem;">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.82rem; font-weight:600;">Firebase Project ID (projectId)</label>
+                    <input type="text" id="adminFbProjectId" class="form-input" placeholder="grosshub-store" style="font-family: monospace; font-size: 0.85rem;">
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.82rem; font-weight:600;">Auth Domain (authDomain)</label>
+                    <input type="text" id="adminFbAuthDomain" class="form-input" placeholder="grosshub-store.firebaseapp.com" style="font-family: monospace; font-size: 0.85rem;">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.82rem; font-weight:600;">Firebase Web App ID (appId)</label>
+                    <input type="text" id="adminFbAppId" class="form-input" placeholder="1:123456789:web:abcdef..." style="font-family: monospace; font-size: 0.85rem;">
+                  </div>
+                </div>
+
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 14px; font-size: 0.8rem; color: #1e40af; line-height: 1.5;">
+                  <strong>💡 How to configure real SMS in 2 minutes (Free 10,000 SMS/mo):</strong>
+                  <ol style="margin: 6px 0 0 16px; padding: 0;">
+                    <li>Go to <a href="https://console.firebase.google.com/" target="_blank" rel="noopener" style="color: #1d4ed8; text-decoration: underline; font-weight: 600;">Firebase Console</a> and create or open your project.</li>
+                    <li>Under <em>Build &gt; Authentication</em>, click <strong>Get started</strong> &gt; enable <strong>Phone</strong> sign-in provider.</li>
+                    <li>Under <em>Authorized domains</em>, make sure <code>grosshub.in</code> and <code>localhost</code> are listed.</li>
+                    <li>Go to <em>Project Settings (⚙️) &gt; General &gt; Your apps &gt; Web app (&lt;/&gt;)</em> and copy the config values above.</li>
+                    <li>Click <strong>Save SMS Gateway Credentials</strong> below. Customers will now receive real SMS verification codes!</li>
+                  </ol>
+                </div>
+
+                <div style="display:flex; justify-content: flex-end; gap:10px;">
+                  <button type="submit" class="btn-hero-primary" style="padding: 8px 20px; font-size: 0.88rem;">
+                    💾 Save SMS Gateway Credentials
+                  </button>
+                </div>
+              </form>
+            </div>
+
             <!-- Data Management & Demo Purge -->
             <div style="margin-top: 30px; padding: 22px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: var(--radius-md);">
               <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
@@ -760,13 +821,19 @@
   </div>
 
   <!-- Global Toast Notification Container -->
+    <!-- Invisible reCAPTCHA container for Admin SMS test -->
+  <div id="admin-recaptcha-container"></div>
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=4.4.0"></script>
-  <script src="js/store.js?v=4.4.0"></script>
-  <script src="js/admin.js?v=4.4.0"></script>
+  <!-- Google Firebase SDK (Compat v10 for Real SMS Phone Authentication) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="js/sms-service.js?v=4.5.0"></script>
+  <script src="js/data.js?v=4.5.0"></script>
+  <script src="js/store.js?v=4.5.0"></script>
+  <script src="js/admin.js?v=4.5.0"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {

@@ -44,6 +44,15 @@ const DEFAULT_SHOP_CONFIG = {
     minFare: 25,        // ₹25 minimum rider delivery fare
     freeDeliveryThreshold: 499, // Store-sponsored free delivery for orders >= ₹499
     freeDeliveryMaxKm: 5        // Free delivery covers up to 5 km from hub
+  },
+  firebaseConfig: {
+    enabled: true,
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
   }
 };
 

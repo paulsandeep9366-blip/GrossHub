@@ -80,35 +80,48 @@
           </button>
         </form>
 
+        <!-- Invisible Firebase Recaptcha Container -->
+        <div id="recaptcha-container"></div>
+
         <!-- Step 2: OTP Verification Form -->
         <div id="gateOtpSection" style="display: none;">
           <div class="otp-display-pill" style="margin-bottom: 12px; display: flex; align-items: center; justify-content: center; text-align: center;">
-            <span>📲 Verification code sent to <strong id="gateTargetPhone">your mobile number</strong></span>
+            <span>📲 Verification code sent via SMS to <strong id="gateTargetPhone">your mobile number</strong></span>
           </div>
 
-          <!-- Instant OTP Helper Badge -->
-          <div id="gateOtpCodeCard" style="background: #f0fdf4; border: 1.5px dashed #22c55e; border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; text-align: center;">
-            <div style="font-size: 0.78rem; color: #15803d; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;">⚡ Instant Verification Code</div>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-              <span id="gateOtpGeneratedCode" style="font-size: 1.5rem; font-weight: 900; letter-spacing: 6px; color: #166534; font-family: monospace;">----</span>
-              <button type="button" onclick="autoFillGateOtp()" style="background: #16a34a; color: #fff; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">Auto-fill</button>
+          <!-- SMS Status Card -->
+          <div id="gateSmsStatusCard" style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; text-align: center;">
+            <div style="font-size: 0.78rem; color: #166534; font-weight: 700; margin-bottom: 3px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>📩</span> <span id="gateSmsModeBadge">SMS DISPATCHED TO MOBILE</span>
             </div>
-            <div style="color: #15803d; font-size: 0.74rem; margin-top: 4px;">Tap Verify & Enter Store below to open GrossHub</div>
+            <div id="gateSmsNoticeText" style="font-size: 0.78rem; color: #15803d; line-height: 1.4;">
+              Please check your phone Messages inbox for the verification code.
+            </div>
+            <!-- Simulation helper badge (shown if Firebase credentials are pending in Admin) -->
+            <div id="gateOtpCodeCard" style="margin-top: 8px; display: none; background: #ecfdf5; border: 1px dashed #10b981; border-radius: 8px; padding: 6px 10px;">
+              <span style="font-size: 0.72rem; color: #047857;">Demo / Setup Code: <strong id="gateOtpGeneratedCode" style="font-size: 1.15rem; letter-spacing: 2px;">----</strong></span>
+              <button type="button" onclick="autoFillGateOtp()" style="background: #16a34a; color: #fff; border: none; border-radius: 4px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; margin-left: 6px; cursor: pointer;">Auto-fill</button>
+            </div>
           </div>
 
           <div class="form-group" style="margin-bottom: 16px; text-align: left;">
-            <label class="form-label" for="gateOtpInput" style="text-align: center; display: block;">Enter 4-Digit Verification Code</label>
-            <input type="text" id="gateOtpInput" class="form-input" placeholder="••••" maxlength="4" style="font-size: 1.4rem; letter-spacing: 0.35em; text-align: center; font-weight: 800;" autocomplete="one-time-code" oninput="handleGateOtpInput(this)">
+            <label class="form-label" for="gateOtpInput" style="text-align: center; display: block;">Enter SMS Verification Code</label>
+            <input type="text" id="gateOtpInput" class="form-input" placeholder="••••••" maxlength="6" style="font-size: 1.5rem; letter-spacing: 0.35em; text-align: center; font-weight: 800;" autocomplete="one-time-code" oninput="handleGateOtpInput(this)">
             <div id="gateOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px; text-align: center;"></div>
           </div>
 
-          <button type="button" class="btn-hero-primary" style="width: 100%; padding: 13px; font-size: 1rem; justify-content: center; margin-bottom: 12px;" onclick="verifyGateOtp()">
+          <button type="button" class="btn-hero-primary" style="width: 100%; padding: 13px; font-size: 1rem; justify-content: center; margin-bottom: 12px;" onclick="verifyGateOtp()" id="btnGateVerify">
             Verify & Enter Store ➔
           </button>
 
-          <button type="button" onclick="backToGatePhoneStep()" style="background: none; border: none; color: var(--slate-500); font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
-            ← Change Mobile Number
-          </button>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px;">
+            <button type="button" onclick="backToGatePhoneStep()" style="background: none; border: none; color: var(--slate-500); cursor: pointer; text-decoration: underline;">
+              ← Change Mobile Number
+            </button>
+            <button type="button" id="btnGateResendOtp" onclick="handleGateResendOtp()" style="background: none; border: none; color: #0284c7; cursor: pointer; font-weight: 700;">
+              🔄 Resend SMS
+            </button>
+          </div>
         </div>
       </div>
 
@@ -773,8 +786,8 @@
           </div>
 
           <div class="form-group" style="margin-bottom: 16px;">
-            <label class="form-label" for="storeCustOtpInput">Enter 4-Digit Code</label>
-            <input type="text" id="storeCustOtpInput" class="form-input" placeholder="••••" maxlength="4" style="font-size: 1.3rem; letter-spacing: 0.3em; text-align: center;" oninput="handleStoreCustOtpInput(this)">
+            <label class="form-label" for="storeCustOtpInput">Enter 6-Digit SMS Code</label>
+            <input type="text" id="storeCustOtpInput" class="form-input" placeholder="••••••" maxlength="6" style="font-size: 1.4rem; letter-spacing: 0.3em; text-align: center; font-weight:800;" oninput="handleStoreCustOtpInput(this)">
             <div id="storeCustOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px;"></div>
           </div>
 
@@ -964,11 +977,16 @@
 
   <!-- Leaflet Map Engine -->
   <script src="js/leaflet.js"></script>
+  <!-- Google Firebase SDK (Compat v10 for Real SMS Phone Authentication) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
   <!-- Scripts -->
-  <script src="js/data.js?v=4.3.0"></script>
-  <script src="js/store.js?v=4.3.0"></script>
-  <script src="js/tracking.js?v=4.3.0"></script>
-  <script src="js/app.js?v=4.3.0"></script>
+  <script src="js/data.js?v=4.5.0"></script>
+  <script src="js/store.js?v=4.5.0"></script>
+  <script src="js/sms-service.js?v=4.5.0"></script>
+  <script src="js/tracking.js?v=4.5.0"></script>
+  <script src="js/app.js?v=4.5.0"></script>
 
   <!-- PWA Service Worker Registration -->
   <script>

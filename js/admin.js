@@ -710,6 +710,26 @@ const AdminPanel = {
     if (statusToggle) {
       statusToggle.checked = config.serviceStatus !== 'closed';
     }
+
+    // Populate Firebase SMS Gateway settings
+    const fbCfg = (Store.getFirebaseConfig ? Store.getFirebaseConfig() : (DEFAULT_SHOP_CONFIG.firebaseConfig || {})) || {};
+    set('adminFbApiKey', fbCfg.apiKey || '');
+    set('adminFbProjectId', fbCfg.projectId || '');
+    set('adminFbAuthDomain', fbCfg.authDomain || '');
+    set('adminFbAppId', fbCfg.appId || '');
+
+    const badge = document.getElementById('adminFbStatusBadge');
+    if (badge) {
+      if (Store.isFirebaseConfigured && Store.isFirebaseConfigured()) {
+        badge.textContent = '🟢 Live SMS Active (Firebase)';
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#15803d';
+      } else {
+        badge.textContent = '🟡 Simulation Mode (Setup Required)';
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#92400e';
+      }
+    }
   },
 
   handleSaveSettings() {
@@ -762,6 +782,65 @@ const AdminPanel = {
     // Update storefront header & delivery meter
     if (typeof renderStoreHeaderInfo === 'function') renderStoreHeaderInfo();
     if (typeof updateCartBadgeAndDrawer === 'function') updateCartBadgeAndDrawer();
+  },
+
+  handleSaveFirebaseSettings(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const apiKey = document.getElementById('adminFbApiKey')?.value.trim() || '';
+    const projectId = document.getElementById('adminFbProjectId')?.value.trim() || '';
+    const authDomain = document.getElementById('adminFbAuthDomain')?.value.trim() || '';
+    const appId = document.getElementById('adminFbAppId')?.value.trim() || '';
+
+    Store.saveFirebaseConfig({
+      apiKey,
+      projectId,
+      authDomain,
+      appId
+    });
+
+    if (typeof SMSGateway !== 'undefined') {
+      SMSGateway.initFirebase();
+    }
+
+    this.loadSettingsForm();
+    showToast('SMS Gateway credentials updated successfully! 📱', 'success');
+  },
+
+  async handleTestSmsPrompt() {
+    const rawPhone = prompt('Enter a 10-digit Indian mobile number to test SMS delivery (+91):');
+    if (!rawPhone) return;
+
+    const digits = String(rawPhone).replace(/\D/g, '').slice(-10);
+    if (digits.length !== 10) {
+      alert('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    showToast(`Dispatching test verification SMS to +91${digits}...`, 'info');
+
+    try {
+      if (typeof SMSGateway === 'undefined') {
+        alert('SMSGateway module not loaded.');
+        return;
+      }
+
+      const res = await SMSGateway.sendOtpSms(digits, 'Admin Tester', 'admin-recaptcha-container');
+      if (res.success) {
+        if (res.mode === 'firebase_live') {
+          alert(`✅ Live SMS successfully dispatched via Firebase to +91${digits}!\nPlease check SMS inbox on the device.`);
+          showToast(`Live SMS sent to +91${digits}!`, 'success');
+        } else {
+          alert(`ℹ️ SMS Gateway Simulation Mode:\nTest OTP Code: ${res.code}\nTo send real SMS to mobile phones, enter your Firebase API Key and Project ID in settings.`);
+          showToast(`Test OTP: ${res.code}`, 'info');
+        }
+      } else {
+        alert(`❌ Failed to send SMS: ${res.error || 'Unknown error'}`);
+        showToast(res.error || 'SMS send failed', 'error');
+      }
+    } catch (err) {
+      console.error('Test SMS exception:', err);
+      alert(`❌ Error testing SMS: ${err.message}`);
+    }
   },
 
   // 5. CSV Reports Export
