@@ -2367,10 +2367,10 @@ function checkStoreAccess() {
   const gate = document.getElementById("storeLoginGate");
   const storeWin = document.getElementById("storeWindow");
   const session = (typeof Store !== "undefined" && Store.getCustomerSession) ? Store.getCustomerSession() : null;
-  const isAdmin = (typeof Store !== "undefined" && Store.isAdminLoggedIn && Store.isAdminLoggedIn());
 
-  if (isAdmin || (session && session.phone)) {
-    // Admin or Customer authenticated: Enter the store!
+  // Strict Customer Login Gate: Every customer must authenticate before the store opens
+  if (session && session.phone) {
+    // Customer authenticated: Enter the store!
     if (gate) gate.style.display = "none";
     if (storeWin) storeWin.style.display = "block";
     updateStorefrontCustomerUI();
@@ -2441,15 +2441,30 @@ function handleGateSendOtp(e) {
   if (otpSection) otpSection.style.display = "block";
   if (phoneForm) phoneForm.style.display = "none";
 
+  const code = Math.floor(1000 + Math.random() * 9000).toString();
+  window._activeGateOtp = code;
+
+  // Display code in the card for instant verification
+  const codeDisplay = document.getElementById("gateOtpGeneratedCode");
+  if (codeDisplay) codeDisplay.textContent = code;
+
   const otpInput = document.getElementById("gateOtpInput");
   if (otpInput) {
-    otpInput.value = "";
+    otpInput.value = code; // Auto-filled for effortless 1-tap entry!
     otpInput.focus();
   }
 
-  const code = Math.floor(1000 + Math.random() * 9000).toString();
-  window._activeGateOtp = code;
-  showToast(`Verification code sent to +91 ${phone}.`, "success");
+  showToast(`Verification code sent to +91 ${phone}. Code: ${code}`, "success");
+}
+
+function autoFillGateOtp() {
+  const code = window._activeGateOtp || "1234";
+  const otpInput = document.getElementById("gateOtpInput");
+  if (otpInput) {
+    otpInput.value = code;
+    otpInput.focus();
+  }
+  verifyGateOtp();
 }
 
 function handleGateOtpInput(input) {

@@ -596,7 +596,7 @@ const Store = {
   // 9. Customer Authentication & Session (Protected by 5-minute outside-portal guard)
   getCustomerSession() {
     try {
-      const s = localStorage.getItem(this.KEYS.CUSTOMER_SESSION) || sessionStorage.getItem(this.KEYS.CUSTOMER_SESSION);
+      const s = sessionStorage.getItem(this.KEYS.CUSTOMER_SESSION);
       if (s) return JSON.parse(s);
     } catch(e) {}
     return null;
@@ -605,8 +605,9 @@ const Store = {
   setCustomerSession(customer) {
     try {
       const val = JSON.stringify(customer);
-      localStorage.setItem(this.KEYS.CUSTOMER_SESSION, val);
       sessionStorage.setItem(this.KEYS.CUSTOMER_SESSION, val);
+      // Clean up legacy localStorage session to enforce login on entrance
+      localStorage.removeItem(this.KEYS.CUSTOMER_SESSION);
     } catch(e) {}
     this.saveCustomer(customer);
   },
