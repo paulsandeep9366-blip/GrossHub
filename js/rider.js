@@ -64,6 +64,7 @@ const RiderPanel = {
     if (session && session.name) {
       this.isAuthenticated = true;
       this.activeRider = session.name;
+      this.activeRiderUsername = session.username || session.id;
       this.showDashboard();
     } else {
       this.showLogin();
@@ -92,7 +93,8 @@ const RiderPanel = {
     if (loginView) loginView.style.display = "none";
     if (dashView) dashView.style.display = "block";
     if (badge) {
-      badge.textContent = this.activeRider;
+      const displayLabel = this.activeRiderUsername ? `${this.activeRider} (ID: ${this.activeRiderUsername})` : this.activeRider;
+      badge.textContent = displayLabel;
       badge.style.display = "inline-flex";
     }
     if (logoutBtn) logoutBtn.style.display = "inline-flex";
@@ -115,7 +117,7 @@ const RiderPanel = {
     if (!riderId || !password) {
       if (errEl) {
         errEl.style.display = "block";
-        errEl.textContent = "Please enter both Rider ID and Password.";
+        errEl.textContent = "Please enter both your Rider ID and Password.";
       }
       showToast("Please enter both Rider ID and Password.", "error");
       return;
@@ -123,7 +125,7 @@ const RiderPanel = {
 
     // Admin Universal Access: Admin credentials unlock Rider Portal
     const adminPwd = (typeof Store !== 'undefined' && Store.getAdminPassword) ? Store.getAdminPassword() : 'grosshub123';
-    if (password.trim() === adminPwd || riderId.toLowerCase().trim() === 'admin') {
+    if ((password.trim() === adminPwd && riderId.toLowerCase().trim() === 'admin') || (riderId.toLowerCase().trim() === 'admin' && password.trim() === adminPwd)) {
       if (typeof Store !== 'undefined' && Store.setAdminLoggedIn) {
         Store.setAdminLoggedIn(true);
       }
@@ -131,70 +133,92 @@ const RiderPanel = {
       return;
     }
 
-    const riders = Store.getRiders();
+    const riders = Store.getRiders() || [];
     const cleanId = riderId.toLowerCase().trim();
     const cleanPhone = riderId.replace(/\D/g, "");
 
-    // Match by ID, username, name, or phone number
+    // Match specifically by assigned username/ID or registered mobile
     const matchedRider = riders.find(r => {
       const rId = (r.id || "").toLowerCase();
       const rUsername = (r.username || "").toLowerCase();
       const rName = (r.name || "").toLowerCase();
-      const rNameWithoutPrefix = rName.replace(/^rider\s+/, "");
       const rPhone = (r.phone || "").replace(/\D/g, "");
 
-      return rId === cleanId ||
-             rUsername === cleanId ||
-             rName === cleanId ||
-             rNameWithoutPrefix === cleanId ||
-             (cleanPhone && rPhone === cleanPhone);
+      return rUsername === cleanId ||
+             rId === cleanId ||
+             (cleanPhone && cleanPhone.length >= 10 && rPhone === cleanPhone) ||
+             rName === cleanId;
     });
 
     if (!matchedRider) {
       if (errEl) {
         errEl.style.display = "block";
-        errEl.textContent = "Rider ID not found. Please verify your credentials or contact administrator.";
+        errEl.textContent = `Rider ID "${riderId}" is not registered in the delivery fleet. Please contact Store Admin.`;
       }
-      showToast("Rider ID not recognized.", "error");
+      showToast("Rider ID not found.", "error");
       return;
     }
 
-    const fleetPassword = (Store.getRiderPassword ? Store.getRiderPassword() : Store.getRiderPin()) || "rider123";
-    const individualPassword = matchedRider.password || fleetPassword;
-    const cleanInputPwd = password.trim();
-
-    const isPwdValid = (cleanInputPwd === individualPassword) ||
-                       (cleanInputPwd === fleetPassword) ||
-                       (cleanInputPwd === "rider123");
-
-    if (isPwdValid) {
-      this.isAuthenticated = true;
-      this.activeRider = matchedRider.name;
-      Store.setRiderSession({
-        id: matchedRider.id,
-        name: matchedRider.name,
-        phone: matchedRider.phone,
-        loginTime: new Date().toISOString()
-      });
-
-      if (errEl) errEl.style.display = "none";
-      const pwdInput = document.getElementById("riderPasswordInput");
-      if (pwdInput) pwdInput.value = "";
-
-      if (typeof Store !== 'undefined' && Store.SessionGuard) {
-        Store.SessionGuard.recordLogin('rider');
-      }
-      const timeoutNotice = document.getElementById('riderTimeoutNotice');
-      if (timeoutNotice) timeoutNotice.style.display = 'none';
-
-      this.showDashboard();
-      showToast(`Welcome back, ${matchedRider.name}! 🛵`, "success");
-    } else {
+    // Check account status
+    if (matchedRider.status === "inactive") {
       if (errEl) {
         errEl.style.display = "block";
-        errEl.textContent = "Incorrect password. Please verify your credentials or contact store admin.";
+        errEl.textContent = `Rider account for "${matchedRider.name}" is currently suspended by Store Admin.`;
       }
-      showToast("Incorrect password.", "error");
+      showToast("Rider account is inactive.", "error");
+      return;
+    }
+
+    // Strict individual password check controlled by Admin
+    const cleanInputPwd = password.trim();
+    const assignedPassword = matchedRider.password || (matchedRider.pin || Store.getRiderPin());
+
+    if (cleanInputPwd !== assignedPassword) {
+      if (errEl) {
+        errEl.style.display = "block";
+        errEl.textContent = `Incorrect password for rider "${matchedRider.name}". Please enter your individual password set by Admin.`;
+      }
+      showToast("Incorrect rider password.", "error");
+      return;
+    }
+
+    this.isAuthenticated = true;
+    this.activeRider = matchedRider.name;
+    this.activeRiderUsername = matchedRider.username || matchedRider.id;
+    this.activeRiderId = matchedRider.id;
+
+    Store.setRiderSession({
+      id: matchedRider.id,
+      username: matchedRider.username || matchedRider.id,
+      name: matchedRider.name,
+      phone: matchedRider.phone,
+      loginTime: new Date().toISOString()
+    });
+
+    if (errEl) errEl.style.display = "none";
+    const pwdInput = document.getElementById("riderPasswordInput");
+    if (pwdInput) pwdInput.value = "";
+
+    if (typeof Store !== 'undefined' && Store.SessionGuard) {
+      Store.SessionGuard.recordLogin('rider');
+    }
+    const timeoutNotice = document.getElementById('riderTimeoutNotice');
+    if (timeoutNotice) timeoutNotice.style.display = 'none';
+
+    this.showDashboard();
+    showToast(`Welcome back, ${matchedRider.name}! 🛵`, "success");
+  },
+
+  togglePasswordVisibility() {
+    const pwdInput = document.getElementById("riderPasswordInput");
+    const btn = document.getElementById("riderTogglePwdBtn");
+    if (!pwdInput) return;
+    if (pwdInput.type === "password") {
+      pwdInput.type = "text";
+      if (btn) btn.textContent = "🙈 Hide";
+    } else {
+      pwdInput.type = "password";
+      if (btn) btn.textContent = "👁️ Show";
     }
   },
 

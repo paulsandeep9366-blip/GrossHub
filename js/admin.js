@@ -1471,43 +1471,83 @@ const AdminPanel = {
       const assigned = orders.filter(o => o.assignedRider === rider.name && o.status !== "delivered" && o.status !== "cancelled");
       const deliveredCount = orders.filter(o => o.assignedRider === rider.name && o.status === "delivered").length;
       const isBusy = assigned.length > 0;
+      const riderId = rider.id;
+      const riderUsername = rider.username || rider.id;
+      const riderPassword = rider.password || (Store.getRiderPin ? Store.getRiderPin() : "rider123");
+      const isActive = rider.status !== "inactive";
 
       return `
-        <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="background: var(--white); border: 1.5px solid var(--slate-200); border-radius: var(--radius-md); padding: 18px; margin-bottom: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+          <!-- Top Row: Avatar, Name, Status Badge -->
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 44px; height: 44px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+              <div style="width: 46px; height: 46px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1.5px solid #bfdbfe;">
                 🛵
               </div>
               <div>
-                <h4 style="margin: 0; font-size: 1.05rem; color: var(--slate-900);">${escapeHTML(rider.name)}</h4>
+                <h4 style="margin: 0; font-size: 1.1rem; color: var(--slate-900);">${escapeHTML(rider.name)}</h4>
                 <div style="font-size: 0.82rem; color: var(--slate-500); margin-top: 2px;">
-                  📞 ${escapeHTML(rider.phone || "9862272399")} • Zone: ${escapeHTML(rider.zone || "Agartala")}
+                  📞 ${escapeHTML(rider.phone || "9862272399")} • Hub: ${escapeHTML(rider.zone || "Battala, Agartala")}
                 </div>
               </div>
             </div>
-            <div>
-              <span style="font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: ${isBusy ? "#fff7ed" : "#ecfdf5"}; color: ${isBusy ? "#c2410c" : "#047857"}; border: 1px solid ${isBusy ? "#fed7aa" : "#a7f3d0"};">
-                ${isBusy ? `🛵 On Delivery (${assigned.length})` : "🟢 Ready / Idle"}
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span style="font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: ${isActive ? "#ecfdf5" : "#fef2f2"}; color: ${isActive ? "#047857" : "#b91c1c"}; border: 1px solid ${isActive ? "#a7f3d0" : "#fecaca"};">
+                ${isActive ? "🟢 Active" : "🔴 Inactive"}
+              </span>
+              <span style="font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: ${isBusy ? "#fff7ed" : "#f1f5f9"}; color: ${isBusy ? "#c2410c" : "#475569"}; border: 1px solid ${isBusy ? "#fed7aa" : "#cbd5e1"};">
+                ${isBusy ? `🛵 On Delivery (${assigned.length})` : "Ready / Idle"}
               </span>
             </div>
           </div>
 
-          <div style="display: flex; gap: 20px; margin: 14px 0; font-size: 0.85rem; background: var(--slate-50); padding: 10px 14px; border-radius: var(--radius-sm); flex-wrap: wrap;">
-            <div>Active Deliveries: <strong>${assigned.length}</strong></div>
-            <div>Delivered Total: <strong>${deliveredCount}</strong></div>
-            <div>Assigned Order IDs: <strong>${assigned.map(o => o.id).join(", ") || "None currently"}</strong></div>
+          <!-- Credentials Box: ID and Password Controlled by Admin -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin: 14px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+              <div>
+                <span style="font-size: 0.74rem; text-transform: uppercase; color: var(--slate-500); font-weight: 700; display: block; margin-bottom: 2px;">Rider Login ID</span>
+                <code style="background: #eff6ff; color: #1d4ed8; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.92rem; border: 1px solid #bfdbfe; font-family: monospace;">${escapeHTML(riderUsername)}</code>
+              </div>
+
+              <div>
+                <span style="font-size: 0.74rem; text-transform: uppercase; color: var(--slate-500); font-weight: 700; display: block; margin-bottom: 2px;">Individual Password</span>
+                <div style="display: inline-flex; align-items: center; gap: 6px;">
+                  <code id="adminRiderPwdDisplay_${rider.id}" style="background: #ffffff; color: #0f172a; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.92rem; border: 1px solid #cbd5e1; font-family: monospace;" data-real-pwd="${escapeHTML(riderPassword)}">••••••••</code>
+                  <button type="button" class="btn-xs btn-outline" onclick="AdminPanel.toggleRiderCardPassword('${rider.id}')" id="btnRiderCardTogglePwd_${rider.id}" style="padding: 2px 8px; font-size: 0.75rem;" title="Show/Hide Password">👁️ Show</button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <button type="button" class="btn-xs btn-secondary" onclick="AdminPanel.copyRiderLoginDetails('${rider.id}')" style="background: #0284c7; color: #ffffff; padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;" title="Copy complete login instructions to send to rider">
+                📋 Copy Login Details
+              </button>
+            </div>
           </div>
 
-          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <!-- Dispatch Deliveries Summary -->
+          <div style="display: flex; gap: 20px; margin-bottom: 14px; font-size: 0.82rem; color: var(--slate-600); flex-wrap: wrap;">
+            <div>Active Deliveries: <strong style="color:var(--slate-900);">${assigned.length}</strong></div>
+            <div>Lifetime Completed: <strong style="color:var(--slate-900);">${deliveredCount}</strong></div>
+            <div>Active Orders: <strong>${assigned.map(o => o.id).join(", ") || "None"}</strong></div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button class="btn-xs btn-outline" onclick="AdminPanel.editRider('${rider.id}')" style="border-color: #0284c7; color: #0284c7; font-weight: 700;">
+              ✏️ Edit Rider & Password
+            </button>
+            <button class="btn-xs btn-outline" onclick="AdminPanel.quickResetRiderPassword('${rider.id}')" style="border-color: #64748b; color: #475569;">
+              🔑 Change Password
+            </button>
             <a href="tel:${rider.phone || "9862272399"}" class="btn-xs btn-secondary" style="text-decoration: none;">
-              📞 Call Rider
+              📞 Call
             </a>
             <a href="https://wa.me/91${(rider.phone || "9862272399").replace(/\D/g, "")}" target="_blank" class="btn-xs btn-outline" style="text-decoration: none; color: #15803d; border-color: #86efac;">
               💬 WhatsApp
             </a>
             <button class="btn-xs btn-outline" style="color: #dc2626; border-color: #fca5a5; margin-left: auto;" onclick="AdminPanel.handleDeleteRider('${rider.id}')" title="Remove Rider from Fleet">
-              🗑️ Remove Rider
+              🗑️ Remove
             </button>
           </div>
         </div>
@@ -1515,21 +1555,186 @@ const AdminPanel = {
     }).join("");
   },
 
-  handleUpdateRiderPin() {
-    const current = Store.getRiderPin();
-    const pin = prompt("Enter new 4-digit Master Security PIN for Delivery Fleet:", current);
-    if (pin && pin.trim().length >= 4) {
-      Store.setRiderPin(pin.trim());
-      showToast(`Rider PIN updated to ${pin.trim()}!`, "success");
+  openRiderModal(riderId = null) {
+    const modal = document.getElementById("adminRiderModal");
+    const title = document.getElementById("adminRiderModalTitle");
+    const idInput = document.getElementById("riderFormId");
+    const usernameInput = document.getElementById("riderFormUsername");
+    const nameInput = document.getElementById("riderFormName");
+    const phoneInput = document.getElementById("riderFormPhone");
+    const pwdInput = document.getElementById("riderFormPassword");
+    const zoneInput = document.getElementById("riderFormZone");
+    const statusInput = document.getElementById("riderFormStatus");
+
+    if (riderId) {
+      const rider = (Store.getRiders() || []).find(r => r.id === riderId);
+      if (rider) {
+        if (title) title.textContent = "✏️ Edit Rider Credentials & Password";
+        if (idInput) idInput.value = rider.id;
+        if (usernameInput) {
+          usernameInput.value = rider.username || rider.id;
+          usernameInput.readOnly = false;
+        }
+        if (nameInput) nameInput.value = rider.name || "";
+        if (phoneInput) phoneInput.value = (rider.phone || "").replace(/\D/g, "").slice(-10);
+        if (pwdInput) pwdInput.value = rider.password || (Store.getRiderPin ? Store.getRiderPin() : "rider123");
+        if (zoneInput) zoneInput.value = rider.zone || "Battala, Agartala";
+        if (statusInput) statusInput.value = rider.status || "active";
+      }
+    } else {
+      if (title) title.textContent = "➕ Add New Delivery Rider";
+      if (idInput) idInput.value = "";
+      if (usernameInput) {
+        usernameInput.value = "";
+        usernameInput.readOnly = false;
+      }
+      if (nameInput) nameInput.value = "";
+      if (phoneInput) phoneInput.value = "";
+      if (pwdInput) pwdInput.value = "rider@" + Math.floor(1000 + Math.random() * 9000);
+      if (zoneInput) zoneInput.value = "Battala, Agartala";
+      if (statusInput) statusInput.value = "active";
+    }
+
+    if (modal) modal.classList.add("active");
+  },
+
+  closeRiderModal() {
+    const modal = document.getElementById("adminRiderModal");
+    if (modal) modal.classList.remove("active");
+  },
+
+  generateRandomRiderPassword() {
+    const pwdInput = document.getElementById("riderFormPassword");
+    if (pwdInput) {
+      const newPwd = "rider@" + Math.floor(1000 + Math.random() * 9000);
+      pwdInput.value = newPwd;
+      showToast(`Generated secure password: ${newPwd}`, "info");
+    }
+  },
+
+  toggleRiderFormPasswordVisibility() {
+    const pwdInput = document.getElementById("riderFormPassword");
+    const btn = document.getElementById("btnToggleRiderFormPwd");
+    if (!pwdInput) return;
+    if (pwdInput.type === "password") {
+      pwdInput.type = "text";
+      if (btn) btn.textContent = "🙈";
+    } else {
+      pwdInput.type = "password";
+      if (btn) btn.textContent = "👁️";
+    }
+  },
+
+  handleSaveRider(e) {
+    if (e) e.preventDefault();
+    const id = document.getElementById("riderFormId")?.value?.trim() || "";
+    const username = document.getElementById("riderFormUsername")?.value?.trim().toLowerCase() || "";
+    const name = document.getElementById("riderFormName")?.value?.trim() || "";
+    const phone = document.getElementById("riderFormPhone")?.value?.trim().replace(/\D/g, "") || "";
+    const password = document.getElementById("riderFormPassword")?.value?.trim() || "";
+    const zone = document.getElementById("riderFormZone")?.value?.trim() || "Battala, Agartala";
+    const status = document.getElementById("riderFormStatus")?.value || "active";
+
+    if (!username) {
+      showToast("Please enter a unique Rider Login ID.", "error");
+      return;
+    }
+    if (!name) {
+      showToast("Please enter rider full name.", "error");
+      return;
+    }
+    if (!phone || phone.length < 10) {
+      showToast("Please enter a valid 10-digit mobile number.", "error");
+      return;
+    }
+    if (!password || password.length < 3) {
+      showToast("Please enter a password with at least 3 characters.", "error");
+      return;
+    }
+
+    const allRiders = Store.getRiders() || [];
+    const duplicate = allRiders.find(r => (r.username?.toLowerCase() === username || r.id?.toLowerCase() === username) && r.id !== id);
+    if (duplicate) {
+      showToast(`Rider ID "${username}" is already taken by ${duplicate.name}. Please choose another.`, "error");
+      return;
+    }
+
+    const riderData = {
+      id: id || ("rider_" + Date.now()),
+      username: username,
+      name: name,
+      phone: phone,
+      password: password,
+      zone: zone,
+      status: status,
+      updatedAt: new Date().toISOString()
+    };
+
+    Store.saveRider(riderData);
+    this.closeRiderModal();
+    this.renderRidersTab();
+    this.renderOrders(); // Refreshes rider assignment dropdown
+    showToast(`Rider "${name}" credentials saved! Login ID: ${username}`, "success");
+  },
+
+  editRider(riderId) {
+    this.openRiderModal(riderId);
+  },
+
+  quickResetRiderPassword(riderId) {
+    const rider = (Store.getRiders() || []).find(r => r.id === riderId);
+    if (!rider) return;
+    const current = rider.password || (Store.getRiderPin ? Store.getRiderPin() : "rider123");
+    const newPwd = prompt(`Enter new password for ${rider.name} (Rider ID: ${rider.username || rider.id}):`, current);
+    if (newPwd && newPwd.trim().length >= 3) {
+      rider.password = newPwd.trim();
+      Store.saveRider(rider);
       this.renderRidersTab();
+      showToast(`Password updated for ${rider.name}! New password: ${newPwd.trim()}`, "success");
+    }
+  },
+
+  copyRiderLoginDetails(riderId) {
+    const rider = (Store.getRiders() || []).find(r => r.id === riderId);
+    if (!rider) return;
+    const riderIdStr = rider.username || rider.id;
+    const pwd = rider.password || (Store.getRiderPin ? Store.getRiderPin() : "rider123");
+    const portalUrl = window.location.origin ? (window.location.origin + "/rider.html") : "https://grosshub.in/rider.html";
+    const text = `🛵 *GrossHub Delivery Partner Login*\n━━━━━━━━━━━━━━━━\n👤 *Rider ID:* ${riderIdStr}\n🔑 *Password:* ${pwd}\n🌐 *Portal:* ${portalUrl}\n━━━━━━━━━━━━━━━━\nLog in to accept dispatches & view active deliveries.`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`Login credentials for ${rider.name} copied! Ready to send on WhatsApp. 📋`, "success");
+      }).catch(() => {
+        prompt("Copy rider credentials:", text);
+      });
+    } else {
+      prompt("Copy rider credentials:", text);
+    }
+  },
+
+  toggleRiderCardPassword(riderId) {
+    const el = document.getElementById(`adminRiderPwdDisplay_${riderId}`);
+    const btn = document.getElementById(`btnRiderCardTogglePwd_${riderId}`);
+    if (!el) return;
+    const real = el.getAttribute("data-real-pwd") || "";
+    if (el.textContent === "••••••••") {
+      el.textContent = real;
+      if (btn) btn.textContent = "🙈 Hide";
+    } else {
+      el.textContent = "••••••••";
+      if (btn) btn.textContent = "👁️ Show";
     }
   },
 
   handleDeleteRider(riderId) {
-    if (!confirm("Are you sure you want to remove this rider from the fleet?")) return;
+    const rider = (Store.getRiders() || []).find(r => r.id === riderId);
+    const name = rider ? rider.name : "this rider";
+    if (!confirm(`Are you sure you want to remove ${name} from the delivery fleet?`)) return;
     Store.deleteRider(riderId);
-    showToast("Rider removed from fleet.", "info");
+    showToast(`Rider ${name} removed from fleet.`, "info");
     this.renderRidersTab();
+    this.renderOrders();
   },
 
   handlePurgeDemoData() {
@@ -1543,20 +1748,9 @@ const AdminPanel = {
   },
 
   handleAddNewRider() {
-    const name = prompt("Enter new delivery rider full name (e.g. Rider Sanjib):");
-    if (!name || !name.trim()) return;
-    const phone = prompt("Enter 10-digit mobile number for rider:", "9862272399") || "9862272399";
-    const config = Store.getConfig();
-    const riders = config.riders || DEFAULT_SHOP_CONFIG.riders;
-    const newId = `rider_${Date.now()}`;
-    riders.push({ id: newId, name: name.trim(), phone: phone.trim(), zone: "Agartala" });
-    config.riders = riders;
-    Store.saveConfig(config);
-    showToast(`Rider ${name.trim()} added to fleet!`, "success");
-    this.renderRidersTab();
+    this.openRiderModal();
   },
 
-  // 6. Customers Directory Tab
   renderCustomersTab() {
     const container = document.getElementById("adminCustomersList");
     if (!container) return;

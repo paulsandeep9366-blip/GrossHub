@@ -188,23 +188,24 @@
 
       <form id="riderLoginForm">
         <div class="form-group" style="text-align:left; margin-bottom:16px;">
-          <label class="form-label" for="riderIdInput">Rider ID or Registered Phone *</label>
-          <input type="text" id="riderIdInput" class="form-input" placeholder="Enter Rider ID or Mobile Number" required autocomplete="username">
+          <label class="form-label" for="riderIdInput"><strong>Assigned Rider ID *</strong></label>
+          <input type="text" id="riderIdInput" class="form-input" placeholder="e.g. sanjib or GH-01" required autocomplete="username" style="font-weight:700;">
+          <small style="color:var(--slate-500); font-size:0.78rem; display:block; margin-top:4px;">Enter the unique Rider ID assigned to you by Store Admin.</small>
         </div>
 
         <div class="form-group" style="text-align:left; margin-bottom:18px;">
-          <label class="form-label" for="riderPasswordInput">Rider Password *</label>
-          <input type="password" id="riderPasswordInput" class="form-input" placeholder="Enter Rider Password" required autocomplete="current-password">
-          <div id="riderLoginError" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:6px;"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label class="form-label" for="riderPasswordInput" style="margin:0;"><strong>Individual Rider Password *</strong></label>
+            <button type="button" onclick="RiderPanel.togglePasswordVisibility()" style="background:none; border:none; color:#0284c7; font-size:0.8rem; font-weight:700; cursor:pointer;" id="riderTogglePwdBtn">👁️ Show</button>
+          </div>
+          <input type="password" id="riderPasswordInput" class="form-input" placeholder="Enter your individual password" required autocomplete="current-password" style="font-weight:700;">
+          <small style="color:var(--slate-500); font-size:0.78rem; display:block; margin-top:4px;">Enter the password set for your account by Store Admin.</small>
+          <div id="riderLoginError" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:8px; font-weight:600; background:#fef2f2; padding:8px 12px; border-radius:6px; border:1px solid #fecaca;"></div>
         </div>
 
-        <button type="submit" class="btn-hero-primary" style="width:100%; padding:12px; font-size:0.95rem; justify-content:center;">
+        <button type="submit" class="btn-hero-primary" style="width:100%; padding:13px; font-size:0.95rem; justify-content:center;">
           Sign In to Dispatch Dashboard ➔
         </button>
-
-
-
-
       </form>
     </div>
 
@@ -248,9 +249,9 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/data.js?v=4.1.0"></script>
-  <script src="js/store.js?v=4.1.0"></script>
-  <script src="js/rider.js?v=4.1.0"></script>
+  <script src="js/data.js?v=4.4.0"></script>
+  <script src="js/store.js?v=4.4.0"></script>
+  <script src="js/rider.js?v=4.4.0"></script>
   <script>
     function escapeHTML(str) {
       if (!str) return "";

@@ -38,11 +38,7 @@ const Store = {
           riderPin: parsed.riderPin || DEFAULT_SHOP_CONFIG.riderPin,
           riders: (parsed.riders || []).filter(r => {
             const id = (r.id || '').toLowerCase();
-            const un = (r.username || '').toLowerCase();
-            const name = (r.name || '').toLowerCase();
-            return id !== 'rider_1' && id !== 'rider_2' && id !== 'rider_3' &&
-                   un !== 'bikash' && un !== 'rahul' && un !== 'samir' &&
-                   name !== 'rider bikash' && name !== 'rider rahul' && name !== 'rider samir';
+            return id !== 'rider_1' && id !== 'rider_2' && id !== 'rider_3';
           })
         };
       }
@@ -528,13 +524,39 @@ const Store = {
   getRiders() {
     const config = this.getConfig();
     return (config.riders || []).filter(r => {
-      const id = (r.id || '').toLowerCase();
-      const un = (r.username || '').toLowerCase();
-      const name = (r.name || '').toLowerCase();
-      return id !== 'rider_1' && id !== 'rider_2' && id !== 'rider_3' &&
-             un !== 'bikash' && un !== 'rahul' && un !== 'samir' &&
-             name !== 'rider bikash' && name !== 'rider rahul' && name !== 'rider samir';
+      const id = (r.id || "").toLowerCase();
+      return id !== "rider_1" && id !== "rider_2" && id !== "rider_3";
     });
+  },
+
+  getRider(idOrUsername) {
+    if (!idOrUsername) return null;
+    const riders = this.getRiders();
+    const clean = idOrUsername.toLowerCase().trim();
+    const cleanPhone = idOrUsername.replace(/\D/g, "");
+    return riders.find(r => {
+      const rId = (r.id || "").toLowerCase();
+      const rUsername = (r.username || "").toLowerCase();
+      const rPhone = (r.phone || "").replace(/\D/g, "");
+      return rId === clean || rUsername === clean || (cleanPhone.length >= 10 && rPhone === cleanPhone);
+    }) || null;
+  },
+
+  saveRider(riderData) {
+    const config = this.getConfig();
+    let riders = [...(config.riders || [])];
+    if (!riderData.id) {
+      riderData.id = "rider_" + Date.now();
+    }
+    const idx = riders.findIndex(r => r.id === riderData.id);
+    if (idx >= 0) {
+      riders[idx] = { ...riders[idx], ...riderData };
+    } else {
+      riders.push(riderData);
+    }
+    config.riders = riders;
+    this.saveConfig(config);
+    return riderData;
   },
 
   deleteRider(riderId) {

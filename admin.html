@@ -458,16 +458,18 @@
               <span class="kpi-value" id="kpiFleetActive">0</span>
             </div>
             <div class="kpi-card products">
-              <span class="kpi-label">Fleet Login Password</span>
-              <span class="kpi-value" id="adminDisplayRiderPin" style="font-family: monospace; letter-spacing: 0.1em;">••••</span>
+              <span class="kpi-label">Rider Access Control</span>
+              <span class="kpi-value" style="font-size: 1.05rem; color: #0284c7;">Individual ID & Password</span>
             </div>
           </div>
 
           <div class="admin-table-controls">
-            <h4 style="margin: 0;">🛵 Registered Delivery Fleet & Live Status</h4>
+            <div>
+              <h4 style="margin: 0; font-size: 1.1rem;">🛵 Registered Delivery Fleet & Live Credentials</h4>
+              <p style="margin: 2px 0 0 0; color: var(--slate-500); font-size: 0.82rem;">Each delivery partner logs into the Rider Portal with their individual Rider ID and Password.</p>
+            </div>
             <div style="display: flex; gap: 10px;">
-              <button class="btn-xs btn-outline" onclick="AdminPanel.handleUpdateRiderPin()">🔑 Update Fleet Password</button>
-              <button class="btn-xs btn-hero-primary" onclick="AdminPanel.handleAddNewRider()">➕ Add New Rider</button>
+              <button class="btn-xs btn-hero-primary" onclick="AdminPanel.openRiderModal()" style="padding: 7px 16px; font-size: 0.86rem;">➕ Add New Rider</button>
             </div>
           </div>
 
@@ -686,14 +688,85 @@
     </div>
   </div>
 
+  <!-- Rider Credentials Management Modal (Add / Edit Rider) -->
+  <div class="modal-overlay" id="adminRiderModal">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; padding: 14px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">🛵</span>
+          <h3 id="adminRiderModalTitle" style="color: #ffffff; margin: 0; font-size: 1.15rem;">Add New Delivery Rider</h3>
+        </div>
+        <button class="btn-modal-close" onclick="AdminPanel.closeRiderModal()" style="color: #ffffff;">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 22px;">
+        <form id="adminRiderForm" onsubmit="AdminPanel.handleSaveRider(event)">
+          <input type="hidden" id="riderFormId" value="">
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" for="riderFormUsername"><strong>Rider Login ID *</strong></label>
+            <input type="text" id="riderFormUsername" class="form-input" placeholder="e.g. sanjib or GH-01" required autocomplete="off" style="font-family: monospace; font-weight: 700; letter-spacing: 0.05em;">
+            <small class="text-muted" style="display:block; margin-top:4px;">Unique ID used by this rider to log into the Rider Dispatch Portal.</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" for="riderFormName"><strong>Rider Full Name *</strong></label>
+            <input type="text" id="riderFormName" class="form-input" placeholder="e.g. Sanjib Debbarma" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" for="riderFormPhone"><strong>10-Digit Mobile Number *</strong></label>
+            <div style="display:flex; gap:8px;">
+              <span style="display:flex; align-items:center; padding:0 12px; background:#f1f5f9; border:1px solid var(--slate-300); border-radius:var(--radius-md); font-weight:700; color:var(--slate-700);">+91</span>
+              <input type="tel" id="riderFormPhone" class="form-input" placeholder="Enter 10-digit mobile number" maxlength="10" required style="flex:1;">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label class="form-label" for="riderFormPassword" style="margin:0;"><strong>Individual Login Password *</strong></label>
+              <button type="button" onclick="AdminPanel.generateRandomRiderPassword()" style="background:none; border:none; color:#0284c7; font-size:0.8rem; font-weight:700; cursor:pointer; text-decoration:underline;">🎲 Generate</button>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="riderFormPassword" class="form-input" placeholder="Enter individual rider password" required style="font-family: monospace; font-weight: 700; flex:1;">
+              <button type="button" class="btn-xs btn-outline" onclick="AdminPanel.toggleRiderFormPasswordVisibility()" id="btnToggleRiderFormPwd" style="padding:0 12px;" title="Toggle Password Visibility">👁️</button>
+            </div>
+            <small class="text-muted" style="display:block; margin-top:4px;">Only this rider can log in with this password. Controlled exclusively by Admin.</small>
+          </div>
+
+          <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;">
+            <div class="form-group">
+              <label class="form-label" for="riderFormZone"><strong>Operational Zone</strong></label>
+              <input type="text" id="riderFormZone" class="form-input" value="Battala, Agartala" placeholder="Zone">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="riderFormStatus"><strong>Status</strong></label>
+              <select id="riderFormStatus" class="form-select">
+                <option value="active">🟢 Active (Can Login)</option>
+                <option value="inactive">🔴 Inactive (Suspended)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+            <button type="button" class="btn-secondary" onclick="AdminPanel.closeRiderModal()" style="padding: 9px 18px;">Cancel</button>
+            <button type="submit" class="btn-hero-primary" style="padding: 9px 22px;">
+              💾 Save Rider Credentials
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Global Toast Notification Container -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
-  <script src="js/data.js?v=4.1.0"></script>
-  <script src="js/store.js?v=4.1.0"></script>
-  <script src="js/admin.js?v=4.1.0"></script>
+  <script src="js/data.js?v=4.4.0"></script>
+  <script src="js/store.js?v=4.4.0"></script>
+  <script src="js/admin.js?v=4.4.0"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {
