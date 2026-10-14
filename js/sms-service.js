@@ -143,7 +143,7 @@ const SMSGateway = {
       } else if (err.code === "auth/quota-exceeded") {
         userMsg = "Daily SMS quota reached on your Firebase project. Please check Firebase console.";
       } else if (err.code === "auth/billing-not-enabled") {
-        userMsg = "Firebase Phone Authentication requires identity verification in Firebase console.";
+        userMsg = "Google requires Blaze plan (10k free SMS/mo) or adding your number under 'Phone numbers for testing' in Firebase Console.";
       } else if (err.code === "auth/invalid-app-credential") {
         userMsg = "Invalid Firebase credentials. Please verify your API Key and Project ID in Admin Settings.";
       } else if (err.code === "auth/operation-not-allowed") {
