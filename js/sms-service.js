@@ -146,6 +146,12 @@ const SMSGateway = {
         userMsg = "Firebase Phone Authentication requires identity verification in Firebase console.";
       } else if (err.code === "auth/invalid-app-credential") {
         userMsg = "Invalid Firebase credentials. Please verify your API Key and Project ID in Admin Settings.";
+      } else if (err.code === "auth/operation-not-allowed") {
+        if (String(err.message || "").toLowerCase().includes("region")) {
+          userMsg = "SMS Region Policy: Please allow India (+91) in Firebase Console ➔ Authentication ➔ Settings ➔ SMS Region Policy.";
+        } else {
+          userMsg = "Phone Authentication is not enabled yet in your Firebase Console. Please enable 'Phone' under Authentication ➔ Sign-in method.";
+        }
       }
 
       return {
