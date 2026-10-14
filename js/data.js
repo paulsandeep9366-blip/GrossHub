@@ -47,12 +47,13 @@ const DEFAULT_SHOP_CONFIG = {
   },
   firebaseConfig: {
     enabled: true,
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyANKDnPCH3cUv83qY6XVS0QkFrBgMY_Eyk",
+    authDomain: "grosshub-ad4e7.firebaseapp.com",
+    projectId: "grosshub-ad4e7",
+    storageBucket: "grosshub-ad4e7.firebasestorage.app",
+    messagingSenderId: "633572531511",
+    appId: "1:633572531511:web:a9610953fad1dcc5d5ceb2",
+    measurementId: "G-7L6Y21EX4Z"
   }
 };
 

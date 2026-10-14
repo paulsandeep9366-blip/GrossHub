@@ -40,7 +40,7 @@ const Store = {
             const id = (r.id || '').toLowerCase();
             return id !== 'rider_1' && id !== 'rider_2' && id !== 'rider_3';
           }),
-          firebaseConfig: parsed.firebaseConfig || DEFAULT_SHOP_CONFIG.firebaseConfig
+          firebaseConfig: (parsed.firebaseConfig && parsed.firebaseConfig.apiKey && parsed.firebaseConfig.apiKey.trim().length > 5) ? parsed.firebaseConfig : DEFAULT_SHOP_CONFIG.firebaseConfig
         };
       }
     } catch (e) {
@@ -672,7 +672,11 @@ const Store = {
   // 12. Firebase Phone Auth & SMS Gateway Settings
   getFirebaseConfig() {
     const config = this.getConfig();
-    return config.firebaseConfig || DEFAULT_SHOP_CONFIG.firebaseConfig;
+    const cfg = config.firebaseConfig;
+    if (cfg && cfg.apiKey && cfg.apiKey.trim().length > 5) {
+      return cfg;
+    }
+    return DEFAULT_SHOP_CONFIG.firebaseConfig;
   },
 
   saveFirebaseConfig(newFirebaseConfig) {

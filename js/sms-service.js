@@ -202,3 +202,20 @@ const SMSGateway = {
     }
   }
 };
+
+// Auto-initialize Firebase Phone Auth once DOM or Firebase SDK is ready
+if (typeof window !== 'undefined') {
+  const tryInit = () => {
+    try {
+      if (typeof firebase !== 'undefined' && typeof Store !== 'undefined' && SMSGateway.isFirebaseConfigured()) {
+        SMSGateway.initFirebase();
+      }
+    } catch (e) {}
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryInit);
+  } else {
+    tryInit();
+  }
+}
