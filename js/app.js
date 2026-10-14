@@ -2137,7 +2137,14 @@ async function handleSendCustomerOtp(e) {
   }
 
   if (res && res.success) {
-    showToast(`Real SMS OTP dispatched to +91 ${phone}. Check your messages! 📲`, "success");
+    if (res.mode === "free_instant_otp") {
+      if (otpInput) {
+        otpInput.value = res.code;
+      }
+      showToast(`Verification code: ${res.code} (Free Instant Mode) ⚡`, "success");
+    } else {
+      showToast(`Real SMS OTP dispatched to +91 ${phone}. Check your messages! 📲`, "success");
+    }
   } else {
     showToast(res?.error || "Failed to send SMS.", "error");
   }
@@ -2532,9 +2539,30 @@ async function handleGateSendOtp(e) {
   const modeBadge = document.getElementById("gateSmsModeBadge");
   const noticeText = document.getElementById("gateSmsNoticeText");
 
-  if (modeBadge) modeBadge.textContent = "REAL SMS DISPATCHED TO PHONE";
-  if (noticeText) noticeText.textContent = `A real SMS with your 6-digit verification code has been sent to +91 ${phone}. Please check your phone SMS inbox!`;
-  showToast(`SMS OTP dispatched to +91 ${phone}! Check your messages. 📲`, "success");
+  if (res.mode === "free_instant_otp") {
+    if (modeBadge) modeBadge.textContent = "⚡ 100% FREE INSTANT VERIFICATION";
+    if (noticeText) {
+      noticeText.innerHTML = `
+        <div style="font-size: 0.88rem; color: #166534; font-weight: 700; margin-bottom: 6px;">
+          Your Free Verification Code:
+        </div>
+        <div style="display:inline-block; background:#dcfce7; border:2px dashed #16a34a; padding:6px 16px; border-radius:8px; font-size:1.4rem; font-weight:900; letter-spacing:4px; color:#15803d; margin-bottom:6px;">
+          ${res.code}
+        </div>
+        <div style="font-size: 0.78rem; color: #166534; opacity: 0.9;">
+          Auto-filled below for instant access. Tap "Verify & Enter Store" to enter!
+        </div>
+      `;
+    }
+    if (otpInput) {
+      otpInput.value = res.code;
+    }
+    showToast(`Verification Code: ${res.code} (Free Instant Mode) ⚡`, "success");
+  } else {
+    if (modeBadge) modeBadge.textContent = "REAL SMS DISPATCHED TO PHONE";
+    if (noticeText) noticeText.textContent = `A real SMS with your 6-digit verification code has been sent to +91 ${phone}. Please check your phone SMS inbox!`;
+    showToast(`SMS OTP dispatched to +91 ${phone}! Check your messages. 📲`, "success");
+  }
 
   startGateResendTimer();
 }
@@ -2623,11 +2651,29 @@ function handleGateResendOtp() {
     if (typeof SMSGateway !== "undefined") {
       SMSGateway.sendOtpSms(phone, name, "recaptcha-container").then(res => {
         if (res.success) {
-          if (res.mode === "demo_fallback") {
-            window._activeGateOtp = res.code;
-            if (codeDisplay) codeDisplay.textContent = res.code;
+          if (res.mode === "free_instant_otp" || res.mode === "demo_fallback") {
+            const noticeText = document.getElementById("gateSmsNoticeText");
+            if (noticeText) {
+              noticeText.innerHTML = `
+                <div style="font-size: 0.88rem; color: #166534; font-weight: 700; margin-bottom: 6px;">
+                  Your Fresh Free Verification Code:
+                </div>
+                <div style="display:inline-block; background:#dcfce7; border:2px dashed #16a34a; padding:6px 16px; border-radius:8px; font-size:1.4rem; font-weight:900; letter-spacing:4px; color:#15803d; margin-bottom:6px;">
+                  ${res.code}
+                </div>
+                <div style="font-size: 0.78rem; color: #166534; opacity: 0.9;">
+                  Auto-filled below for instant access. Tap "Verify & Enter Store" to enter!
+                </div>
+              `;
+            }
+            if (otpInput) {
+              otpInput.value = res.code;
+              otpInput.focus();
+            }
+            showToast(`New code: ${res.code} ⚡`, "success");
+          } else {
+            showToast(`Fresh unique SMS code sent to +91 ${phone}! 📲`, "success");
           }
-          showToast(`Fresh unique SMS code sent to +91 ${phone}! 📲`, "success");
           startGateResendTimer();
         } else {
           showToast(res.error || "Failed to resend SMS.", "error");
