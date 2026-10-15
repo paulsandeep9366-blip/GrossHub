@@ -18,6 +18,40 @@ const AdminPanel = {
     this.checkSession();
     this.initSessionGuard();
     this.setupEventListeners();
+    this.initFirestoreSync();
+  },
+
+  initFirestoreSync() {
+    // Register Firestore real-time callbacks for live order/product/config updates
+    const self = this;
+    const tryRegister = () => {
+      if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+        // Orders: refresh admin order table in real-time
+        FirebaseSync.onOrdersChange((orders) => {
+          if (self.isAuthenticated && self.activeTab === 'orders') {
+            self.renderOrders();
+          }
+          // Always refresh KPI metrics
+          self.renderOverview && self.renderOverview();
+        });
+        // Products: refresh product list in real-time
+        FirebaseSync.onProductsChange((products) => {
+          if (self.isAuthenticated && self.activeTab === 'products') {
+            self.renderProducts && self.renderProducts();
+          }
+        });
+        // Config: refresh settings in real-time
+        FirebaseSync.onConfigChange((config) => {
+          if (self.isAuthenticated && self.activeTab === 'settings') {
+            self.renderSettings && self.renderSettings();
+          }
+        });
+        console.log('[AdminPanel] Firestore real-time sync registered.');
+      } else {
+        setTimeout(tryRegister, 800);
+      }
+    };
+    setTimeout(tryRegister, 500);
   },
 
   initSessionGuard() {

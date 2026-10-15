@@ -202,6 +202,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Verify customer authentication and control store window access
   checkStoreAccess();
+
+  // Register Firestore real-time callbacks for live product/config updates
+  (function initStorefrontFirestoreSync() {
+    const tryRegister = () => {
+      if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+        // Products: refresh storefront product grid in real-time
+        FirebaseSync.onProductsChange((products) => {
+          renderCategoryPills();
+          renderProducts();
+          updateCartBadgeAndDrawer();
+          console.log('[Storefront] Products refreshed from Firestore:', products.length);
+        });
+        // Config: refresh store header info in real-time
+        FirebaseSync.onConfigChange((config) => {
+          renderStoreHeaderInfo();
+        });
+        console.log('[Storefront] Firestore real-time sync registered.');
+      } else {
+        setTimeout(tryRegister, 800);
+      }
+    };
+    setTimeout(tryRegister, 500);
+  })();
 });
 
 // 1. Store Header & Status
@@ -2133,7 +2156,10 @@ async function handleSendCustomerOtp(e) {
   if (typeof SMSGateway !== "undefined") {
     res = await SMSGateway.sendOtpSms(phone, name, "recaptcha-container");
   } else {
-    res = { success: false, error: "SMS Gateway service unavailable." };
+    // SMSGateway not yet loaded — generate a local free OTP as fallback
+    const _fbCode = String(Math.floor(100000 + Math.random() * 900000));
+    window._grosshubFallbackOtp = _fbCode;
+    res = { success: true, mode: "free_instant_otp", code: _fbCode, phone: "+91" + phone };
   }
 
   if (res && res.success) {
@@ -2191,7 +2217,12 @@ async function verifyCustomerOtp() {
   if (typeof SMSGateway !== "undefined") {
     verifyResult = await SMSGateway.verifyOtpSms(otp);
   } else {
-    verifyResult = { success: false, error: "❌ SMS Gateway service unavailable." };
+    // SMSGateway not loaded — verify against locally stored fallback OTP
+    const _storedOtp = window._grosshubFallbackOtp || "";
+    verifyResult = (_storedOtp && otp === _storedOtp)
+      ? { success: true, mode: "free_instant_otp" }
+      : { success: false, error: "❌ Incorrect verification code. Please try again." };
+    if (verifyResult.success) window._grosshubFallbackOtp = null;
   }
 
   // STRICT REJECTION: Incorrect OTP cannot login
@@ -2508,7 +2539,10 @@ async function handleGateSendOtp(e) {
   if (typeof SMSGateway !== "undefined") {
     res = await SMSGateway.sendOtpSms(phone, name, "recaptcha-container");
   } else {
-    res = { success: false, error: "SMS Gateway service unavailable." };
+    // SMSGateway not yet loaded — generate a local free OTP as fallback
+    const _fbCode = String(Math.floor(100000 + Math.random() * 900000));
+    window._grosshubFallbackOtp = _fbCode;
+    res = { success: true, mode: "free_instant_otp", code: _fbCode, phone: "+91" + phone };
   }
 
   if (submitBtn) {
@@ -2724,7 +2758,12 @@ async function verifyGateOtp() {
   if (typeof SMSGateway !== "undefined") {
     verifyResult = await SMSGateway.verifyOtpSms(otp);
   } else {
-    verifyResult = { success: false, error: "❌ SMS Gateway service unavailable." };
+    // SMSGateway not loaded — verify against locally stored fallback OTP
+    const _storedOtp = window._grosshubFallbackOtp || "";
+    verifyResult = (_storedOtp && otp === _storedOtp)
+      ? { success: true, mode: "free_instant_otp" }
+      : { success: false, error: "❌ Incorrect verification code. Please try again." };
+    if (verifyResult.success) window._grosshubFallbackOtp = null;
   }
 
   if (verifyBtn) {

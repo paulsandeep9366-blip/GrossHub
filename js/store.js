@@ -137,6 +137,10 @@ const Store = {
   saveConfig(newConfig) {
     const merged = { ...this.getConfig(), ...newConfig };
     localStorage.setItem(this.KEYS.CONFIG, JSON.stringify(merged));
+    // Sync to Firebase Firestore (non-blocking)
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+      FirebaseSync.saveConfig(merged).catch(e => console.warn('[Store] Firestore saveConfig error:', e));
+    }
     return merged;
   },
 
@@ -174,6 +178,10 @@ const Store = {
 
   saveProducts(products) {
     localStorage.setItem(this.KEYS.PRODUCTS, JSON.stringify(products));
+    // Sync to Firebase Firestore (non-blocking, batch write)
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+      FirebaseSync.saveProducts(products).catch(e => console.warn('[Store] Firestore saveProducts error:', e));
+    }
     return products;
   },
 
@@ -317,6 +325,11 @@ const Store = {
     // Save customer info for easy auto-fill
     this.saveCustomer(newOrder.customer);
 
+    // Sync new order to Firebase Firestore (non-blocking)
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+      FirebaseSync.saveOrder(newOrder).catch(e => console.warn('[Store] Firestore saveOrder error:', e));
+    }
+
     return newOrder;
   },
 
@@ -354,6 +367,12 @@ const Store = {
     });
 
     this.saveOrders(orders);
+
+    // Sync updated order to Firebase Firestore (non-blocking)
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+      FirebaseSync.saveOrder(order).catch(e => console.warn('[Store] Firestore updateOrder error:', e));
+    }
+
     return order;
   },
 
@@ -377,6 +396,12 @@ const Store = {
     });
 
     this.saveOrders(orders);
+
+    // Sync cancelled order to Firebase Firestore (non-blocking)
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+      FirebaseSync.saveOrder(order).catch(e => console.warn('[Store] Firestore cancelOrder error:', e));
+    }
+
     return order;
   },
 
