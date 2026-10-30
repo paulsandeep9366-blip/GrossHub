@@ -1,12 +1,843 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base href="/">
+  <script>
+    // Enforce clean URL at /admin/
+    (function() {
+      try {
+        var p = window.location.pathname;
+        if (p.endsWith('/admin.html') || p.endsWith('/admin')) {
+          var clean = p.replace(/\/(admin\.html|admin)$/, '/admin/');
+          window.history.replaceState(null, '', clean + window.location.search + window.location.hash);
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=https://grosshub.in/admin">
-  <script>window.location.replace('https://grosshub.in/admin' + window.location.search + window.location.hash);</script>
-  <title>Redirecting to GrossHub Admin...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GrossHub Admin">
+  <meta name="theme-color" content="#0f172a">
+  <title>Merchant Admin Portal — GrossHub Agartala</title>
+  <meta name="description" content="GrossHub Merchant Control Center: Real-time orders, catalog inventory, rider dispatch, and distance-based delivery settings.">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=4.1.0">
+  <link rel="stylesheet" href="css/admin.css?v=4.1.0">
+  <style>
+    body {
+      background: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .admin-page-header {
+      background: var(--slate-900);
+      color: var(--white);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--slate-800);
+      box-shadow: var(--shadow-sm);
+    }
+    .aph-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--white);
+    }
+    .aph-brand .logo-icon {
+      background: var(--primary-600);
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+    .aph-brand h1 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--white);
+    }
+    .aph-brand span.badge-admin {
+      background: var(--accent-500);
+      color: var(--slate-900);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      margin-left: 6px;
+      text-transform: uppercase;
+    }
+    .aph-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .aph-link-btn {
+      background: var(--slate-800);
+      color: var(--slate-200);
+      padding: 7px 14px;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .aph-link-btn:hover {
+      background: var(--slate-700);
+      color: var(--white);
+    }
+    .admin-standalone-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 1300px;
+      width: 100%;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+    .admin-card-container {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 80vh;
+    }
+    .admin-login-fullscreen {
+      max-width: 420px;
+      margin: 80px auto;
+      background: var(--white);
+      padding: 36px 28px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+  </style>
+
 </head>
 <body>
-  <p>Redirecting to <a href="https://grosshub.in/admin">GrossHub Admin Control Center</a>...</p>
+
+  <!-- Admin Standalone Header Bar -->
+  <header class="admin-page-header">
+    <a href="https://grosshub.in/admin/" class="aph-brand">
+      <div class="logo-icon">🏪</div>
+      <div>
+        <h1>GrossHub <span class="badge-admin">Merchant Admin</span></h1>
+      </div>
+    </a>
+    <div class="aph-links">
+      <a href="index.html" class="aph-link-btn" title="View Customer Storefront">🛒 Storefront</a>
+      <a href="rider.html" class="aph-link-btn" title="Delivery Partner Portal">🛵 Rider Portal</a>
+      <button class="aph-link-btn" id="btnAdminTopLogout" style="background:#ef4444; color:#fff; border:none; cursor:pointer; display:none;" onclick="AdminPanel.handleLogout()">
+        🚪 Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- Main View Area -->
+  <main class="admin-standalone-wrapper">
+    
+    <!-- Login Card View -->
+    <div id="adminLoginView" class="admin-login-fullscreen">
+      <div style="font-size:3.5rem; margin-bottom:12px;">🏪</div>
+      <h2 style="margin-bottom:6px;">GrossHub Merchant Portal</h2>
+      <p style="color:var(--slate-500); font-size:0.9rem; margin-bottom:20px;">Please enter your administrator security password to access store management.</p>
+
+      <!-- 5-Minute Session Timeout Re-Login Notice -->
+      <div id="adminTimeoutNotice" class="portal-timeout-alert" style="display:none;">
+        <span class="timeout-icon">⏱️</span>
+        <div>
+          <strong>Session Expired (5-Min Outside Portal)</strong>
+          <div>You were away from the admin portal for more than 5 minutes. For security, please re-enter your password.</div>
+        </div>
+      </div>
+
+      <form id="adminLoginForm" onsubmit="event.preventDefault(); AdminPanel.handleLogin();">
+        <div class="form-group" style="text-align:left;">
+          <label class="form-label" for="adminPasswordInput">Admin Password</label>
+          <input type="password" id="adminPasswordInput" class="form-input" placeholder="Enter Admin Password" required>
+          <div id="adminLoginError" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:6px;"></div>
+        </div>
+        <button type="submit" class="btn-hero-primary" style="width:100%; margin-top:8px;">
+          Unlock Dashboard ➔
+        </button>
+      </form>
+    </div>
+
+    <!-- Authenticated Dashboard View -->
+    <div id="adminDashboardView" class="admin-card-container" style="display: none;">
+      
+      <!-- Top Bar Inside Dashboard -->
+      <div class="admin-top-bar">
+        <h3>🏪 GrossHub Admin Control Center</h3>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-xs btn-hero-primary" style="background: #059669;" onclick="AdminPanel.printAllIndividualBills()" title="Generate & Print / Download PDF Bills for Every Individual Order">
+            📑 All Individual Bills PDF
+          </button>
+          <button class="btn-xs btn-hero-primary" onclick="AdminPanel.printTotalBillReport()" title="Consolidated Sales & Bill Statement">
+            📄 Total Bill PDF
+          </button>
+          <button class="btn-xs btn-outline" style="background:#334155; color:#fff;" onclick="AdminPanel.exportOrdersToCSV()">
+            📥 Export CSV
+          </button>
+          <button class="btn-xs" style="background:#ef4444; color:#fff; border:none; cursor:pointer;" onclick="AdminPanel.handleLogout()">
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="admin-nav-tabs">
+        <button class="admin-nav-item active" data-tab="overview" onclick="AdminPanel.switchTab('overview')">📊 Overview</button>
+        <button class="admin-nav-item" data-tab="orders" onclick="AdminPanel.switchTab('orders')">📦 Orders Management</button>
+        <button class="admin-nav-item" data-tab="products" onclick="AdminPanel.switchTab('products')">🛒 Product Catalog</button>
+        <button class="admin-nav-item" data-tab="riders" onclick="AdminPanel.switchTab('riders')">🛵 Fleet & Dispatches</button>
+        <button class="admin-nav-item" data-tab="customers" onclick="AdminPanel.switchTab('customers')">👥 Customer Directory</button>
+        <button class="admin-nav-item" data-tab="settings" onclick="AdminPanel.switchTab('settings')">⚙️ Store Settings & Distance Fees</button>
+      </nav>
+
+      <!-- Content Viewport -->
+      <div class="admin-content-viewport">
+        
+        <!-- 1. Overview Tab -->
+        <div id="adminPanel-overview">
+          <div class="kpi-grid">
+            <div class="kpi-card revenue">
+              <span class="kpi-label">Gross Revenue</span>
+              <span class="kpi-value" id="kpiRevenue">₹0</span>
+            </div>
+            <div class="kpi-card orders">
+              <span class="kpi-label">Total Orders</span>
+              <span class="kpi-value" id="kpiOrders">0</span>
+            </div>
+            <div class="kpi-card pending">
+              <span class="kpi-label">Pending Orders</span>
+              <span class="kpi-value" id="kpiPending">0</span>
+            </div>
+            <div class="kpi-card delivered">
+              <span class="kpi-label">Delivered Orders</span>
+              <span class="kpi-value" id="kpiDelivered">0</span>
+            </div>
+            <div class="kpi-card products">
+              <span class="kpi-label">Active SKUs</span>
+              <span class="kpi-value" id="kpiProducts">0</span>
+            </div>
+          </div>
+
+          <div style="background:var(--white); padding:20px; border-radius:var(--radius-md); border:1px solid var(--slate-200);">
+            <h4 style="margin-bottom:14px;">Recent Orders Quick Look</h4>
+            <div id="adminRecentOrdersSnippet">
+              <!-- Snippet items -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Orders Tab -->
+        <div id="adminPanel-orders" style="display: none;">
+          <div class="admin-table-controls">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <input type="text" id="adminOrderSearch" class="admin-search-input" placeholder="Search ID, customer, phone...">
+              <select id="adminOrderFilter" class="sort-select">
+                <option value="all">All Orders</option>
+                <option value="placed">Placed</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="preparing">Preparing</option>
+                <option value="out_for_delivery">Out for Delivery</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-hero-primary" style="font-size: 0.85rem; padding: 7px 14px; background: #059669;" onclick="AdminPanel.printAllIndividualBills()" title="Generate & Print / Download PDF Bills for Every Individual Order">
+                📑 All Individual Bills (PDF)
+              </button>
+              <button class="btn-hero-primary" style="font-size: 0.85rem; padding: 7px 14px;" onclick="AdminPanel.printTotalBillReport()" title="Consolidated Sales & Bill Statement">
+                📄 Export Total Bill (PDF)
+              </button>
+              <button class="btn-secondary" onclick="AdminPanel.exportOrdersToCSV()">
+                📊 Download CSV Report
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order & Time</th>
+                  <th>Customer</th>
+                  <th>Address & Distance</th>
+                  <th>Total</th>
+                  <th>Rider Assigned</th>
+                  <th>Order Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminOrdersTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3. Products Tab -->
+        <div id="adminPanel-products" style="display: none;">
+          <div class="admin-table-controls">
+            <h4>Store Catalog Inventory</h4>
+            <button class="btn-hero-primary" onclick="AdminPanel.openProductAddModal()">
+              + Add New Product
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th class="admin-table-img-col">Image</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Pack Size</th>
+                  <th>Price / MRP</th>
+                  <th>Stock Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminProductsTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 4. Store Settings & Distance Fees Tab -->
+        <div id="adminPanel-settings" style="display: none;">
+          <div style="background:var(--white); padding:24px; border-radius:var(--radius-md); border:1px solid var(--slate-200); max-width:760px;">
+            <h4 style="margin-bottom:18px;">Store Configuration & Business Rules</h4>
+            <form id="adminSettingsForm" onsubmit="event.preventDefault(); AdminPanel.handleSaveSettings();">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Shop Name</label>
+                  <input type="text" id="adminSetShopName" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tagline</label>
+                  <input type="text" id="adminSetTagline" class="form-input">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Shop Address</label>
+                <input type="text" id="adminSetAddress" class="form-input">
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Primary Phone (Phone 1)</label>
+                  <input type="text" id="adminSetPhone1" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Secondary Phone (Phone 2)</label>
+                  <input type="text" id="adminSetPhone2" class="form-input">
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">WhatsApp Number (e.g. 919862272399)</label>
+                  <input type="text" id="adminSetWhatsapp" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Store UPI ID</label>
+                  <input type="text" id="adminSetUpiId" class="form-input">
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Standard Delivery Charge (₹)</label>
+                  <input type="number" id="adminSetDeliveryFee" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Free Delivery Threshold (₹)</label>
+                  <input type="number" id="adminSetFreeThreshold" class="form-input">
+                </div>
+              </div>
+
+              <div class="admin-distance-settings-box">
+                <label class="form-label" style="font-weight:700; color:var(--emerald-800);">📍 Distance-Based Delivery Rates (Agartala)</label>
+                <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:12px;">Configure delivery charges for each distance tier from Battala store:</p>
+                
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">0 – 2 km (Local) Fee (₹)</label>
+                    <input type="number" id="adminTierFee_tier_1" class="form-input" min="0" placeholder="15">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">2 – 5 km (City Core) Fee (₹)</label>
+                    <input type="number" id="adminTierFee_tier_2" class="form-input" min="0" placeholder="30">
+                  </div>
+                </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">5 – 8 km (Extended City) Fee (₹)</label>
+                    <input type="number" id="adminTierFee_tier_3" class="form-input" min="0" placeholder="50">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">8 – 12 km (Suburbs) Fee (₹)</label>
+                    <input type="number" id="adminTierFee_tier_4" class="form-input" min="0" placeholder="75">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" style="font-size:0.8rem;">12+ km (Outskirts) Fee (₹)</label>
+                  <input type="number" id="adminTierFee_tier_5" class="form-input" min="0" placeholder="100">
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Store Status (Open / Accepting Orders)</label>
+                  <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                    <label class="switch">
+                      <input type="checkbox" id="adminSetStoreStatus" checked>
+                      <span class="slider round"></span>
+                    </label>
+                    <span>Store Open</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Update Admin Password</label>
+                  <input type="password" id="adminSetNewPassword" class="form-input" placeholder="Leave blank to keep unchanged">
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top:10px;">
+                <label class="form-label">Rider Fleet Login Password</label>
+                <input type="text" id="adminSetRiderPin" class="form-input" placeholder="Enter Fleet Password" maxlength="16" style="max-width:240px;">
+                <small class="text-muted">Delivery riders use their Rider ID and this password to log into their Rider Dispatch Portal.</small>
+              </div>
+
+              <button type="submit" class="btn-hero-primary" style="margin-top: 14px;">
+                💾 Save Store Settings
+              </button>
+            </form>
+
+
+            <!-- Data Management & Demo Purge -->
+            <div style="margin-top: 30px; padding: 22px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: var(--radius-md);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h4 style="margin: 0 0 6px 0; color: #9f1239; font-size: 1.05rem;">🧹 Data Management & Demo Data Reset</h4>
+                  <p style="font-size: 0.85rem; color: #881337; margin: 0; max-width: 540px; line-height: 1.5;">
+                    Remove all test orders, demo sessions, and sample records across all customer, admin, and rider dispatch portals.
+                  </p>
+                </div>
+                <button type="button" class="btn-xs" style="background: #e11d48; color: #ffffff; border: none; padding: 9px 18px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onclick="AdminPanel.handlePurgeDemoData()">
+                  🗑️ Purge All Demo Data
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- 5. Rider Fleet Tab -->
+        <div id="adminPanel-riders" style="display: none;">
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
+            <div class="kpi-card orders">
+              <span class="kpi-label">Active Fleet Size</span>
+              <span class="kpi-value" id="kpiFleetTotal">0</span>
+            </div>
+            <div class="kpi-card pending">
+              <span class="kpi-label">On-Road Deliveries</span>
+              <span class="kpi-value" id="kpiFleetActive">0</span>
+            </div>
+            <div class="kpi-card products">
+              <span class="kpi-label">Rider Access Control</span>
+              <span class="kpi-value" style="font-size: 1.05rem; color: #0284c7;">Individual ID & Password</span>
+            </div>
+          </div>
+
+          <div class="admin-table-controls">
+            <div>
+              <h4 style="margin: 0; font-size: 1.1rem;">🛵 Registered Delivery Fleet & Live Credentials</h4>
+              <p style="margin: 2px 0 0 0; color: var(--slate-500); font-size: 0.82rem;">Each delivery partner logs into the Rider Portal with their individual Rider ID and Password.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn-xs btn-hero-primary" onclick="AdminPanel.openRiderModal()" style="padding: 7px 16px; font-size: 0.86rem;">➕ Add New Rider</button>
+            </div>
+          </div>
+
+          <div id="adminRidersContainer">
+            <!-- Rendered by admin.js -->
+          </div>
+        </div>
+
+        <!-- 6. Customers Tab -->
+        <div id="adminPanel-customers" style="display: none;">
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
+            <div class="kpi-card revenue">
+              <span class="kpi-label">Total Customer Revenue</span>
+              <span class="kpi-value" id="kpiTotalCustomerRevenue">₹0</span>
+            </div>
+            <div class="kpi-card orders">
+              <span class="kpi-label">Unique Customers</span>
+              <span class="kpi-value" id="kpiTotalCustomers">0</span>
+            </div>
+          </div>
+
+          <div class="admin-table-controls">
+            <h4 style="margin: 0;">👥 Customer Profiles & Order History</h4>
+          </div>
+
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Customer Name</th>
+                  <th>Mobile Number</th>
+                  <th>Delivery Address</th>
+                  <th>Total Orders</th>
+                  <th>Lifetime Value</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminCustomersList">
+                <!-- Rendered by admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Admin Add / Edit Product Modal -->
+  <div class="modal-overlay" id="adminProductModal">
+    <div class="modal-container" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 id="modalProductTitle">Add New Product</h3>
+        <button class="btn-modal-close" onclick="closeModal('adminProductModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="adminProductForm" onsubmit="event.preventDefault(); AdminPanel.handleSaveProduct();">
+          <div class="form-group">
+            <label class="form-label">Product Name *</label>
+            <input type="text" id="prodName" class="form-input" placeholder="e.g. Pure Mustard Oil" required>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select id="prodCategory" class="form-select" required>
+                <option value="rice-atta">Rice & Atta</option>
+                <option value="dal-pulses">Dal & Pulses</option>
+                <option value="oils-ghee">Cooking Oils & Ghee</option>
+                <option value="spices-masala">Spices & Masalas</option>
+                <option value="dairy-breakfast">Dairy & Breakfast</option>
+                <option value="tea-snacks">Tea & Snacks</option>
+                <option value="cleaning-home">Cleaning & Home</option>
+                <option value="fresh-produce">Fresh Produce</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pack Size / Unit *</label>
+              <input type="text" id="prodUnit" class="form-input" placeholder="e.g. 1 Liter bottle" required>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Selling Price (₹) *</label>
+              <input type="number" id="prodPrice" class="form-input" placeholder="150" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">MRP (₹) *</label>
+              <input type="number" id="prodMrp" class="form-input" placeholder="170">
+            </div>
+          </div>
+
+          <!-- Custom Product Image Upload & Selection -->
+          <div class="form-group">
+            <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+              <span>Custom Product Image</span>
+              <small class="text-muted" style="font-weight:normal;">Upload photo or enter URL</small>
+            </label>
+            <div class="admin-image-upload-wrapper">
+              <div class="admin-img-preview-box">
+                <img id="prodImagePreview" src="images/hero-basket.jpg" alt="Preview" onerror="this.src='images/hero-basket.jpg';">
+              </div>
+              <div class="admin-img-controls">
+                <div class="admin-file-btn-wrapper">
+                  <label class="btn-file-upload">
+                    📸 Upload Custom Photo
+                    <input type="file" id="prodImageFile" accept="image/*" onchange="AdminPanel.handleImageFileUpload(event)">
+                  </label>
+                  <button type="button" class="btn-reset-img" onclick="AdminPanel.resetProductImage()" title="Reset to default placeholder">
+                    Reset
+                  </button>
+                </div>
+                <input type="text" id="prodImage" class="form-input" placeholder="images/products/miniket-rice.jpg or https://..." oninput="AdminPanel.handleImageUrlInput(this.value)">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Badge Tag (Optional)</label>
+            <input type="text" id="prodBadge" class="form-input" placeholder="e.g. Bestseller / New / 10% OFF">
+            <input type="hidden" id="prodEmoji" value="🛒">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="prodDesc" class="form-textarea" rows="2" placeholder="Brief details about product"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="switch">
+              <input type="checkbox" id="prodInStock" checked>
+              <span class="slider round"></span>
+            </label>
+            <span style="font-size:0.9rem; font-weight:600; margin-left:8px;">In Stock (Available for Purchase)</span>
+          </div>
+
+          <button type="submit" class="btn-hero-primary" style="width:100%; margin-top:14px;" id="btnSaveProduct">
+            Save Product to Catalog
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Cancellation Reason Modal -->
+  <div class="modal-overlay" id="adminCancelOrderModal">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header" style="background: #991b1b; color: #ffffff; padding: 14px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.25rem;">🚫</span>
+          <h3 id="cancelModalTitle" style="color: #ffffff; margin: 0; font-size: 1.1rem;">Cancel Order Delivery</h3>
+        </div>
+        <button class="btn-modal-close" onclick="AdminPanel.closeCancelModal()" style="color: #ffffff;">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <input type="hidden" id="cancelTargetOrderId" value="">
+        <p style="margin: 0 0 6px 0; color: #1e293b; font-size: 0.95rem;">
+          Specify the cancellation reason for <strong id="cancelTargetOrderDisplay">GH-XXXX</strong>:
+        </p>
+        <p style="color: #64748b; font-size: 0.8rem; margin: 0 0 12px 0;">
+          This reason will appear in the Admin order table, live customer tracking, rider dispatch, and official bill statements.
+        </p>
+        
+        <label class="form-label" style="font-weight: 700; margin-bottom: 6px; display: block;">Quick Presets (Click to apply):</label>
+        <div class="cancel-presets-grid">
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Customer requested cancellation (Ordered by mistake)')">👤 Customer requested</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Customer unreachable / Phone switched off')">📵 Phone unreachable</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Delivery address unreachable / Out of service area')">📍 Address unreachable</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Items out of stock at Hub')">📦 Items out of stock</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Customer refused delivery at doorstep')">🚪 Refused at doorstep</button>
+          <button type="button" class="btn-preset-chip" onclick="AdminPanel.setCancelReasonPreset('Duplicate / Test order')">⚠️ Duplicate / Test</button>
+        </div>
+
+        <div class="form-group" style="margin-top: 14px; margin-bottom: 18px;">
+          <label class="form-label" for="cancelReasonInput"><strong>Cancellation Reason *</strong></label>
+          <textarea id="cancelReasonInput" class="form-input" rows="3" placeholder="Enter specific reason for cancellation..." style="resize: vertical; font-size: 0.92rem;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="AdminPanel.closeCancelModal()" style="padding: 8px 16px;">Keep Order</button>
+          <button type="button" class="btn-hero-primary" style="background: #dc2626; border-color: #dc2626; padding: 8px 18px;" onclick="AdminPanel.confirmCancelOrder()">
+            Confirm Cancellation ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Invoice / Bill PDF Preview Modal -->
+  <div class="modal-overlay" id="adminInvoiceModal">
+    <div class="modal-container" style="max-width: 800px; max-height: 94vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="background: var(--slate-900); color: var(--white); border-bottom: none; padding: 12px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">🧾</span>
+          <h3 id="modalInvoiceTitle" style="color: var(--white); margin: 0; font-size: 1.1rem;">Official Delivery Bill & Tax Invoice</h3>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn-hero-primary" style="padding: 6px 14px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;" onclick="AdminPanel.downloadCurrentInvoicePDF()" id="btnModalDownloadPDF" title="Download as PDF file">
+            📥 Download PDF Bill
+          </button>
+          <button type="button" class="btn-secondary" style="padding: 6px 14px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; background: #334155; color: #fff;" onclick="AdminPanel.printActiveInvoice()" title="Print Bill or Save to PDF">
+            🖨️ Print Bill
+          </button>
+          <button type="button" class="btn-outline" style="padding: 6px 12px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,0.1);" onclick="AdminPanel.shareInvoiceOnWhatsApp()" id="btnModalShareWhatsApp" title="Share Bill Details on WhatsApp">
+            💬 WhatsApp
+          </button>
+          <button class="btn-modal-close" onclick="closeModal('adminInvoiceModal')" style="color: var(--white);">✕</button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding: 12px; overflow-y: auto; background: #e2e8f0;">
+        <div id="invoicePrintContainer">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rider Credentials Management Modal (Add / Edit Rider) -->
+  <div class="modal-overlay" id="adminRiderModal">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; padding: 14px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">🛵</span>
+          <h3 id="adminRiderModalTitle" style="color: #ffffff; margin: 0; font-size: 1.15rem;">Add New Delivery Rider</h3>
+        </div>
+        <button class="btn-modal-close" onclick="AdminPanel.closeRiderModal()" style="color: #ffffff;">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 22px;">
+        <form id="adminRiderForm" onsubmit="AdminPanel.handleSaveRider(event)">
+          <input type="hidden" id="riderFormId" value="">
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" for="riderFormUsername"><strong>Rider Login ID *</strong></label>
+            <input type="text" id="riderFormUsername" class="form-input" placeholder="e.g. sanjib or GH-01" required autocomplete="off" style="font-family: monospace; font-weight: 700; letter-spacing: 0.05em;">
+            <small class="text-muted" style="display:block; margin-top:4px;">Unique ID used by this rider to log into the Rider Dispatch Portal.</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" for="riderFormName"><strong>Rider Full Name *</strong></label>
+            <input type="text" id="riderFormName" class="form-input" placeholder="e.g. Sanjib Debbarma" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" for="riderFormPhone"><strong>10-Digit Mobile Number *</strong></label>
+            <div style="display:flex; gap:8px;">
+              <span style="display:flex; align-items:center; padding:0 12px; background:#f1f5f9; border:1px solid var(--slate-300); border-radius:var(--radius-md); font-weight:700; color:var(--slate-700);">+91</span>
+              <input type="tel" id="riderFormPhone" class="form-input" placeholder="Enter 10-digit mobile number" maxlength="10" required style="flex:1;">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label class="form-label" for="riderFormPassword" style="margin:0;"><strong>Individual Login Password *</strong></label>
+              <button type="button" onclick="AdminPanel.generateRandomRiderPassword()" style="background:none; border:none; color:#0284c7; font-size:0.8rem; font-weight:700; cursor:pointer; text-decoration:underline;">🎲 Generate</button>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="riderFormPassword" class="form-input" placeholder="Enter individual rider password" required style="font-family: monospace; font-weight: 700; flex:1;">
+              <button type="button" class="btn-xs btn-outline" onclick="AdminPanel.toggleRiderFormPasswordVisibility()" id="btnToggleRiderFormPwd" style="padding:0 12px;" title="Toggle Password Visibility">👁️</button>
+            </div>
+            <small class="text-muted" style="display:block; margin-top:4px;">Only this rider can log in with this password. Controlled exclusively by Admin.</small>
+          </div>
+
+          <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;">
+            <div class="form-group">
+              <label class="form-label" for="riderFormZone"><strong>Operational Zone</strong></label>
+              <input type="text" id="riderFormZone" class="form-input" value="Battala, Agartala" placeholder="Zone">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="riderFormStatus"><strong>Status</strong></label>
+              <select id="riderFormStatus" class="form-select">
+                <option value="active">🟢 Active (Can Login)</option>
+                <option value="inactive">🔴 Inactive (Suspended)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+            <button type="button" class="btn-secondary" onclick="AdminPanel.closeRiderModal()" style="padding: 9px 18px;">Cancel</button>
+            <button type="submit" class="btn-hero-primary" style="padding: 9px 22px;">
+              💾 Save Rider Credentials
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/html2pdf.bundle.min.js"></script>
+  <!-- Google Firebase SDK (Compat v10 for Real SMS & Firestore Realtime Sync) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="js/data.js?v=4.7.0"></script>
+  <script src="js/store.js?v=4.7.0"></script>
+  <script src="js/firebase.js?v=1.0.0"></script>
+  <script src="js/admin.js?v=4.7.0"></script>
+  <script>
+    // Utility helpers for standalone modals & toasts
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add("active");
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove("active");
+    }
+    function formatStatusLabel(status) {
+      const map = {
+        'placed': 'Placed',
+        'confirmed': 'Confirmed',
+        'preparing': 'Packing',
+        'out_for_delivery': 'Out for Delivery',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled'
+      };
+      return map[status] || status;
+    }
+    function escapeHTML(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    function showToast(message, type = "info") {
+      const c = document.getElementById("toastContainer");
+      if (!c) return;
+      const t = document.createElement("div");
+      t.className = `toast toast-${type}`;
+      t.textContent = message;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = "0";
+        setTimeout(() => t.remove(), 300);
+      }, 3500);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      AdminPanel.init();
+      // Update top bar logout button visibility based on session
+      const logoutBtn = document.getElementById("btnAdminTopLogout");
+      if (logoutBtn) {
+        logoutBtn.style.display = sessionStorage.getItem("grosshub_admin_logged_in") === "true" ? "inline-flex" : "none";
+      }
+    });
+  </script>
 </body>
 </html>

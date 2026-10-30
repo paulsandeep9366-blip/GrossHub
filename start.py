@@ -59,7 +59,7 @@ class CustomHandler(SimpleHTTPRequestHandler):
         # Redirect /admin, /admin.html, and /admin/ directly to production grosshub.in/admin
         if clean_path in ('/admin', '/admin/', '/admin.html'):
             if 'local=1' not in self.path and 'local=true' not in self.path:
-                target = 'https://grosshub.in/admin'
+                target = 'https://grosshub.in/admin/'
                 if '?' in self.path:
                     target += '?' + self.path.split('?', 1)[1]
                 self.send_response(302)
@@ -89,7 +89,7 @@ class CustomHandler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
         clean_path = path.split('?')[0].rstrip('/')
         if clean_path == '/admin':
-            path = '/admin.html'
+            path = '/admin/index.html'
         elif clean_path == '/rider':
             path = '/rider.html'
         elif clean_path == '/customer':
@@ -145,7 +145,7 @@ def main():
     print("  " + BOLD + "Quick Mobile & Desktop Portal Links:" + RESET)
     print("    * Storefront:      " + CYAN + mobile_url + "/" + RESET)
     print("    * Rider Portal:    " + CYAN + mobile_url + "/rider" + RESET + "    (Password: " + YELLOW + "rider123" + RESET + ")")
-    print("    * Admin Center:    " + CYAN + "https://grosshub.in/admin" + RESET + "    (Password: " + YELLOW + "grosshub123" + RESET + ")")
+    print("    * Admin Center:    " + CYAN + "https://grosshub.in/admin/" + RESET + "    (Password: " + YELLOW + "grosshub123" + RESET + ")")
     print("")
     print_qr_code(mobile_url + "/")
     print("  💡 " + BOLD + "Tip for Phones:" + RESET + " Ensure your phone is connected to the same Wi-Fi network.")
