@@ -56,15 +56,16 @@ def open_browser(url, delay=0.5):
 class CustomHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         clean_path = self.path.split('?')[0].split('#')[0]
-        # Redirect legacy .html and trailing slashes to clean extensionless URLs
-        if clean_path in ('/admin/', '/admin.html'):
-            target = '/admin'
-            if '?' in self.path:
-                target += '?' + self.path.split('?', 1)[1]
-            self.send_response(301)
-            self.send_header('Location', target)
-            self.end_headers()
-            return
+        # Redirect /admin, /admin.html, and /admin/ directly to production grosshub.in/admin
+        if clean_path in ('/admin', '/admin/', '/admin.html'):
+            if 'local=1' not in self.path and 'local=true' not in self.path:
+                target = 'https://grosshub.in/admin'
+                if '?' in self.path:
+                    target += '?' + self.path.split('?', 1)[1]
+                self.send_response(302)
+                self.send_header('Location', target)
+                self.end_headers()
+                return
         elif clean_path in ('/rider/', '/rider.html'):
             target = '/rider'
             if '?' in self.path:
@@ -144,7 +145,7 @@ def main():
     print("  " + BOLD + "Quick Mobile & Desktop Portal Links:" + RESET)
     print("    * Storefront:      " + CYAN + mobile_url + "/" + RESET)
     print("    * Rider Portal:    " + CYAN + mobile_url + "/rider" + RESET + "    (Password: " + YELLOW + "rider123" + RESET + ")")
-    print("    * Admin Center:    " + CYAN + mobile_url + "/admin" + RESET + "    (Password: " + YELLOW + "grosshub123" + RESET + ")")
+    print("    * Admin Center:    " + CYAN + "https://grosshub.in/admin" + RESET + "    (Password: " + YELLOW + "grosshub123" + RESET + ")")
     print("")
     print_qr_code(mobile_url + "/")
     print("  💡 " + BOLD + "Tip for Phones:" + RESET + " Ensure your phone is connected to the same Wi-Fi network.")

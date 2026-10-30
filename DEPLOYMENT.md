@@ -33,7 +33,7 @@ This automatically starts the local HTTP server, detects an open port, and opens
 - 🛒 **Customer Storefront**: [http://localhost:8080/](http://localhost:8080/)
 - 👤 **Customer Account Direct**: [http://localhost:8080/customer.html](http://localhost:8080/customer.html)
 - 🛵 **Rider Dispatch Portal**: [http://localhost:8080/rider.html](http://localhost:8080/rider.html)
-- 🏪 **Merchant Admin Control Center**: [http://localhost:8080/admin](http://localhost:8080/admin)
+- 🏪 **Merchant Admin Control Center**: [https://grosshub.in/admin](https://grosshub.in/admin) (or `http://localhost:8080/admin?local=1`)
 
 ---
 
