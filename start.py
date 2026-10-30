@@ -54,6 +54,16 @@ def open_browser(url, delay=0.5):
         print("Note: Could not open browser automatically (" + str(e) + "). Visit: " + url)
 
 class CustomHandler(SimpleHTTPRequestHandler):
+    def translate_path(self, path):
+        clean_path = path.split('?')[0].rstrip('/')
+        if clean_path == '/admin':
+            path = '/admin.html'
+        elif clean_path == '/rider':
+            path = '/rider.html'
+        elif clean_path == '/customer':
+            path = '/customer.html'
+        return super().translate_path(path)
+
     def end_headers(self):
         # Prevent caching during development so changes appear instantly
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")

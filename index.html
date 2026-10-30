@@ -80,8 +80,6 @@
           </button>
         </form>
 
-        <!-- Invisible Firebase Recaptcha Container -->
-        <div id="recaptcha-container"></div>
 
         <!-- Step 2: OTP Verification Form -->
         <div id="gateOtpSection" style="display: none;">
@@ -99,9 +97,18 @@
             </div>
           </div>
 
-          <div class="form-group" style="margin-bottom: 16px; text-align: left;">
-            <label class="form-label" for="gateOtpInput" style="text-align: center; display: block;">Enter SMS Verification Code</label>
-            <input type="text" id="gateOtpInput" class="form-input" placeholder="••••••" maxlength="6" style="font-size: 1.5rem; letter-spacing: 0.35em; text-align: center; font-weight: 800;" autocomplete="one-time-code" oninput="handleGateOtpInput(this)">
+          <div class="form-group" style="margin-bottom: 16px; text-align: center;">
+            <label class="form-label" style="text-align: center; display: block; margin-bottom: 10px;">Enter SMS Verification Code</label>
+            <!-- Hidden aggregated input for compatibility -->
+            <input type="hidden" id="gateOtpInput">
+            <div class="otp-boxes-row" id="gateOtpBoxesRow">
+              <input class="otp-digit-box" id="gateOtpBox0" type="tel" maxlength="1" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 0, 'gate')" oninput="otpBoxInput(event, 0, 'gate')">
+              <input class="otp-digit-box" id="gateOtpBox1" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 1, 'gate')" oninput="otpBoxInput(event, 1, 'gate')">
+              <input class="otp-digit-box" id="gateOtpBox2" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 2, 'gate')" oninput="otpBoxInput(event, 2, 'gate')">
+              <input class="otp-digit-box" id="gateOtpBox3" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 3, 'gate')" oninput="otpBoxInput(event, 3, 'gate')">
+              <input class="otp-digit-box" id="gateOtpBox4" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 4, 'gate')" oninput="otpBoxInput(event, 4, 'gate')">
+              <input class="otp-digit-box" id="gateOtpBox5" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 5, 'gate')" oninput="otpBoxInput(event, 5, 'gate')">
+            </div>
             <div id="gateOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px; text-align: center;"></div>
           </div>
 
@@ -780,9 +787,18 @@
             <span>📲 Verification code sent to <strong id="storeOtpTargetPhone">your mobile number</strong></span>
           </div>
 
-          <div class="form-group" style="margin-bottom: 16px;">
-            <label class="form-label" for="storeCustOtpInput">Enter 6-Digit SMS Code</label>
-            <input type="text" id="storeCustOtpInput" class="form-input" placeholder="••••••" maxlength="6" style="font-size: 1.4rem; letter-spacing: 0.3em; text-align: center; font-weight:800;" oninput="handleStoreCustOtpInput(this)">
+          <div class="form-group" style="margin-bottom: 16px; text-align: center;">
+            <label class="form-label" style="display: block; margin-bottom: 10px;">Enter 6-Digit SMS Code</label>
+            <!-- Hidden aggregated input for compatibility -->
+            <input type="hidden" id="storeCustOtpInput">
+            <div class="otp-boxes-row" id="storeOtpBoxesRow">
+              <input class="otp-digit-box" id="storeOtpBox0" type="tel" maxlength="1" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 0, 'store')" oninput="otpBoxInput(event, 0, 'store')">
+              <input class="otp-digit-box" id="storeOtpBox1" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 1, 'store')" oninput="otpBoxInput(event, 1, 'store')">
+              <input class="otp-digit-box" id="storeOtpBox2" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 2, 'store')" oninput="otpBoxInput(event, 2, 'store')">
+              <input class="otp-digit-box" id="storeOtpBox3" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 3, 'store')" oninput="otpBoxInput(event, 3, 'store')">
+              <input class="otp-digit-box" id="storeOtpBox4" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 4, 'store')" oninput="otpBoxInput(event, 4, 'store')">
+              <input class="otp-digit-box" id="storeOtpBox5" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" onkeydown="otpBoxKeydown(event, 5, 'store')" oninput="otpBoxInput(event, 5, 'store')">
+            </div>
             <div id="storeCustOtpError" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 6px;"></div>
           </div>
 
@@ -972,15 +988,13 @@
 
   <!-- Leaflet Map Engine -->
   <script src="js/leaflet.js"></script>
-  <!-- Google Firebase SDK (Compat v10 for Real SMS Phone Authentication) -->
+  <!-- Google Firebase SDK (Compat v10 for Real SMS & Firestore Realtime Sync) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
   <!-- Scripts -->
   <script src="js/data.js?v=4.7.0"></script>
   <script src="js/store.js?v=4.7.0"></script>
-  <script src="js/sms-service.js?v=4.7.0"></script>
   <script src="js/firebase.js?v=1.0.0"></script>
   <script src="js/tracking.js?v=4.7.0"></script>
   <script src="js/app.js?v=4.7.0"></script>

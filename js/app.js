@@ -203,6 +203,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Verify customer authentication and control store window access
   checkStoreAccess();
 
+  // Listen for storage events (products or config added/edited from admin panel in another tab)
+  window.addEventListener('storage', (e) => {
+    if (!e || !e.key) return;
+    if (e.key === 'grosshub_products' || (typeof Store !== 'undefined' && Store.KEYS && e.key === Store.KEYS.PRODUCTS)) {
+      renderCategoryPills();
+      renderProducts();
+      updateCartBadgeAndDrawer();
+      console.log('[Storefront] Products updated live from Admin storage event.');
+    }
+    if (e.key === 'grosshub_config' || (typeof Store !== 'undefined' && Store.KEYS && e.key === Store.KEYS.CONFIG)) {
+      renderStoreHeaderInfo();
+    }
+  });
+
   // Register Firestore real-time callbacks for live product/config updates
   (function initStorefrontFirestoreSync() {
     const tryRegister = () => {
@@ -2104,7 +2118,7 @@ function handleAccountClick() {
     const otpErr = document.getElementById("storeCustOtpError");
     if (otpSection) otpSection.style.display = "none";
     if (phoneForm) phoneForm.style.display = "block";
-    if (otpInput) otpInput.value = "";
+    clearOtpBoxes('store');
     if (otpErr) { otpErr.style.display = "none"; otpErr.textContent = ""; }
 
     openModal("customerAuthModal");
@@ -2139,55 +2153,23 @@ async function handleSendCustomerOtp(e) {
   if (otpSection) otpSection.style.display = "block";
   if (phoneForm) phoneForm.style.display = "none";
 
-  const otpInput = document.getElementById("storeCustOtpInput");
   const otpErr = document.getElementById("storeCustOtpError");
-  if (otpInput) {
-    otpInput.value = "";
-    otpInput.style.borderColor = "";
-    otpInput.style.boxShadow = "";
-    otpInput.focus();
-  }
+  clearOtpBoxes('store');
+  document.getElementById('storeOtpBox0')?.focus();
   if (otpErr) {
     otpErr.style.display = "none";
     otpErr.textContent = "";
   }
 
-  let res;
-  if (typeof SMSGateway !== "undefined") {
-    res = await SMSGateway.sendOtpSms(phone, name, "recaptcha-container");
-  } else {
-    // SMSGateway not yet loaded — generate a local free OTP as fallback
-    const _fbCode = String(Math.floor(100000 + Math.random() * 900000));
-    window._grosshubFallbackOtp = _fbCode;
-    res = { success: true, mode: "free_instant_otp", code: _fbCode, phone: "+91" + phone };
-  }
-
-  if (res && res.success) {
-    if (res.mode === "free_instant_otp") {
-      if (otpInput) {
-        otpInput.value = res.code;
-      }
-      showToast(`Verification code: ${res.code} (Free Instant Mode) ⚡`, "success");
-    } else {
-      showToast(`Real SMS OTP dispatched to +91 ${phone}. Check your messages! 📲`, "success");
-    }
-  } else {
-    showToast(res?.error || "Failed to send SMS.", "error");
-  }
+  // Generate a local 6-digit instant verification code
+  const _storeCode = String(Math.floor(100000 + Math.random() * 900000));
+  window._grosshubFallbackOtp = _storeCode;
+  fillOtpBoxes('store', _storeCode);
+  showToast(`Your code: ${_storeCode} ⚡ Auto-filled!`, "success");
 }
 
 function handleStoreCustOtpInput(input) {
-  if (input) {
-    const val = input.value.trim();
-    const otpErr = document.getElementById("storeCustOtpError");
-    if (otpErr && val.length < 6) {
-      otpErr.style.display = "none";
-      input.style.borderColor = "";
-    }
-    if (val.length === 6 && /^\d{6}$/.test(val)) {
-      verifyCustomerOtp();
-    }
-  }
+  // Legacy stub — functionality handled by otpBoxInput()
 }
 
 async function verifyCustomerOtp() {
@@ -2196,7 +2178,7 @@ async function verifyCustomerOtp() {
   const nameInput = document.getElementById("storeCustNameInput");
   const phoneInput = document.getElementById("storeCustPhoneInput");
 
-  const otp = otpInput ? otpInput.value.trim() : "";
+  const otp = collectOtpBoxes('gate');
   const name = nameInput ? nameInput.value.trim() : "Valued Customer";
   const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
 
@@ -2205,25 +2187,18 @@ async function verifyCustomerOtp() {
       otpErr.textContent = "Please enter the complete 6-digit SMS verification code.";
       otpErr.style.display = "block";
     }
-    if (otpInput) {
-      otpInput.style.borderColor = "#dc2626";
-      otpInput.focus();
-    }
+    _setOtpBoxError('store', true);
+    document.getElementById('storeOtpBox0')?.focus();
     showToast("Please enter a valid 6-digit code.", "error");
     return;
   }
 
-  let verifyResult;
-  if (typeof SMSGateway !== "undefined") {
-    verifyResult = await SMSGateway.verifyOtpSms(otp);
-  } else {
-    // SMSGateway not loaded — verify against locally stored fallback OTP
-    const _storedOtp = window._grosshubFallbackOtp || "";
-    verifyResult = (_storedOtp && otp === _storedOtp)
-      ? { success: true, mode: "free_instant_otp" }
-      : { success: false, error: "❌ Incorrect verification code. Please try again." };
-    if (verifyResult.success) window._grosshubFallbackOtp = null;
-  }
+  // Verify against locally stored OTP
+  const _storedStoreOtp = window._grosshubFallbackOtp || "";
+  const verifyResult = (_storedStoreOtp && otp === _storedStoreOtp)
+    ? { success: true }
+    : { success: false, error: "❌ Incorrect code. Please try again." };
+  if (verifyResult.success) window._grosshubFallbackOtp = null;
 
   // STRICT REJECTION: Incorrect OTP cannot login
   if (!verifyResult || !verifyResult.success) {
@@ -2233,19 +2208,8 @@ async function verifyCustomerOtp() {
       otpErr.style.display = "block";
       otpErr.style.color = "#dc2626";
     }
-    if (otpInput) {
-      otpInput.style.borderColor = "#dc2626";
-      otpInput.style.backgroundColor = "#fff1f2";
-      otpInput.animate([
-        { transform: 'translateX(-6px)' },
-        { transform: 'translateX(6px)' },
-        { transform: 'translateX(-4px)' },
-        { transform: 'translateX(4px)' },
-        { transform: 'translateX(0px)' }
-      ], { duration: 300 });
-      otpInput.focus();
-      otpInput.select();
-    }
+    _setOtpBoxError('store', true);
+    document.getElementById('storeOtpBox0')?.focus();
     showToast(errMsg, "error");
     return;
   }
@@ -2507,6 +2471,163 @@ function checkStoreAccess() {
   }
 }
 
+
+// ============================================================
+// OTP Individual Digit Boxes — Shared Utility Functions
+// ============================================================
+function _otpPrefix(group) {
+  return group === 'gate' ? 'gateOtpBox' : 'storeOtpBox';
+}
+function _otpHiddenId(group) {
+  return group === 'gate' ? 'gateOtpInput' : 'storeCustOtpInput';
+}
+function _otpErrorId(group) {
+  return group === 'gate' ? 'gateOtpError' : 'storeCustOtpError';
+}
+
+/** Collect value from 6 boxes into the hidden input */
+function collectOtpBoxes(group) {
+  const prefix = _otpPrefix(group);
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    const box = document.getElementById(prefix + i);
+    code += (box ? box.value : '');
+  }
+  const hidden = document.getElementById(_otpHiddenId(group));
+  if (hidden) hidden.value = code;
+  return code;
+}
+
+/** Mark all boxes as error (red) */
+function _setOtpBoxError(group, isError) {
+  const prefix = _otpPrefix(group);
+  for (let i = 0; i < 6; i++) {
+    const box = document.getElementById(prefix + i);
+    if (!box) continue;
+    if (isError) {
+      box.classList.add('otp-digit-error');
+      box.classList.remove('otp-digit-filled');
+    } else {
+      box.classList.remove('otp-digit-error');
+    }
+  }
+}
+
+/** Clear all OTP boxes */
+function clearOtpBoxes(group) {
+  const prefix = _otpPrefix(group);
+  for (let i = 0; i < 6; i++) {
+    const box = document.getElementById(prefix + i);
+    if (box) {
+      box.value = '';
+      box.classList.remove('otp-digit-filled', 'otp-digit-error');
+    }
+  }
+  collectOtpBoxes(group);
+}
+
+/** Fill all OTP boxes from a code string (e.g., auto-fill) */
+function fillOtpBoxes(group, code) {
+  const prefix = _otpPrefix(group);
+  const digits = String(code).replace(/\D/g, '').slice(0, 6);
+  for (let i = 0; i < 6; i++) {
+    const box = document.getElementById(prefix + i);
+    if (box) {
+      box.value = digits[i] || '';
+      box.classList.toggle('otp-digit-filled', !!digits[i]);
+      box.classList.remove('otp-digit-error');
+    }
+  }
+  collectOtpBoxes(group);
+}
+
+/** oninput handler for each box */
+function otpBoxInput(e, idx, group) {
+  const box = e.target;
+  // Accept only digits; strip non-numeric
+  box.value = box.value.replace(/\D/g, '').slice(-1);
+  box.classList.toggle('otp-digit-filled', !!box.value);
+  box.classList.remove('otp-digit-error');
+
+  // Handle paste of full code into first box
+  if (idx === 0 && box.value === '' && e.inputType === 'insertFromPaste') return;
+
+  const code = collectOtpBoxes(group);
+
+  // Clear error
+  const errEl = document.getElementById(_otpErrorId(group));
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+
+  // Auto-advance
+  if (box.value && idx < 5) {
+    const next = document.getElementById(_otpPrefix(group) + (idx + 1));
+    if (next) next.focus();
+  }
+
+  // Auto-submit when all 6 filled
+  if (code.length === 6 && /^\d{6}$/.test(code)) {
+    if (group === 'gate') verifyGateOtp();
+    else verifyCustomerOtp();
+  }
+}
+
+/** onkeydown handler for each box */
+function otpBoxKeydown(e, idx, group) {
+  const prefix = _otpPrefix(group);
+  const box = e.target;
+
+  if (e.key === 'Backspace') {
+    if (box.value) {
+      box.value = '';
+      box.classList.remove('otp-digit-filled');
+      collectOtpBoxes(group);
+    } else if (idx > 0) {
+      const prev = document.getElementById(prefix + (idx - 1));
+      if (prev) {
+        prev.value = '';
+        prev.classList.remove('otp-digit-filled');
+        prev.focus();
+        collectOtpBoxes(group);
+      }
+    }
+    e.preventDefault();
+  } else if (e.key === 'ArrowLeft' && idx > 0) {
+    document.getElementById(prefix + (idx - 1))?.focus();
+  } else if (e.key === 'ArrowRight' && idx < 5) {
+    document.getElementById(prefix + (idx + 1))?.focus();
+  } else if (e.key === 'Enter') {
+    const code = collectOtpBoxes(group);
+    if (code.length === 6) {
+      if (group === 'gate') verifyGateOtp();
+      else verifyCustomerOtp();
+    }
+  }
+}
+
+/** Paste handler — attach to first box only via JS after DOM ready */
+function _attachOtpPaste(group) {
+  const box0 = document.getElementById(_otpPrefix(group) + '0');
+  if (!box0) return;
+  box0.addEventListener('paste', function(e) {
+    e.preventDefault();
+    const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted) {
+      fillOtpBoxes(group, pasted);
+      const lastIdx = Math.min(pasted.length, 5);
+      document.getElementById(_otpPrefix(group) + lastIdx)?.focus();
+      if (pasted.length === 6) {
+        if (group === 'gate') verifyGateOtp();
+        else verifyCustomerOtp();
+      }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  _attachOtpPaste('gate');
+  _attachOtpPaste('store');
+});
+
 async function handleGateSendOtp(e) {
   if (e) e.preventDefault();
   const nameInput = document.getElementById("gateNameInput");
@@ -2531,19 +2652,13 @@ async function handleGateSendOtp(e) {
   const originalBtnHtml = submitBtn ? submitBtn.innerHTML : "Send Verification Code ➔";
   if (submitBtn) {
     submitBtn.disabled = true;
-    submitBtn.innerHTML = `<span>⏳ Sending SMS to +91 ${phone}...</span>`;
+    submitBtn.innerHTML = `<span>⏳ Generating code...</span>`;
   }
 
-  // Dispatch real SMS OTP via SMSGateway (Google Firebase Phone Auth)
-  let res;
-  if (typeof SMSGateway !== "undefined") {
-    res = await SMSGateway.sendOtpSms(phone, name, "recaptcha-container");
-  } else {
-    // SMSGateway not yet loaded — generate a local free OTP as fallback
-    const _fbCode = String(Math.floor(100000 + Math.random() * 900000));
-    window._grosshubFallbackOtp = _fbCode;
-    res = { success: true, mode: "free_instant_otp", code: _fbCode, phone: "+91" + phone };
-  }
+  // Generate a local 6-digit instant verification code
+  const _otpCode = String(Math.floor(100000 + Math.random() * 900000));
+  window._grosshubFallbackOtp = _otpCode;
+  const res = { success: true, mode: "free_instant_otp", code: _otpCode, phone: "+91" + phone };
 
   if (submitBtn) {
     submitBtn.disabled = false;
@@ -2563,61 +2678,36 @@ async function handleGateSendOtp(e) {
   if (otpSection) otpSection.style.display = "block";
   if (phoneForm) phoneForm.style.display = "none";
 
-  const otpInput = document.getElementById("gateOtpInput");
-  if (otpInput) {
-    otpInput.value = "";
-    otpInput.focus();
-  }
+  clearOtpBoxes('gate');
+  const firstBox = document.getElementById('gateOtpBox0');
+  if (firstBox) firstBox.focus();
 
-  // Update SMS status banner
+  // Update OTP status banner
   const modeBadge = document.getElementById("gateSmsModeBadge");
   const noticeText = document.getElementById("gateSmsNoticeText");
 
-  if (res.mode === "free_instant_otp") {
-    if (modeBadge) modeBadge.textContent = "⚡ 100% FREE INSTANT VERIFICATION";
-    if (noticeText) {
-      noticeText.innerHTML = `
-        <div style="font-size: 0.88rem; color: #166534; font-weight: 700; margin-bottom: 6px;">
-          Your Free Verification Code:
-        </div>
-        <div style="display:inline-block; background:#dcfce7; border:2px dashed #16a34a; padding:6px 16px; border-radius:8px; font-size:1.4rem; font-weight:900; letter-spacing:4px; color:#15803d; margin-bottom:6px;">
-          ${res.code}
-        </div>
-        <div style="font-size: 0.78rem; color: #166534; opacity: 0.9;">
-          Auto-filled below for instant access. Tap "Verify & Enter Store" to enter!
-        </div>
-      `;
-    }
-    if (otpInput) {
-      otpInput.value = res.code;
-    }
-    showToast(`Verification Code: ${res.code} (Free Instant Mode) ⚡`, "success");
-  } else {
-    if (modeBadge) modeBadge.textContent = "REAL SMS DISPATCHED TO PHONE";
-    if (noticeText) noticeText.textContent = `A real SMS with your 6-digit verification code has been sent to +91 ${phone}. Please check your phone SMS inbox!`;
-    showToast(`SMS OTP dispatched to +91 ${phone}! Check your messages. 📲`, "success");
+  if (modeBadge) modeBadge.textContent = "⚡ INSTANT VERIFICATION CODE";
+  if (noticeText) {
+    noticeText.innerHTML = `
+      <div style="font-size: 0.88rem; color: #166534; font-weight: 700; margin-bottom: 6px;">
+        Your Verification Code:
+      </div>
+      <div style="display:inline-block; background:#dcfce7; border:2px dashed #16a34a; padding:6px 16px; border-radius:8px; font-size:1.4rem; font-weight:900; letter-spacing:4px; color:#15803d; margin-bottom:6px;">
+        ${res.code}
+      </div>
+      <div style="font-size: 0.78rem; color: #166534; opacity: 0.9;">
+        Auto-filled below. Tap "Verify &amp; Enter Store" to enter!
+      </div>
+    `;
   }
+  fillOtpBoxes('gate', res.code);
+  showToast(`Your code: ${res.code} ⚡ Auto-filled!`, "success");
 
   startGateResendTimer();
 }
 
 function handleGateOtpInput(input) {
-  if (input) {
-    const val = input.value.trim();
-    const otpErr = document.getElementById("gateOtpError");
-    // Clear error styling on input change
-    if (otpErr && otpErr.style.display !== "none") {
-      otpErr.style.display = "none";
-      otpErr.textContent = "";
-      input.style.borderColor = "";
-      input.style.backgroundColor = "";
-      input.style.boxShadow = "";
-    }
-    // Auto submit STRICTLY when all 6 digits are typed
-    if (val.length === 6 && /^\d{6}$/.test(val)) {
-      verifyGateOtp();
-    }
-  }
+  // Legacy stub — functionality handled by otpBoxInput()
 }
 
 function backToGatePhoneStep() {
@@ -2627,12 +2717,7 @@ function backToGatePhoneStep() {
   const otpInput = document.getElementById("gateOtpInput");
   if (otpSection) otpSection.style.display = "none";
   if (phoneForm) phoneForm.style.display = "block";
-  if (otpInput) {
-    otpInput.value = "";
-    otpInput.style.borderColor = "";
-    otpInput.style.backgroundColor = "";
-    otpInput.style.boxShadow = "";
-  }
+  clearOtpBoxes('gate');
   if (otpErr) {
     otpErr.style.display = "none";
     otpErr.textContent = "";
@@ -2668,52 +2753,35 @@ function handleGateResendOtp() {
   const otpErr = document.getElementById("gateOtpError");
   const codeDisplay = document.getElementById("gateOtpGeneratedCode");
 
-  if (otpInput) {
-    otpInput.value = "";
-    otpInput.style.borderColor = "";
-    otpInput.style.backgroundColor = "";
-    otpInput.style.boxShadow = "";
-    otpInput.focus();
-  }
+  clearOtpBoxes('gate');
+  const firstResendBox = document.getElementById('gateOtpBox0');
+  if (firstResendBox) firstResendBox.focus();
   if (otpErr) {
     otpErr.style.display = "none";
     otpErr.textContent = "";
   }
 
   if (phone && phone.length >= 10) {
-    showToast(`Generating new unique SMS code for +91 ${phone}...`, "info");
-    if (typeof SMSGateway !== "undefined") {
-      SMSGateway.sendOtpSms(phone, name, "recaptcha-container").then(res => {
-        if (res.success) {
-          if (res.mode === "free_instant_otp" || res.mode === "demo_fallback") {
-            const noticeText = document.getElementById("gateSmsNoticeText");
-            if (noticeText) {
-              noticeText.innerHTML = `
-                <div style="font-size: 0.88rem; color: #166534; font-weight: 700; margin-bottom: 6px;">
-                  Your Fresh Free Verification Code:
-                </div>
-                <div style="display:inline-block; background:#dcfce7; border:2px dashed #16a34a; padding:6px 16px; border-radius:8px; font-size:1.4rem; font-weight:900; letter-spacing:4px; color:#15803d; margin-bottom:6px;">
-                  ${res.code}
-                </div>
-                <div style="font-size: 0.78rem; color: #166534; opacity: 0.9;">
-                  Auto-filled below for instant access. Tap "Verify & Enter Store" to enter!
-                </div>
-              `;
-            }
-            if (otpInput) {
-              otpInput.value = res.code;
-              otpInput.focus();
-            }
-            showToast(`New code: ${res.code} ⚡`, "success");
-          } else {
-            showToast(`Fresh unique SMS code sent to +91 ${phone}! 📲`, "success");
-          }
-          startGateResendTimer();
-        } else {
-          showToast(res.error || "Failed to resend SMS.", "error");
-        }
-      });
+    const newCode = String(Math.floor(100000 + Math.random() * 900000));
+    window._grosshubFallbackOtp = newCode;
+    const noticeText = document.getElementById("gateSmsNoticeText");
+    if (noticeText) {
+      noticeText.innerHTML = `
+        <div style="font-size: 0.88rem; color: #166534; font-weight: 700; margin-bottom: 6px;">
+          Your Fresh Verification Code:
+        </div>
+        <div style="display:inline-block; background:#dcfce7; border:2px dashed #16a34a; padding:6px 16px; border-radius:8px; font-size:1.4rem; font-weight:900; letter-spacing:4px; color:#15803d; margin-bottom:6px;">
+          ${newCode}
+        </div>
+        <div style="font-size: 0.78rem; color: #166534; opacity: 0.9;">
+          Auto-filled below. Tap "Verify &amp; Enter Store" to enter!
+        </div>
+      `;
     }
+    fillOtpBoxes('gate', newCode);
+    document.getElementById('gateOtpBox0')?.focus();
+    showToast(`New code: ${newCode} ⚡`, "success");
+    startGateResendTimer();
   }
 }
 
@@ -2724,7 +2792,7 @@ async function verifyGateOtp() {
   const phoneInput = document.getElementById("gatePhoneInput");
   const verifyBtn = document.getElementById("btnGateVerify");
 
-  const otp = otpInput ? otpInput.value.trim() : "";
+  const otp = collectOtpBoxes('gate');
   const name = nameInput ? nameInput.value.trim() : "Valued Customer";
   const phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, "") : "";
 
@@ -2740,10 +2808,8 @@ async function verifyGateOtp() {
       otpErr.style.border = "1px solid #fca5a5";
       otpErr.style.marginTop = "10px";
     }
-    if (otpInput) {
-      otpInput.style.borderColor = "#dc2626";
-      otpInput.focus();
-    }
+    _setOtpBoxError('gate', true);
+    document.getElementById('gateOtpBox0')?.focus();
     showToast("Please enter a valid 6-digit verification code.", "error");
     return;
   }
@@ -2754,17 +2820,12 @@ async function verifyGateOtp() {
     verifyBtn.innerHTML = "<span>⏳ Verifying SMS Code...</span>";
   }
 
-  let verifyResult;
-  if (typeof SMSGateway !== "undefined") {
-    verifyResult = await SMSGateway.verifyOtpSms(otp);
-  } else {
-    // SMSGateway not loaded — verify against locally stored fallback OTP
-    const _storedOtp = window._grosshubFallbackOtp || "";
-    verifyResult = (_storedOtp && otp === _storedOtp)
-      ? { success: true, mode: "free_instant_otp" }
-      : { success: false, error: "❌ Incorrect verification code. Please try again." };
-    if (verifyResult.success) window._grosshubFallbackOtp = null;
-  }
+  // Verify against locally stored OTP
+  const _storedGateOtp = window._grosshubFallbackOtp || "";
+  const verifyResult = (_storedGateOtp && otp === _storedGateOtp)
+    ? { success: true }
+    : { success: false, error: "❌ Incorrect code. Please try again." };
+  if (verifyResult.success) window._grosshubFallbackOtp = null;
 
   if (verifyBtn) {
     verifyBtn.disabled = false;
@@ -2784,23 +2845,8 @@ async function verifyGateOtp() {
       otpErr.style.border = "1px solid #fca5a5";
       otpErr.style.marginTop = "10px";
     }
-    if (otpInput) {
-      otpInput.style.borderColor = "#dc2626";
-      otpInput.style.backgroundColor = "#fff1f2";
-      otpInput.style.boxShadow = "0 0 0 3px rgba(220, 38, 38, 0.25)";
-      // Shake animation to visually communicate denial
-      otpInput.animate([
-        { transform: 'translateX(-8px)' },
-        { transform: 'translateX(8px)' },
-        { transform: 'translateX(-6px)' },
-        { transform: 'translateX(6px)' },
-        { transform: 'translateX(-3px)' },
-        { transform: 'translateX(3px)' },
-        { transform: 'translateX(0px)' }
-      ], { duration: 350 });
-      otpInput.focus();
-      otpInput.select();
-    }
+    _setOtpBoxError('gate', true);
+    document.getElementById('gateOtpBox0')?.focus();
     showToast(errMsg, "error");
 
     // Strictly ensure store remains locked and entrance gate remains visible
@@ -2816,11 +2862,7 @@ async function verifyGateOtp() {
     otpErr.style.display = "none";
     otpErr.textContent = "";
   }
-  if (otpInput) {
-    otpInput.style.borderColor = "#16a34a";
-    otpInput.style.backgroundColor = "#f0fdf4";
-    otpInput.style.boxShadow = "0 0 0 3px rgba(22, 163, 74, 0.2)";
-  }
+  // (OTP boxes will be hidden once gate closes)
 
   // Consume active OTP so it cannot be reused
   window._activeGateOtp = null;

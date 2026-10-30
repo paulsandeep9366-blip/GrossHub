@@ -4,6 +4,19 @@
  * product inventory CRUD with stock toggling, shop settings, and CSV report export.
  */
 
+function formatStatusLabel(status) {
+  const map = {
+    'placed': 'Placed',
+    'confirmed': 'Confirmed',
+    'preparing': 'Packing',
+    'out_for_delivery': 'Out for Delivery',
+    'delivered': 'Delivered',
+    'cancelled': 'Cancelled'
+  };
+  return map[status] || status;
+}
+
+
 const AdminPanel = {
   isAuthenticated: false,
   activeTab: 'overview',
@@ -13,26 +26,112 @@ const AdminPanel = {
   currentInvoiceType: 'single', // 'single' | 'all_individual' | 'total_report' | 'customer_statement'
   currentInvoiceOrderId: null,
   currentInvoiceOrder: null,
+  knownOrderIds: new Set(),
+  _pollTimer: null,
+
+  formatStatusLabel(status) {
+    return formatStatusLabel(status);
+  },
 
   init() {
+    this.initKnownOrders();
     this.checkSession();
     this.initSessionGuard();
     this.setupEventListeners();
     this.initFirestoreSync();
   },
 
+  initKnownOrders() {
+    try {
+      const orders = (typeof Store !== 'undefined' && Store.getOrders) ? Store.getOrders() : [];
+      this.knownOrderIds = new Set(orders.map(o => o.id));
+    } catch (e) {
+      this.knownOrderIds = new Set();
+    }
+  },
+
+  playOrderNotificationSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      const now = ctx.currentTime;
+      
+      // Tone 1: high pleasant ping
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, now); // D5
+      osc1.frequency.exponentialRampToValueAtTime(880, now + 0.12); // A5
+      gain1.gain.setValueAtTime(0.3, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+      // Tone 2: chime flourish
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(880, now + 0.15); // A5
+      osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.35); // D6
+      gain2.gain.setValueAtTime(0.35, now + 0.15);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.15);
+      osc2.stop(now + 0.65);
+    } catch (e) {
+      console.warn('[AdminPanel] Order notification chime warning:', e);
+    }
+  },
+
+  checkForNewOrdersAndRefresh() {
+    try {
+      const orders = (typeof Store !== 'undefined' && Store.getOrders) ? Store.getOrders() : [];
+      const newOrders = orders.filter(o => !this.knownOrderIds.has(o.id));
+
+      if (newOrders.length > 0) {
+        newOrders.forEach(o => {
+          this.knownOrderIds.add(o.id);
+          const custName = o.customer?.name || 'Customer';
+          const total = o.summary?.grandTotal || 0;
+          showToast(`🔔 New Order ${o.id} received! ₹${total} (${custName})`, 'success');
+        });
+        this.playOrderNotificationSound();
+        if ('Notification' in window && Notification.permission === 'granted') {
+          const latest = newOrders[0];
+          new Notification('GrossHub: New Order Received!', {
+            body: `Order ${latest.id} (₹${latest.summary?.grandTotal || 0}) by ${latest.customer?.name || 'Customer'}`
+          });
+        }
+      } else {
+        this.knownOrderIds = new Set(orders.map(o => o.id));
+      }
+
+      this.renderMetrics();
+      if (this.isAuthenticated && this.activeTab === 'orders') {
+        this.renderOrders();
+      }
+    } catch (e) {
+      console.warn('[AdminPanel] Error in checkForNewOrdersAndRefresh:', e);
+    }
+  },
+
   initFirestoreSync() {
     // Register Firestore real-time callbacks for live order/product/config updates
     const self = this;
+    let attempts = 0;
+    const maxAttempts = 15;
     const tryRegister = () => {
       if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
-        // Orders: refresh admin order table in real-time
+        // Orders: refresh admin order table & play notifications in real-time
         FirebaseSync.onOrdersChange((orders) => {
-          if (self.isAuthenticated && self.activeTab === 'orders') {
-            self.renderOrders();
-          }
-          // Always refresh KPI metrics
-          self.renderOverview && self.renderOverview();
+          self.checkForNewOrdersAndRefresh();
         });
         // Products: refresh product list in real-time
         FirebaseSync.onProductsChange((products) => {
@@ -43,11 +142,12 @@ const AdminPanel = {
         // Config: refresh settings in real-time
         FirebaseSync.onConfigChange((config) => {
           if (self.isAuthenticated && self.activeTab === 'settings') {
-            self.renderSettings && self.renderSettings();
+            self.loadSettingsForm && self.loadSettingsForm();
           }
         });
         console.log('[AdminPanel] Firestore real-time sync registered.');
-      } else {
+      } else if (attempts < maxAttempts) {
+        attempts++;
         setTimeout(tryRegister, 800);
       }
     };
@@ -63,8 +163,18 @@ const AdminPanel = {
     }
   },
 
-  handleTimeout(reason = 'outside') {
+  showLogin() {
     this.isAuthenticated = false;
+    const loginView = document.getElementById('adminLoginView');
+    const dashView = document.getElementById('adminDashboardView');
+    const topLogout = document.getElementById('btnAdminTopLogout');
+    if (loginView) loginView.style.display = 'block';
+    if (dashView) dashView.style.display = 'none';
+    if (topLogout) topLogout.style.display = 'none';
+  },
+
+  handleTimeout(reason = 'outside') {
+    this.showLogin();
     sessionStorage.removeItem('grosshub_admin_logged_in');
     
     const dashView = document.getElementById('adminDashboardView');
@@ -144,6 +254,37 @@ const AdminPanel = {
         this.handleSaveProduct();
       });
     }
+
+    // Real-time synchronization across browser tabs via storage events
+    window.addEventListener('storage', (e) => {
+      if (!e || !e.key) return;
+      if (e.key === 'grosshub_orders' || (typeof Store !== 'undefined' && Store.KEYS && e.key === Store.KEYS.ORDERS)) {
+        this.checkForNewOrdersAndRefresh();
+      }
+      if (e.key === 'grosshub_products' || (typeof Store !== 'undefined' && Store.KEYS && e.key === Store.KEYS.PRODUCTS)) {
+        if (this.isAuthenticated && this.activeTab === 'products') {
+          this.renderProducts();
+        }
+      }
+      if (e.key === 'grosshub_config' || (typeof Store !== 'undefined' && Store.KEYS && e.key === Store.KEYS.CONFIG)) {
+        if (this.isAuthenticated && this.activeTab === 'settings') {
+          this.loadSettingsForm();
+        }
+      }
+    });
+
+    // Periodic check interval (every 3 seconds) for local changes
+    if (this._pollTimer) clearInterval(this._pollTimer);
+    this._pollTimer = setInterval(() => {
+      this.checkForNewOrdersAndRefresh();
+    }, 3000);
+
+    // Request notification permission if available
+    try {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    } catch (e) {}
   },
 
   handleLogin() {
@@ -233,7 +374,7 @@ const AdminPanel = {
       el.classList.toggle('active', el.dataset.tab === tabName);
     });
 
-    const panels = ['overview', 'orders', 'products', 'riders', 'customers', 'firebase', 'settings', 'reports'];
+    const panels = ['overview', 'orders', 'products', 'riders', 'customers', 'settings', 'reports'];
     panels.forEach(p => {
       const panel = document.getElementById(`adminPanel-${p}`);
       if (panel) panel.style.display = (p === tabName ? 'block' : 'none');
@@ -244,7 +385,7 @@ const AdminPanel = {
     if (tabName === 'products') this.renderProducts();
     if (tabName === 'riders') this.renderRidersTab();
     if (tabName === 'customers') this.renderCustomersTab();
-    if (tabName === 'settings' || tabName === 'firebase') this.loadSettingsForm();
+    if (tabName === 'settings') this.loadSettingsForm();
   },
 
   // 1. Metrics & Overview
@@ -291,7 +432,7 @@ const AdminPanel = {
               ` : ''}
             </div>
             <div style="display:flex; gap:6px; align-items:center;">
-              <span class="track-badge ${o.status}">${formatStatusLabel(o.status)}</span>
+              <span class="track-badge ${o.status}">${typeof formatStatusLabel === "function" ? formatStatusLabel(o.status) : (o.status || "").toUpperCase()}</span>
               <strong style="margin-right:4px;">₹${o.summary?.grandTotal || 0}</strong>
               <button class="btn-xs btn-hero-primary" onclick="AdminPanel.openOrderInvoiceModal('${o.id}')" title="View / Print PDF Bill for ${o.id}">
                 🧾 PDF Bill
@@ -401,6 +542,9 @@ const AdminPanel = {
             <button class="btn-xs btn-outline" onclick="AdminPanel.viewOrderDetails('${order.id}')" title="View full order details">
               👁️
             </button>
+            <button class="btn-xs" style="background:#dc2626; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:3px;" onclick="AdminPanel.handleDeleteOrder('${order.id}')" title="Permanently delete this order">
+              🗑️ Delete
+            </button>
           </div>
         </td>
       </tr>
@@ -429,6 +573,25 @@ const AdminPanel = {
     }
     Store.updateOrderStatus(orderId, newStatus);
     showToast(`Order ${orderId} status updated to ${newStatus}`, 'success');
+    this.renderMetrics();
+    this.renderOrders();
+    if (typeof RiderPanel !== 'undefined' && RiderPanel.renderOrders) {
+      RiderPanel.renderOrders();
+    }
+  },
+
+  handleDeleteOrder(orderId) {
+    const order = Store.getOrder(orderId);
+    if (!order) { showToast('Order not found.', 'error'); return; }
+    const confirmed = window.confirm(`⚠️ Delete Order ${orderId}?
+
+Customer: ${order.customer?.name || 'Guest'}
+Total: ₹${order.summary?.grandTotal || 0}
+
+This action cannot be undone.`);
+    if (!confirmed) return;
+    Store.deleteOrder(orderId);
+    showToast(`Order ${orderId} has been permanently deleted. 🗑️`, 'success');
     this.renderMetrics();
     this.renderOrders();
     if (typeof RiderPanel !== 'undefined' && RiderPanel.renderOrders) {
@@ -574,8 +737,10 @@ const AdminPanel = {
     this.editingProductId = null;
     const form = document.getElementById('adminProductForm');
     if (form) form.reset();
-    document.getElementById('modalProductTitle').textContent = 'Add New Grocery Product';
-    document.getElementById('prodInStock').checked = true;
+    const titleEl = document.getElementById('modalProductTitle');
+    if (titleEl) titleEl.textContent = 'Add New Grocery Product';
+    const stockEl = document.getElementById('prodInStock');
+    if (stockEl) stockEl.checked = true;
 
     // Reset image preview & input fields
     const preview = document.getElementById('prodImagePreview');
@@ -589,36 +754,41 @@ const AdminPanel = {
   },
 
   openProductEditModal(id) {
-    const product = Store.getProducts().find(p => p.id === Number(id));
-    if (!product) return;
+    const product = Store.getProducts().find(p => Number(p.id) === Number(id));
+    if (!product) {
+      showToast('Product not found.', 'error');
+      return;
+    }
 
-    this.editingProductId = id;
-    document.getElementById('modalProductTitle').textContent = 'Edit Product';
+    this.editingProductId = Number(id);
+    const titleEl = document.getElementById('modalProductTitle');
+    if (titleEl) titleEl.textContent = 'Edit Product: ' + product.name;
 
-    document.getElementById('prodName').value = product.name;
-    document.getElementById('prodCategory').value = product.category;
-    document.getElementById('prodUnit').value = product.unit;
-    document.getElementById('prodPrice').value = product.price;
-    document.getElementById('prodMrp').value = product.mrp || product.price;
+    const setVal = (fieldId, val) => {
+      const el = document.getElementById(fieldId);
+      if (el) el.value = (val !== undefined && val !== null) ? val : '';
+    };
 
-    const prodImgInput = document.getElementById('prodImage');
-    const imageVal = product.image || '';
-    if (prodImgInput) prodImgInput.value = imageVal;
+    setVal('prodName', product.name);
+    setVal('prodCategory', product.category);
+    setVal('prodUnit', product.unit);
+    setVal('prodPrice', product.price);
+    setVal('prodMrp', product.mrp || product.price);
+    setVal('prodImage', product.image || '');
+    setVal('prodEmoji', product.emoji || '🛒');
+    setVal('prodBadge', product.badge || '');
+    setVal('prodDesc', product.description || '');
+
+    const stockEl = document.getElementById('prodInStock');
+    if (stockEl) stockEl.checked = product.inStock !== false;
 
     const preview = document.getElementById('prodImagePreview');
     if (preview) {
-      preview.src = imageVal || 'images/hero-basket.jpg';
+      preview.src = (product.image && String(product.image).trim()) ? product.image : 'images/hero-basket.jpg';
     }
 
     const fileInput = document.getElementById('prodImageFile');
     if (fileInput) fileInput.value = '';
-
-    const emojiInput = document.getElementById('prodEmoji');
-    if (emojiInput) emojiInput.value = product.emoji || '🛒';
-
-    document.getElementById('prodBadge').value = product.badge || '';
-    document.getElementById('prodDesc').value = product.description || '';
-    document.getElementById('prodInStock').checked = product.inStock !== false;
 
     openModal('adminProductModal');
   },
@@ -627,19 +797,66 @@ const AdminPanel = {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      showToast('Image file size is too large (max 3MB)', 'warning');
+    if (file.size > 25 * 1024 * 1024) {
+      showToast('Image file size is too large (max 25MB)', 'warning');
       return;
     }
 
+    showToast('Optimizing custom image...', 'info');
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      const preview = document.getElementById('prodImagePreview');
-      if (preview) preview.src = dataUrl;
-      const imgInput = document.getElementById('prodImage');
-      if (imgInput) imgInput.value = dataUrl;
-      showToast('Custom image loaded! Click Save to apply.', 'success');
+      const rawUrl = e.target.result;
+      const img = new Image();
+      img.onload = () => {
+        try {
+          // Proportionally scale down to max 480x480 for fast storage and crisp display
+          const maxDim = 480;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to lightweight, high-quality JPEG (~20-40KB)
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+          const preview = document.getElementById('prodImagePreview');
+          if (preview) preview.src = optimizedDataUrl;
+          const imgInput = document.getElementById('prodImage');
+          if (imgInput) imgInput.value = optimizedDataUrl;
+
+          showToast('📸 Custom image optimized & loaded! Click Save to apply.', 'success');
+        } catch (err) {
+          console.warn('[AdminPanel] Canvas optimization fallback:', err);
+          const preview = document.getElementById('prodImagePreview');
+          if (preview) preview.src = rawUrl;
+          const imgInput = document.getElementById('prodImage');
+          if (imgInput) imgInput.value = rawUrl;
+          showToast('Custom image loaded! Click Save to apply.', 'success');
+        }
+      };
+      img.onerror = () => {
+        showToast('Failed to load image file. Please try another image.', 'error');
+      };
+      img.src = rawUrl;
+    };
+    reader.onerror = () => {
+      showToast('Error reading image file.', 'error');
     };
     reader.readAsDataURL(file);
   },
@@ -662,44 +879,68 @@ const AdminPanel = {
   },
 
   handleSaveProduct() {
-    const name = document.getElementById('prodName').value.trim();
-    const category = document.getElementById('prodCategory').value;
-    const unit = document.getElementById('prodUnit').value.trim();
-    const price = Number(document.getElementById('prodPrice').value);
-    const mrp = Number(document.getElementById('prodMrp').value) || price;
-    const imageInput = document.getElementById('prodImage');
-    const image = imageInput ? imageInput.value.trim() : '';
-    const emoji = document.getElementById('prodEmoji').value.trim() || '🛒';
-    const badge = document.getElementById('prodBadge').value.trim();
-    const description = document.getElementById('prodDesc').value.trim();
-    const inStock = document.getElementById('prodInStock').checked;
+    try {
+      const name = (document.getElementById('prodName')?.value || '').trim();
+      const category = document.getElementById('prodCategory')?.value || 'rice-atta';
+      const unit = (document.getElementById('prodUnit')?.value || '').trim() || '1 unit';
+      const priceVal = document.getElementById('prodPrice')?.value;
+      const price = Number(priceVal);
+      const mrpVal = document.getElementById('prodMrp')?.value;
+      const mrp = (mrpVal && !isNaN(Number(mrpVal)) && Number(mrpVal) > 0) ? Number(mrpVal) : price;
+      const imageInput = document.getElementById('prodImage');
+      const image = imageInput ? imageInput.value.trim() : '';
+      const badge = (document.getElementById('prodBadge')?.value || '').trim();
+      const description = (document.getElementById('prodDesc')?.value || '').trim();
+      const inStock = document.getElementById('prodInStock') ? document.getElementById('prodInStock').checked : true;
 
-    const catObj = CATEGORIES.find(c => c.id === category);
-    const categoryName = catObj ? catObj.name : 'Groceries';
+      const catObj = (typeof CATEGORIES !== 'undefined') ? CATEGORIES.find(c => c.id === category) : null;
+      const categoryName = catObj ? catObj.name : 'Groceries';
+      const emoji = (document.getElementById('prodEmoji')?.value || '').trim() || (catObj ? catObj.icon : '🛒');
 
-    if (!name || isNaN(price) || price <= 0) {
-      showToast('Please enter a valid product name and price.', 'error');
-      return;
+      if (!name) {
+        showToast('Please enter a product name.', 'error');
+        document.getElementById('prodName')?.focus();
+        return;
+      }
+
+      if (isNaN(price) || price <= 0) {
+        showToast('Please enter a valid selling price greater than 0.', 'error');
+        document.getElementById('prodPrice')?.focus();
+        return;
+      }
+
+      const finalImage = (image && image.trim()) ? image.trim() : 'images/hero-basket.jpg';
+
+      const productPayload = {
+        name,
+        category,
+        categoryName,
+        unit,
+        price,
+        mrp,
+        image: finalImage,
+        emoji,
+        badge,
+        description,
+        inStock
+      };
+
+      if (this.editingProductId) {
+        Store.updateProduct(this.editingProductId, productPayload);
+        showToast(`Updated "${name}" with custom image successfully! 🛒`, 'success');
+      } else {
+        Store.addProduct(productPayload);
+        showToast(`Added "${name}" with custom image to store catalog! 🚀`, 'success');
+      }
+
+      closeModal('adminProductModal');
+      this.renderProducts();
+      this.renderMetrics();
+      if (typeof renderProducts === 'function') renderProducts();
+    } catch (e) {
+      console.error('[AdminPanel] Error saving product:', e);
+      showToast('Error saving product: ' + (e.message || 'Unknown error'), 'error');
     }
-
-    const finalImage = image || 'images/hero-basket.jpg';
-
-    if (this.editingProductId) {
-      Store.updateProduct(this.editingProductId, {
-        name, category, categoryName, unit, price, mrp, image: finalImage, emoji, badge, description, inStock
-      });
-      showToast(`Updated "${name}" with custom image successfully!`, 'success');
-    } else {
-      Store.addProduct({
-        name, category, categoryName, unit, price, mrp, image: finalImage, emoji, badge, description, inStock
-      });
-      showToast(`Added "${name}" with custom image to store catalog!`, 'success');
-    }
-
-    closeModal('adminProductModal');
-    this.renderProducts();
-    this.renderMetrics();
-    if (typeof renderProducts === 'function') renderProducts();
   },
 
   handleDeleteProduct(id) {
@@ -745,35 +986,6 @@ const AdminPanel = {
       statusToggle.checked = config.serviceStatus !== 'closed';
     }
 
-    // Populate Firebase SMS Gateway settings (both in settings & dedicated tab)
-    const fbCfg = (Store.getFirebaseConfig ? Store.getFirebaseConfig() : (DEFAULT_SHOP_CONFIG.firebaseConfig || {})) || {};
-    set('adminFbApiKey', fbCfg.apiKey || '');
-    set('adminFbProjectId', fbCfg.projectId || '');
-    set('adminFbAuthDomain', fbCfg.authDomain || '');
-    set('adminFbAppId', fbCfg.appId || '');
-
-    set('adminFbApiKeyDedicated', fbCfg.apiKey || '');
-    set('adminFbProjectIdDedicated', fbCfg.projectId || '');
-    set('adminFbAuthDomainDedicated', fbCfg.authDomain || '');
-    set('adminFbAppIdDedicated', fbCfg.appId || '');
-    set('adminFbStorageBucketDedicated', fbCfg.storageBucket || '');
-    set('adminFbSenderIdDedicated', fbCfg.messagingSenderId || '');
-
-    const isLive = Store.isFirebaseConfigured && Store.isFirebaseConfigured();
-    const updateBadge = badgeEl => {
-      if (!badgeEl) return;
-      if (isLive) {
-        badgeEl.textContent = '🟢 Live SMS Active (Firebase Connected)';
-        badgeEl.style.background = '#dcfce7';
-        badgeEl.style.color = '#15803d';
-      } else {
-        badgeEl.textContent = '🟡 Simulation Mode (Test OTPs Only)';
-        badgeEl.style.background = '#fef3c7';
-        badgeEl.style.color = '#92400e';
-      }
-    };
-    updateBadge(document.getElementById('adminFbStatusBadge'));
-    updateBadge(document.getElementById('adminFbDedicatedBadge'));
   },
 
   handleSaveSettings() {
@@ -803,10 +1015,11 @@ const AdminPanel = {
       serviceStatus: document.getElementById('adminSetStoreStatus')?.checked ? 'open' : 'closed'
     };
 
-    // Check if new rider PIN was entered
+    // Check if new rider PIN/password was entered
     const riderPinVal = document.getElementById('adminSetRiderPin')?.value.trim();
     if (riderPinVal && riderPinVal.length >= 4) {
       Store.setRiderPin(riderPinVal);
+      Store.setRiderPassword(riderPinVal); // keep both keys in sync
     }
 
     // Check if new password was entered
@@ -828,188 +1041,6 @@ const AdminPanel = {
     if (typeof updateCartBadgeAndDrawer === 'function') updateCartBadgeAndDrawer();
   },
 
-  handleSaveFirebaseSettings(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    const apiKey = (document.getElementById('adminFbApiKeyDedicated')?.value || document.getElementById('adminFbApiKey')?.value || '').trim();
-    const projectId = (document.getElementById('adminFbProjectIdDedicated')?.value || document.getElementById('adminFbProjectId')?.value || '').trim();
-    const authDomain = (document.getElementById('adminFbAuthDomainDedicated')?.value || document.getElementById('adminFbAuthDomain')?.value || '').trim();
-    const appId = (document.getElementById('adminFbAppIdDedicated')?.value || document.getElementById('adminFbAppId')?.value || '').trim();
-    const storageBucket = (document.getElementById('adminFbStorageBucketDedicated')?.value || '').trim();
-    const messagingSenderId = (document.getElementById('adminFbSenderIdDedicated')?.value || '').trim();
-
-    if (!apiKey || !projectId) {
-      if (!confirm('Notice: Firebase Web API Key or Project ID is empty. Cellular SMS will remain in simulation mode. Save changes anyway?')) {
-        return;
-      }
-    }
-
-    Store.saveFirebaseConfig({
-      apiKey,
-      projectId,
-      authDomain,
-      appId,
-      storageBucket,
-      messagingSenderId
-    });
-
-    if (typeof SMSGateway !== 'undefined') {
-      SMSGateway.initFirebase();
-    }
-
-    this.loadSettingsForm();
-    if (apiKey && projectId) {
-      showToast('Firebase credentials saved! Live SMS active 📱', 'success');
-    } else {
-      showToast('Settings saved. Running in SMS simulation mode.', 'info');
-    }
-  },
-
-  toggleApiKeyVisibility() {
-    const input = document.getElementById('adminFbApiKeyDedicated');
-    if (input) {
-      input.type = input.type === 'password' ? 'text' : 'password';
-    }
-  },
-
-  handleAutoParseFirebaseSnippet() {
-    const raw = (document.getElementById('adminFbPasteSnippet')?.value || '').trim();
-    if (!raw) {
-      showToast('Please paste your Firebase configuration snippet or JSON first.', 'error');
-      return;
-    }
-
-    let parsed = {};
-
-    try {
-      // 1. Try direct JSON
-      parsed = JSON.parse(raw);
-    } catch (_) {
-      // 2. Try JavaScript snippet / key-value regex extraction
-      const extract = key => {
-        const regex = new RegExp(key + '\\s*:\\s*["\'`]([^"\'`]+)["\'`]', 'i');
-        const match = raw.match(regex);
-        return match ? match[1].trim() : '';
-      };
-
-      parsed = {
-        apiKey: extract('apiKey'),
-        projectId: extract('projectId'),
-        authDomain: extract('authDomain'),
-        appId: extract('appId'),
-        storageBucket: extract('storageBucket'),
-        messagingSenderId: extract('messagingSenderId')
-      };
-
-      // In case just raw API key starting with AIza was pasted
-      if (!parsed.apiKey && raw.startsWith('AIzaSy')) {
-        parsed.apiKey = raw;
-      }
-    }
-
-    if (!parsed.apiKey && !parsed.projectId) {
-      showToast('Could not find apiKey or projectId in pasted text. Please verify the snippet.', 'error');
-      return;
-    }
-
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el && val !== undefined) el.value = val;
-    };
-
-    if (parsed.apiKey) {
-      set('adminFbApiKeyDedicated', parsed.apiKey);
-      set('adminFbApiKey', parsed.apiKey);
-    }
-    if (parsed.projectId) {
-      set('adminFbProjectIdDedicated', parsed.projectId);
-      set('adminFbProjectId', parsed.projectId);
-    }
-    if (parsed.authDomain) {
-      set('adminFbAuthDomainDedicated', parsed.authDomain);
-      set('adminFbAuthDomain', parsed.authDomain);
-    }
-    if (parsed.appId) {
-      set('adminFbAppIdDedicated', parsed.appId);
-      set('adminFbAppId', parsed.appId);
-    }
-    if (parsed.storageBucket) {
-      set('adminFbStorageBucketDedicated', parsed.storageBucket);
-    }
-    if (parsed.messagingSenderId) {
-      set('adminFbSenderIdDedicated', parsed.messagingSenderId);
-    }
-
-    showToast('Firebase credentials extracted! Click "Save SMS Gateway Credentials" to activate.', 'success');
-  },
-
-  handleClearFirebaseSettings() {
-    if (!confirm('Are you sure you want to clear Firebase credentials and revert to local simulation mode?')) {
-      return;
-    }
-    Store.saveFirebaseConfig({
-      apiKey: '',
-      projectId: '',
-      authDomain: '',
-      appId: '',
-      storageBucket: '',
-      messagingSenderId: ''
-    });
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el) el.value = val;
-    };
-    set('adminFbApiKeyDedicated', '');
-    set('adminFbProjectIdDedicated', '');
-    set('adminFbAuthDomainDedicated', '');
-    set('adminFbAppIdDedicated', '');
-    set('adminFbStorageBucketDedicated', '');
-    set('adminFbSenderIdDedicated', '');
-    set('adminFbPasteSnippet', '');
-    set('adminFbApiKey', '');
-    set('adminFbProjectId', '');
-    set('adminFbAuthDomain', '');
-    set('adminFbAppId', '');
-
-    this.loadSettingsForm();
-    showToast('Firebase credentials cleared. Reverted to simulation mode.', 'info');
-  },
-
-  async handleTestSmsPrompt() {
-    const rawPhone = prompt('Enter a 10-digit Indian mobile number to test SMS delivery (+91):');
-    if (!rawPhone) return;
-
-    const digits = String(rawPhone).replace(/\D/g, '').slice(-10);
-    if (digits.length !== 10) {
-      alert('Please enter a valid 10-digit mobile number.');
-      return;
-    }
-
-    showToast(`Dispatching test verification SMS to +91${digits}...`, 'info');
-
-    try {
-      if (typeof SMSGateway === 'undefined') {
-        alert('SMSGateway module not loaded.');
-        return;
-      }
-
-      const res = await SMSGateway.sendOtpSms(digits, 'Admin Tester', 'admin-recaptcha-container');
-      if (res.success) {
-        if (res.mode === 'firebase_live') {
-          alert(`✅ Live SMS successfully dispatched via Firebase to +91${digits}!\nPlease check SMS inbox on the device.`);
-          showToast(`Live SMS sent to +91${digits}!`, 'success');
-        } else {
-          alert(`ℹ️ SMS Gateway Simulation Mode:\nTest OTP Code: ${res.code}\nTo send real SMS to mobile phones, enter your Firebase API Key and Project ID in settings.`);
-          showToast(`Test OTP: ${res.code}`, 'info');
-        }
-      } else {
-        alert(`❌ Failed to send SMS: ${res.error || 'Unknown error'}`);
-        showToast(res.error || 'SMS send failed', 'error');
-      }
-    } catch (err) {
-      console.error('Test SMS exception:', err);
-      alert(`❌ Error testing SMS: ${err.message}`);
-    }
-  },
 
   // 5. CSV Reports Export
   exportOrdersToCSV() {

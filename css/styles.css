@@ -2038,6 +2038,59 @@ button {
   background: #1d4ed8;
 }
 
+/* OTP Individual Digit Boxes */
+.otp-boxes-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 4px 0 10px;
+}
+
+.otp-digit-box {
+  width: 44px;
+  height: 52px;
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-align: center;
+  background: #fff;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, transform 0.12s ease;
+  caret-color: transparent;
+  letter-spacing: 0;
+}
+
+.otp-digit-box:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  background: #eff6ff;
+  transform: scale(1.07);
+}
+
+.otp-digit-box.otp-digit-filled {
+  border-color: #16a34a;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.otp-digit-box.otp-digit-error {
+  border-color: #dc2626;
+  background: #fff1f2;
+  animation: otp-shake 0.3s ease;
+}
+
+@keyframes otp-shake {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-5px); }
+  40%  { transform: translateX(5px); }
+  60%  { transform: translateX(-3px); }
+  80%  { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+
 .customer-profile-card {
   background: var(--white);
   border: 1px solid var(--slate-200);

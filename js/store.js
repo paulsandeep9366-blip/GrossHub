@@ -155,14 +155,18 @@ const Store = {
           let updatedNeeded = false;
           const updated = parsed.map(p => {
             const def = defaultMap.get(p.id);
-            if (def && def.image && (!p.image || p.image !== def.image)) {
+            // ONLY assign default stock image if product has NO image at all.
+            // NEVER overwrite a custom image uploaded or set by the merchant!
+            if (def && def.image && (!p.image || String(p.image).trim() === '')) {
               updatedNeeded = true;
               return { ...p, image: def.image };
             }
             return p;
           });
           if (updatedNeeded) {
-            localStorage.setItem(this.KEYS.PRODUCTS, JSON.stringify(updated));
+            try {
+              localStorage.setItem(this.KEYS.PRODUCTS, JSON.stringify(updated));
+            } catch (e) {}
           }
           return updated;
         }
@@ -177,7 +181,14 @@ const Store = {
   },
 
   saveProducts(products) {
-    localStorage.setItem(this.KEYS.PRODUCTS, JSON.stringify(products));
+    try {
+      localStorage.setItem(this.KEYS.PRODUCTS, JSON.stringify(products));
+    } catch (e) {
+      console.error('[Store] LocalStorage error saving products:', e);
+      if (typeof showToast === 'function') {
+        showToast('Storage quota warning: LocalStorage is full. Please optimize image sizes.', 'warning');
+      }
+    }
     // Sync to Firebase Firestore (non-blocking, batch write)
     if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
       FirebaseSync.saveProducts(products).catch(e => console.warn('[Store] Firestore saveProducts error:', e));
@@ -403,6 +414,19 @@ const Store = {
     }
 
     return order;
+  },
+
+  deleteOrder(orderId) {
+    const orders = this.getOrders();
+    const idx = orders.findIndex(o => o.id === orderId);
+    if (idx === -1) return false;
+    const deleted = orders.splice(idx, 1)[0];
+    this.saveOrders(orders);
+    // Remove from Firebase Firestore if available
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady() && FirebaseSync.deleteOrder) {
+      FirebaseSync.deleteOrder(orderId).catch(e => console.warn('[Store] Firestore deleteOrder error:', e));
+    }
+    return deleted;
   },
 
   updateCancelReason(orderId, newReason) {
