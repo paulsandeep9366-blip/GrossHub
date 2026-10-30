@@ -3,12 +3,12 @@
 <head>
   <base href="/">
   <script>
-    // Enforce clean URL at /admin/
+    // Enforce clean URL at /admin
     (function() {
       try {
         var p = window.location.pathname;
-        if (p.endsWith('/admin.html') || p.endsWith('/admin')) {
-          var clean = p.replace(/\/(admin\.html|admin)$/, '/admin/');
+        if (p.endsWith('/admin.html') || p.endsWith('/admin/')) {
+          var clean = p.replace(/\/(admin\.html|admin\/)$/, '/admin');
           window.history.replaceState(null, '', clean + window.location.search + window.location.hash);
         }
       } catch (e) {}

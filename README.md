@@ -33,7 +33,7 @@ python3 start.py
 | 🛒 **Customer Storefront** | [http://localhost:8080/](http://localhost:8080/) | Any 10-digit mobile number + SMS OTP |
 | 👤 **Customer Account** | [http://localhost:8080/customer](http://localhost:8080/customer) | Mobile OTP Login |
 | 🛵 **Rider Dispatch** | [http://localhost:8080/rider](http://localhost:8080/rider) | Password: `rider123` |
-| 🏪 **Admin Control Center** | [https://grosshub.in/admin/](https://grosshub.in/admin/) | Password: `grosshub123` |
+| 🏪 **Admin Control Center** | [http://localhost:8080/admin](http://localhost:8080/admin) | Password: `grosshub123` |
 
 ---
 
