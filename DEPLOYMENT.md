@@ -12,13 +12,13 @@ Each portal is completely isolated with its own dedicated direct URL:
 - 🛒 **Customer Storefront**: [https://grosshub.in/](https://grosshub.in/) (or `https://grosshub.in/index.html`)
 - 👤 **Customer Account Direct**: [https://grosshub.in/customer.html](https://grosshub.in/customer.html)
 - 🛵 **Rider Dispatch Portal**: [https://grosshub.in/rider.html](https://grosshub.in/rider.html)
-- 🏪 **Merchant Admin Control Center**: [https://grosshub.in/admin.html](https://grosshub.in/admin.html)
+- 🏪 **Merchant Admin Control Center**: [https://grosshub.in/admin](https://grosshub.in/admin)
 
 ### 2. GitHub Pages (`github.io`)
 - 🛒 **Customer Storefront**: [https://paulsandeep9366-blip.github.io/GrossHub/](https://paulsandeep9366-blip.github.io/GrossHub/)
 - 👤 **Customer Account Direct**: [https://paulsandeep9366-blip.github.io/GrossHub/customer.html](https://paulsandeep9366-blip.github.io/GrossHub/customer.html)
 - 🛵 **Rider Dispatch Portal**: [https://paulsandeep9366-blip.github.io/GrossHub/rider.html](https://paulsandeep9366-blip.github.io/GrossHub/rider.html)
-- 🏪 **Merchant Admin Control Center**: [https://paulsandeep9366-blip.github.io/GrossHub/admin.html](https://paulsandeep9366-blip.github.io/GrossHub/admin.html)
+- 🏪 **Merchant Admin Control Center**: [https://paulsandeep9366-blip.github.io/GrossHub/admin](https://paulsandeep9366-blip.github.io/GrossHub/admin)
 
 ### 3. Local Development (`localhost:8080`)
 
@@ -33,7 +33,7 @@ This automatically starts the local HTTP server, detects an open port, and opens
 - 🛒 **Customer Storefront**: [http://localhost:8080/](http://localhost:8080/)
 - 👤 **Customer Account Direct**: [http://localhost:8080/customer.html](http://localhost:8080/customer.html)
 - 🛵 **Rider Dispatch Portal**: [http://localhost:8080/rider.html](http://localhost:8080/rider.html)
-- 🏪 **Merchant Admin Control Center**: [http://localhost:8080/admin.html](http://localhost:8080/admin.html)
+- 🏪 **Merchant Admin Control Center**: [http://localhost:8080/admin](http://localhost:8080/admin)
 
 ---
 

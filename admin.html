@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Enforce clean extensionless URL in browser address bar (e.g. /admin instead of /admin.html)
+    (function() {
+      try {
+        var p = window.location.pathname;
+        if (p.endsWith('/admin.html')) {
+          var clean = p.replace(/\/admin\.html$/, '/admin');
+          window.history.replaceState(null, '', clean + window.location.search + window.location.hash);
+        } else if (p.endsWith('/admin/')) {
+          var clean = p.replace(/\/admin\/$/, '/admin');
+          window.history.replaceState(null, '', clean + window.location.search + window.location.hash);
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
@@ -127,7 +142,7 @@
 
   <!-- Admin Standalone Header Bar -->
   <header class="admin-page-header">
-    <a href="admin.html" class="aph-brand">
+    <a href="admin" class="aph-brand">
       <div class="logo-icon">🏪</div>
       <div>
         <h1>GrossHub <span class="badge-admin">Merchant Admin</span></h1>

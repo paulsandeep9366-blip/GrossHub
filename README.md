@@ -31,9 +31,9 @@ python3 start.py
 | Portal | Local URL | Default Login |
 | :--- | :--- | :--- |
 | 🛒 **Customer Storefront** | [http://localhost:8080/](http://localhost:8080/) | Any 10-digit mobile number + SMS OTP |
-| 👤 **Customer Account** | [http://localhost:8080/customer.html](http://localhost:8080/customer.html) | Mobile OTP Login |
-| 🛵 **Rider Dispatch** | [http://localhost:8080/rider.html](http://localhost:8080/rider.html) | Password: `rider123` |
-| 🏪 **Admin Control Center** | [http://localhost:8080/admin.html](http://localhost:8080/admin.html) | Password: `grosshub123` |
+| 👤 **Customer Account** | [http://localhost:8080/customer](http://localhost:8080/customer) | Mobile OTP Login |
+| 🛵 **Rider Dispatch** | [http://localhost:8080/rider](http://localhost:8080/rider) | Password: `rider123` |
+| 🏪 **Admin Control Center** | [http://localhost:8080/admin](http://localhost:8080/admin) | Password: `grosshub123` |
 
 ---
 
