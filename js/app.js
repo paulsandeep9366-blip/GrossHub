@@ -1928,9 +1928,14 @@ function showOrderConfirmationModal(order) {
   const sendWaBtn = document.getElementById('btnSendReceiptWhatsApp');
   if (sendWaBtn) {
     sendWaBtn.onclick = () => {
-      const config = Store.getConfig();
-      const text = encodeURIComponent(`Hi GrossHub! My Order *${order.id}* for ₹${order.summary?.grandTotal} has been placed. Please confirm delivery to ${order.customer?.address}.`);
-      window.open(`https://wa.me/91${config.phone1}?text=${text}`, '_blank');
+      if (typeof WhatsAppNotifier !== 'undefined' && typeof WhatsAppNotifier.getDirectWhatsAppUrl === 'function') {
+        const waUrl = WhatsAppNotifier.getDirectWhatsAppUrl(order);
+        window.open(waUrl, '_blank');
+      } else {
+        const config = Store.getConfig();
+        const text = encodeURIComponent(`Hi GrossHub! My Order *${order.id}* for ₹${order.summary?.grandTotal} has been placed. Please confirm delivery to ${order.customer?.address}.`);
+        window.open(`https://wa.me/91${config.phone1}?text=${text}`, '_blank');
+      }
     };
   }
 

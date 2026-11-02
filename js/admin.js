@@ -986,6 +986,16 @@ This action cannot be undone.`);
       statusToggle.checked = config.serviceStatus !== 'closed';
     }
 
+    // Populate WhatsApp Notification Settings
+    if (typeof WhatsAppNotifier !== 'undefined') {
+      const waCfg = WhatsAppNotifier.getConfig();
+      const waToggle = document.getElementById('adminWaAlertsEnabled');
+      if (waToggle) waToggle.checked = waCfg.enabled !== false;
+      set('adminWaTargetPhone', waCfg.targetPhone || config.whatsappNumber || '919862272399');
+      set('adminWaCallMeBotKey', waCfg.callMeBotApiKey || '');
+      set('adminWaWebhookUrl', waCfg.webhookUrl || '');
+    }
+
   },
 
   handleSaveSettings() {
@@ -2013,6 +2023,60 @@ This action cannot be undone.`);
     showToast(`Rider ${name} removed from fleet.`, "info");
     this.renderRidersTab();
     this.renderOrders();
+  },
+
+  handleSaveWhatsAppSettings() {
+    if (typeof WhatsAppNotifier === 'undefined') {
+      this.showToast('WhatsApp Notification engine not loaded.', 'error');
+      return;
+    }
+    const enabled = document.getElementById('adminWaAlertsEnabled')?.checked !== false;
+    const targetPhone = document.getElementById('adminWaTargetPhone')?.value.trim() || '919862272399';
+    const callMeBotApiKey = document.getElementById('adminWaCallMeBotKey')?.value.trim() || '';
+    const webhookUrl = document.getElementById('adminWaWebhookUrl')?.value.trim() || '';
+
+    const saved = WhatsAppNotifier.saveConfig({
+      enabled,
+      targetPhone,
+      callMeBotApiKey,
+      webhookUrl
+    });
+
+    const feedback = document.getElementById('adminWaStatusFeedback');
+    if (feedback) {
+      feedback.style.color = '#15803d';
+      feedback.textContent = `✓ WhatsApp alert settings saved for +${saved.targetPhone}!`;
+      setTimeout(() => { feedback.textContent = ''; }, 4000);
+    }
+    this.showToast(`WhatsApp alert settings saved for +${saved.targetPhone}!`, 'success');
+  },
+
+  async handleTestWhatsAppAlert() {
+    if (typeof WhatsAppNotifier === 'undefined') {
+      this.showToast('WhatsApp Notification engine not loaded.', 'error');
+      return;
+    }
+    const feedback = document.getElementById('adminWaStatusFeedback');
+    if (feedback) {
+      feedback.style.color = '#0284c7';
+      feedback.textContent = '⏳ Sending test WhatsApp alert...';
+    }
+
+    try {
+      const res = await WhatsAppNotifier.sendTestAlert();
+      if (feedback) {
+        feedback.style.color = '#15803d';
+        feedback.textContent = `✓ Test alert sent via ${res.method}!`;
+        setTimeout(() => { feedback.textContent = ''; }, 5000);
+      }
+      this.showToast('Test WhatsApp alert dispatched successfully!', 'success');
+    } catch (e) {
+      if (feedback) {
+        feedback.style.color = '#b91c1c';
+        feedback.textContent = `✗ Error: ${e.message}`;
+      }
+      this.showToast(`Error sending test: ${e.message}`, 'error');
+    }
   },
 
   handlePurgeDemoData() {

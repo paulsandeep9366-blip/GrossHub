@@ -56,6 +56,45 @@ def open_browser(url, delay=0.5):
 class CustomHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         clean_path = self.path.split('?')[0].split('#')[0]
+
+        # WhatsApp Notification Proxy
+        if clean_path == '/api/notify-whatsapp':
+            from urllib.parse import urlparse, parse_qs, quote
+            import urllib.request
+            import json
+
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            phone = params.get('phone', [''])[0]
+            apikey = params.get('apikey', [''])[0]
+            text = params.get('text', [''])[0]
+
+            if not phone or not apikey or not text:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': 'Missing phone, apikey, or text'}).encode('utf-8'))
+                return
+
+            try:
+                call_url = f"https://api.callmebot.com/whatsapp.php?phone={quote(phone)}&text={quote(text)}&apikey={quote(apikey)}"
+                req = urllib.request.Request(call_url, headers={'User-Agent': 'GrossHub-Server/1.0'})
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    resp_body = resp.read().decode('utf-8', errors='replace')
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'ok': True, 'response': resp_body}).encode('utf-8'))
+                    return
+            except Exception as e:
+                self.send_response(502)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
+                return
         # Redirect legacy paths and trailing slashes to clean extensionless URLs on localhost
         if clean_path in ('/admin/', '/admin.html'):
             target = '/admin'

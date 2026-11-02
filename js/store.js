@@ -341,6 +341,11 @@ const Store = {
       FirebaseSync.saveOrder(newOrder).catch(e => console.warn('[Store] Firestore saveOrder error:', e));
     }
 
+    // Dispatch automated WhatsApp notification to Store Admin
+    if (typeof WhatsAppNotifier !== 'undefined' && typeof WhatsAppNotifier.sendOrderNotification === 'function') {
+      WhatsAppNotifier.sendOrderNotification(newOrder).catch(e => console.warn('[Store] WhatsApp alert error:', e));
+    }
+
     return newOrder;
   },
 

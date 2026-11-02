@@ -140,7 +140,7 @@
 
   <!-- Admin Standalone Header Bar -->
   <header class="admin-page-header">
-    <a href="https://grosshub.in/admin/" class="aph-brand">
+    <a href="/admin" class="aph-brand">
       <div class="logo-icon">🏪</div>
       <div>
         <h1>GrossHub <span class="badge-admin">Merchant Admin</span></h1>
@@ -442,6 +442,57 @@
               </button>
             </form>
 
+
+            <!-- Automated WhatsApp Order Alerts -->
+            <div style="margin-top: 25px; padding: 22px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md);">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:1.6rem;">📲</span>
+                  <div>
+                    <h4 style="margin:0; color:#166534; font-size:1.05rem;">Automated WhatsApp Order Alerts</h4>
+                    <p style="margin:2px 0 0; font-size:0.82rem; color:#15803d;">Receive instant, itemized WhatsApp notifications on your phone whenever an order is placed.</p>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <label class="switch">
+                    <input type="checkbox" id="adminWaAlertsEnabled" checked>
+                    <span class="slider round"></span>
+                  </label>
+                  <span style="font-size:0.85rem; font-weight:700; color:#166534;">Alerts Active</span>
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">WhatsApp Alert Number</label>
+                  <input type="text" id="adminWaTargetPhone" class="form-input" placeholder="e.g. 919862272399" value="919862272399">
+                  <small class="text-muted">Primary store number receiving instant order pings (+91 9862272399).</small>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CallMeBot Free API Key (Automated Delivery)</label>
+                  <input type="text" id="adminWaCallMeBotKey" class="form-input" placeholder="Enter CallMeBot API key">
+                  <small class="text-muted">
+                    ⚡ <strong>Get Free Key in 10s:</strong> Send <code style="background:#dcfce7; padding:2px 6px; border-radius:4px; color:#166534;">I allow callmebot to send me messages</code> to <a href="https://wa.me/34941861602" target="_blank" style="color:#059669; font-weight:700;">+34 941 86 16 02</a> on WhatsApp.
+                  </small>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top:8px;">
+                <label class="form-label">Custom Webhook URL (Optional)</label>
+                <input type="url" id="adminWaWebhookUrl" class="form-input" placeholder="https://hook.eu1.make.com/... or Zapier/Wati/custom webhook">
+                <small class="text-muted">Optional: Forward real-time order payloads to any external webhook or webhook service.</small>
+              </div>
+
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:16px;">
+                <button type="button" class="btn-xs" style="background:#16a34a; color:#fff; border:none; padding:9px 18px; border-radius:var(--radius-sm); font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="AdminPanel.handleSaveWhatsAppSettings()">
+                  💾 Save WhatsApp Settings
+                </button>
+                <button type="button" class="btn-xs" style="background:#0284c7; color:#fff; border:none; padding:9px 18px; border-radius:var(--radius-sm); font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="AdminPanel.handleTestWhatsAppAlert()">
+                  🧪 Send Test WhatsApp Alert
+                </button>
+                <span id="adminWaStatusFeedback" style="font-size:0.85rem; font-weight:600;"></span>
+              </div>
+            </div>
 
             <!-- Data Management & Demo Purge -->
             <div style="margin-top: 30px; padding: 22px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: var(--radius-md);">
@@ -786,6 +837,7 @@
   <script src="js/data.js?v=4.7.0"></script>
   <script src="js/store.js?v=4.7.0"></script>
   <script src="js/firebase.js?v=1.0.0"></script>
+  <script src="js/whatsapp-notify.js?v=4.7.0"></script>
   <script src="js/admin.js?v=4.7.0"></script>
   <script>
     // Utility helpers for standalone modals & toasts

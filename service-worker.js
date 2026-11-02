@@ -21,6 +21,7 @@ const ASSETS_TO_CACHE = [
   './js/data.js',
   './js/store.js',
   './js/sms-service.js',
+  './js/whatsapp-notify.js',
   './js/tracking.js',
   './js/rider.js',
   './js/admin.js',
