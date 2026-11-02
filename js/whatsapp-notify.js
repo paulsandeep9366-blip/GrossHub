@@ -14,7 +14,7 @@ const WhatsAppNotifier = {
       targetPhone: '919862272399',
       callMeBotApiKey: '',
       webhookUrl: '',
-      autoOpenDirectWa: false,
+      autoOpenDirectWa: true,
       soundAlert: true
     };
   },

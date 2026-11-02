@@ -109,6 +109,10 @@ const AdminPanel = {
             body: `Order ${latest.id} (₹${latest.summary?.grandTotal || 0}) by ${latest.customer?.name || 'Customer'}`
           });
         }
+        // Send WhatsApp notification if pending
+        if (typeof WhatsAppNotifier !== 'undefined' && newOrders[0]) {
+          WhatsAppNotifier.sendOrderNotification(newOrders[0]).catch(e => console.warn('[AdminPanel] WhatsApp alert error:', e));
+        }
       } else {
         this.knownOrderIds = new Set(orders.map(o => o.id));
       }

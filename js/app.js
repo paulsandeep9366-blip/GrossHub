@@ -1863,8 +1863,18 @@ function handleCheckoutSubmit(e) {
     grandTotal: totals.grandTotal
   });
 
+  // Direct WhatsApp dispatch to Store Admin (+91 9862272399)
+  if (typeof WhatsAppNotifier !== 'undefined' && typeof WhatsAppNotifier.getDirectWhatsAppUrl === 'function') {
+    try {
+      const waUrl = WhatsAppNotifier.getDirectWhatsAppUrl(order);
+      window.open(waUrl, '_blank');
+    } catch(e) {
+      console.warn('[Checkout] Direct WhatsApp dispatch blocked by browser:', e);
+    }
+  }
+
   // Clear cart
-  Store.clearCart();Store.clearCart();
+  Store.clearCart();
   activeCoupon = null;
   updateCartBadgeAndDrawer();
   closeModal('checkoutModal');
