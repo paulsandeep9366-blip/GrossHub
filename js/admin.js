@@ -130,9 +130,13 @@ const AdminPanel = {
     // Register Firestore real-time callbacks for live order/product/config updates
     const self = this;
     let attempts = 0;
-    const maxAttempts = 15;
+    const maxAttempts = 20;
     const tryRegister = () => {
       if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+        // Status pill listener
+        FirebaseSync.onStatusChange((isOnline) => {
+          self.updateCloudStatusPill(isOnline);
+        });
         // Orders: refresh admin order table & play notifications in real-time
         FirebaseSync.onOrdersChange((orders) => {
           self.checkForNewOrdersAndRefresh();
@@ -149,13 +153,74 @@ const AdminPanel = {
             self.loadSettingsForm && self.loadSettingsForm();
           }
         });
+        self.updateCloudStatusPill(true);
         console.log('[AdminPanel] Firestore real-time sync registered.');
       } else if (attempts < maxAttempts) {
         attempts++;
-        setTimeout(tryRegister, 800);
+        setTimeout(tryRegister, 500);
+      } else {
+        self.updateCloudStatusPill(false);
       }
     };
-    setTimeout(tryRegister, 500);
+    setTimeout(tryRegister, 300);
+  },
+
+  updateCloudStatusPill(isOnline) {
+    const pill = document.getElementById('adminCloudStatusPill');
+    if (!pill) return;
+    if (isOnline) {
+      pill.style.background = '#dcfce7';
+      pill.style.color = '#15803d';
+      pill.style.border = '1px solid #bbf7d0';
+      pill.innerHTML = '<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e;"></span> ☁️ Cloud Live (grosshub.in)';
+      pill.title = 'Real-time bidirectional sync active with grosshub.in Firestore';
+    } else {
+      pill.style.background = '#fef3c7';
+      pill.style.color = '#92400e';
+      pill.style.border = '1px solid #fde68a';
+      pill.innerHTML = '<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span> 🟠 Local Mode';
+      pill.title = 'Running in LocalStorage mode. Click "Sync to Live Site" to connect.';
+    }
+  },
+
+  async forcePushCloudSync() {
+    const btn = document.getElementById('btnAdminCloudSync');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Syncing...';
+    }
+    showToast('☁️ Pushing product catalog and settings to live cloud (grosshub.in)...', 'info');
+    try {
+      if (typeof FirebaseSync === 'undefined') {
+        throw new Error('FirebaseSync library not found');
+      }
+      if (!FirebaseSync.isReady()) {
+        FirebaseSync.init();
+      }
+      if (!FirebaseSync.isReady()) {
+        throw new Error('Could not initialize Firebase Firestore. Check network.');
+      }
+      const products = Store.getProducts();
+      const config = Store.getConfig();
+      const pSuccess = await FirebaseSync.saveProducts(products);
+      const cSuccess = await FirebaseSync.saveConfig(config);
+      if (pSuccess && cSuccess) {
+        showToast('✅ Synced ' + products.length + ' products & settings to live cloud! Changes are now live on grosshub.in.', 'success');
+        this.updateCloudStatusPill(true);
+      } else {
+        showToast('⚠️ Partial cloud sync. Some documents may have failed.', 'warning');
+      }
+    } catch (e) {
+      console.error('[AdminPanel] forcePushCloudSync error:', e);
+      showToast('Cloud sync error: ' + (e.message || 'Check console'), 'error');
+      this.updateCloudStatusPill(false);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml || '☁️ Sync to Live Site';
+      }
+    }
   },
 
   initSessionGuard() {

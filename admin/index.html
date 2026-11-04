@@ -191,7 +191,13 @@
       <!-- Top Bar Inside Dashboard -->
       <div class="admin-top-bar">
         <h3>🏪 GrossHub Admin Control Center</h3>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <span id="adminCloudStatusPill" style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; display: inline-flex; align-items: center; gap: 5px;">
+            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span> Connecting Cloud...
+          </span>
+          <button class="btn-xs btn-hero-primary" id="btnAdminCloudSync" style="background: #2563eb; display: inline-flex; align-items: center; gap: 5px;" onclick="AdminPanel.forcePushCloudSync()" title="Push all catalog and store setting changes directly to live grosshub.in cloud">
+            ☁️ Sync to Live Site
+          </button>
           <button class="btn-xs btn-hero-primary" style="background: #059669;" onclick="AdminPanel.printAllIndividualBills()" title="Generate & Print / Download PDF Bills for Every Individual Order">
             📑 All Individual Bills PDF
           </button>
@@ -834,11 +840,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="js/data.js?v=4.7.0"></script>
-  <script src="js/store.js?v=4.7.0"></script>
-  <script src="js/firebase.js?v=1.0.0"></script>
-  <script src="js/whatsapp-notify.js?v=4.7.0"></script>
-  <script src="js/admin.js?v=4.7.0"></script>
+  <script src="js/data.js?v=4.8.0"></script>
+  <script src="js/store.js?v=4.8.0"></script>
+  <script src="js/firebase.js?v=4.8.0"></script>
+  <script src="js/whatsapp-notify.js?v=4.8.0"></script>
+  <script src="js/admin.js?v=4.8.0"></script>
   <script>
     // Utility helpers for standalone modals & toasts
     function openModal(id) {

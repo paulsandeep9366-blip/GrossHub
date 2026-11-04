@@ -19,6 +19,7 @@ const FirebaseSync = {
   _onOrdersChangeCallbacks: [],
   _onProductsChangeCallbacks: [],
   _onConfigChangeCallbacks: [],
+  _onStatusChangeCallbacks: [],
 
   COLLECTIONS: {
     ORDERS: 'orders',
@@ -34,7 +35,21 @@ const FirebaseSync = {
         console.warn('[FirebaseSync] Firebase SDK not loaded yet.');
         return false;
       }
-      const app = firebase.app();
+      let app = null;
+      if (firebase.apps && firebase.apps.length > 0) {
+        app = firebase.app();
+      } else {
+        const cfg = (typeof Store !== 'undefined' && Store.getFirebaseConfig)
+          ? Store.getFirebaseConfig()
+          : (typeof DEFAULT_SHOP_CONFIG !== 'undefined' ? DEFAULT_SHOP_CONFIG.firebaseConfig : null);
+        if (cfg && cfg.apiKey && cfg.projectId) {
+          app = firebase.initializeApp(cfg);
+          console.log('[FirebaseSync] Firebase App initialized with projectId:', cfg.projectId);
+        } else {
+          console.warn('[FirebaseSync] No valid Firebase configuration found.');
+          return false;
+        }
+      }
       if (!app) return false;
       if (typeof firebase.firestore !== 'function') {
         console.warn('[FirebaseSync] Firestore SDK not loaded.');
@@ -43,9 +58,11 @@ const FirebaseSync = {
       this._db = firebase.firestore();
       this._isReady = true;
       console.log('[FirebaseSync] Firestore ready ✓');
+      this._notifyStatusChange(true);
       return true;
     } catch (e) {
       console.warn('[FirebaseSync] Init error:', e);
+      this._notifyStatusChange(false);
       return false;
     }
   },
@@ -58,6 +75,25 @@ const FirebaseSync = {
   db() {
     if (!this.isReady()) return null;
     return this._db;
+  },
+
+  _notifyProductsChange(products) {
+    this._onProductsChangeCallbacks.forEach(cb => { try { cb(products); } catch (e) {} });
+  },
+  _notifyConfigChange(config) {
+    this._onConfigChangeCallbacks.forEach(cb => { try { cb(config); } catch (e) {} });
+  },
+  _notifyOrdersChange(orders) {
+    this._onOrdersChangeCallbacks.forEach(cb => { try { cb(orders); } catch (e) {} });
+  },
+  _notifyStatusChange(isOnline) {
+    this._onStatusChangeCallbacks.forEach(cb => { try { cb(isOnline); } catch (e) {} });
+  },
+  onStatusChange(cb) {
+    if (typeof cb === 'function') {
+      this._onStatusChangeCallbacks.push(cb);
+      cb(this._isReady && !!this._db);
+    }
   },
 
   // ─── Orders ────────────────────────────────────────────────────────
@@ -130,7 +166,17 @@ const FirebaseSync = {
     if (this._ordersListener) { this._ordersListener(); this._ordersListener = null; }
   },
 
-  onOrdersChange(cb) { if (typeof cb === 'function') this._onOrdersChangeCallbacks.push(cb); },
+  onOrdersChange(cb) {
+    if (typeof cb === 'function') {
+      this._onOrdersChangeCallbacks.push(cb);
+      if (typeof Store !== 'undefined' && Store.getOrders) {
+        try {
+          const ords = Store.getOrders();
+          if (ords && ords.length) cb(ords);
+        } catch (e) {}
+      }
+    }
+  },
 
   // ─── Products ──────────────────────────────────────────────────────
   async saveProducts(products) {
@@ -217,7 +263,17 @@ const FirebaseSync = {
     if (this._productsListener) { this._productsListener(); this._productsListener = null; }
   },
 
-  onProductsChange(cb) { if (typeof cb === 'function') this._onProductsChangeCallbacks.push(cb); },
+  onProductsChange(cb) {
+    if (typeof cb === 'function') {
+      this._onProductsChangeCallbacks.push(cb);
+      if (typeof Store !== 'undefined' && Store.getProducts) {
+        try {
+          const prods = Store.getProducts();
+          if (prods && prods.length) cb(prods);
+        } catch (e) {}
+      }
+    }
+  },
 
   // ─── Config ────────────────────────────────────────────────────────
   async saveConfig(config) {
@@ -273,7 +329,17 @@ const FirebaseSync = {
     if (this._configListener) { this._configListener(); this._configListener = null; }
   },
 
-  onConfigChange(cb) { if (typeof cb === 'function') this._onConfigChangeCallbacks.push(cb); },
+  onConfigChange(cb) {
+    if (typeof cb === 'function') {
+      this._onConfigChangeCallbacks.push(cb);
+      if (typeof Store !== 'undefined' && Store.getConfig) {
+        try {
+          const cfg = Store.getConfig();
+          if (cfg) cb(cfg);
+        } catch (e) {}
+      }
+    }
+  },
 
   // ─── Hydration ─────────────────────────────────────────────────────
   async hydrate() {
@@ -289,19 +355,23 @@ const FirebaseSync = {
         const merged = Array.from(map.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         localStorage.setItem(Store.KEYS.ORDERS, JSON.stringify(merged));
         console.log('[FirebaseSync] Orders hydrated:', merged.length);
+        this._notifyOrdersChange(merged);
       }
       // Products
       const fsProducts = await this.fetchProducts();
       if (fsProducts && fsProducts.length > 0 && typeof Store !== 'undefined') {
         localStorage.setItem(Store.KEYS.PRODUCTS, JSON.stringify(fsProducts));
         console.log('[FirebaseSync] Products hydrated:', fsProducts.length);
+        this._notifyProductsChange(fsProducts);
       }
       // Config
       const fsConfig = await this.fetchConfig();
       if (fsConfig && typeof Store !== 'undefined') {
         const defaults = typeof DEFAULT_SHOP_CONFIG !== 'undefined' ? DEFAULT_SHOP_CONFIG : {};
-        localStorage.setItem(Store.KEYS.CONFIG, JSON.stringify({ ...defaults, ...fsConfig }));
+        const mergedConfig = { ...defaults, ...fsConfig };
+        localStorage.setItem(Store.KEYS.CONFIG, JSON.stringify(mergedConfig));
         console.log('[FirebaseSync] Config hydrated.');
+        this._notifyConfigChange(mergedConfig);
       }
     } catch (e) {
       console.warn('[FirebaseSync] Hydration error (non-fatal):', e);
@@ -352,34 +422,33 @@ const FirebaseSync = {
 };
 
 // ─── Auto-Bootstrap ────────────────────────────────────────────────────────────
-// Wait for Firebase app to be initialized by SMSGateway, then start Firestore.
+// Automatically initialize Firebase and start real-time Firestore sync
 (function autoStartFirebaseSync() {
   let attempts = 0;
-  const maxAttempts = 20;
+  const maxAttempts = 30;
 
   function tryStart() {
     attempts++;
     if (
       typeof firebase !== 'undefined' &&
       typeof firebase.firestore === 'function' &&
-      firebase.apps && firebase.apps.length > 0
+      (typeof Store !== 'undefined' || typeof DEFAULT_SHOP_CONFIG !== 'undefined')
     ) {
-      FirebaseSync.init();
-      if (FirebaseSync.isReady()) {
+      if (FirebaseSync.init() && FirebaseSync.isReady()) {
         FirebaseSync.start();
         return;
       }
     }
     if (attempts < maxAttempts) {
-      setTimeout(tryStart, 500);
+      setTimeout(tryStart, 200);
     } else {
-      console.warn('[FirebaseSync] Firebase unavailable after 10s — running in LocalStorage-only mode.');
+      console.warn('[FirebaseSync] Firebase unavailable after timeout — running in LocalStorage-only mode.');
     }
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(tryStart, 200));
+    document.addEventListener('DOMContentLoaded', () => setTimeout(tryStart, 100));
   } else {
-    setTimeout(tryStart, 200);
+    setTimeout(tryStart, 100);
   }
 })();

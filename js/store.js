@@ -216,6 +216,9 @@ const Store = {
     };
     products.unshift(newProduct);
     this.saveProducts(products);
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+      FirebaseSync.saveProduct(newProduct).catch(e => console.warn('[Store] Firestore saveProduct error:', e));
+    }
     return newProduct;
   },
 
@@ -225,6 +228,9 @@ const Store = {
     if (index !== -1) {
       products[index] = { ...products[index], ...updates };
       this.saveProducts(products);
+      if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+        FirebaseSync.saveProduct(products[index]).catch(e => console.warn('[Store] Firestore saveProduct error:', e));
+      }
       return products[index];
     }
     return null;
@@ -234,6 +240,9 @@ const Store = {
     let products = this.getProducts();
     products = products.filter(p => p.id !== Number(id));
     this.saveProducts(products);
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+      FirebaseSync.deleteProduct(id).catch(e => console.warn('[Store] Firestore deleteProduct error:', e));
+    }
     return true;
   },
 
@@ -243,6 +252,9 @@ const Store = {
     if (product) {
       product.inStock = !product.inStock;
       this.saveProducts(products);
+      if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
+        FirebaseSync.saveProduct(product).catch(e => console.warn('[Store] Firestore saveProduct error:', e));
+      }
       return product;
     }
     return null;

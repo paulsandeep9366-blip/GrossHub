@@ -219,7 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Register Firestore real-time callbacks for live product/config updates
   (function initStorefrontFirestoreSync() {
+    let attempts = 0;
+    const maxAttempts = 30;
     const tryRegister = () => {
+      attempts++;
       if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady()) {
         // Products: refresh storefront product grid in real-time
         FirebaseSync.onProductsChange((products) => {
@@ -233,11 +236,11 @@ document.addEventListener('DOMContentLoaded', () => {
           renderStoreHeaderInfo();
         });
         console.log('[Storefront] Firestore real-time sync registered.');
-      } else {
-        setTimeout(tryRegister, 800);
+      } else if (attempts < maxAttempts) {
+        setTimeout(tryRegister, 300);
       }
     };
-    setTimeout(tryRegister, 500);
+    setTimeout(tryRegister, 150);
   })();
 });
 
