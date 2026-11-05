@@ -998,19 +998,28 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <!-- Scripts -->
-  <script src="js/data.js?v=4.8.0"></script>
-  <script src="js/store.js?v=4.8.0"></script>
-  <script src="js/firebase.js?v=4.8.0"></script>
-  <script src="js/whatsapp-notify.js?v=4.8.0"></script>
-  <script src="js/tracking.js?v=4.8.0"></script>
-  <script src="js/app.js?v=4.8.0"></script>
+  <script src="js/data.js?v=4.8.1"></script>
+  <script src="js/store.js?v=4.8.1"></script>
+  <script src="js/firebase.js?v=4.8.1"></script>
+  <script src="js/whatsapp-notify.js?v=4.8.1"></script>
+  <script src="js/tracking.js?v=4.8.1"></script>
+  <script src="js/app.js?v=4.8.1"></script>
 
-  <!-- PWA Service Worker Registration -->
+  <!-- PWA Service Worker Registration & Live Cache Invalidation -->
   <script>
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js').catch(err => {
-          console.log('SW registration skipped or error:', err);
+        navigator.serviceWorker.register('service-worker.js').then((reg) => {
+          reg.update();
+        }).catch(err => {
+          console.log('SW registration error:', err);
         });
       });
     }

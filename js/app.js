@@ -227,20 +227,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Products: refresh storefront product grid in real-time
         FirebaseSync.onProductsChange((products) => {
           renderCategoryPills();
-          renderProducts();
+          renderProducts(products);
           updateCartBadgeAndDrawer();
           console.log('[Storefront] Products refreshed from Firestore:', products.length);
         });
         // Config: refresh store header info in real-time
         FirebaseSync.onConfigChange((config) => {
           renderStoreHeaderInfo();
+          updateCartBadgeAndDrawer();
         });
         console.log('[Storefront] Firestore real-time sync registered.');
       } else if (attempts < maxAttempts) {
         setTimeout(tryRegister, 300);
       }
     };
-    setTimeout(tryRegister, 150);
+    tryRegister();
   })();
 });
 
@@ -324,12 +325,12 @@ function selectCategory(catId) {
 }
 
 // 3. Product Catalog Grid
-function renderProducts() {
+function renderProducts(overrideProducts = null) {
   const grid = document.getElementById('productsGrid');
   const countEl = document.getElementById('displayedProductsCount');
   if (!grid) return;
 
-  let products = Store.getProducts();
+  let products = (Array.isArray(overrideProducts) && overrideProducts.length > 0) ? overrideProducts : Store.getProducts();
 
   // Filter Category
   if (activeCategory !== 'all') {

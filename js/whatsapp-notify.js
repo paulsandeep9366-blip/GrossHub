@@ -82,8 +82,7 @@ const WhatsAppNotifier = {
     const itemsText = items.map((item, idx) => {
       const unit = item.unit ? ` (${item.unit})` : '';
       return `${idx + 1}. *${item.name}* × ${item.qty}${unit} — ₹${(item.price || 0) * (item.qty || 1)}`;
-    }).join('
-');
+    }).join('\n');
 
     const addressParts = [
       cust.address,

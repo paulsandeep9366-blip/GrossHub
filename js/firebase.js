@@ -147,7 +147,7 @@ const FirebaseSync = {
       this._ordersListener = db.collection(this.COLLECTIONS.ORDERS)
         .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
-          if (snapshot.metadata.hasPendingWrites) return;
+          // processed snapshot immediately
           const orders = [];
           snapshot.forEach(doc => orders.push(doc.data()));
           if (typeof Store !== 'undefined') {
@@ -243,7 +243,7 @@ const FirebaseSync = {
     try {
       this._productsListener = db.collection(this.COLLECTIONS.PRODUCTS)
         .onSnapshot((snapshot) => {
-          if (snapshot.metadata.hasPendingWrites) return;
+          // processed snapshot immediately
           const products = [];
           snapshot.forEach(doc => products.push(doc.data()));
           products.sort((a, b) => (a.id || 0) - (b.id || 0));
@@ -308,7 +308,7 @@ const FirebaseSync = {
       this._configListener = db.collection(this.COLLECTIONS.CONFIG)
         .doc(this.CONFIG_DOC_ID)
         .onSnapshot((doc) => {
-          if (!doc.exists || doc.metadata.hasPendingWrites) return;
+          if (!doc.exists) return;
           const config = doc.data();
           if (typeof Store !== 'undefined') {
             try {
@@ -357,12 +357,22 @@ const FirebaseSync = {
         console.log('[FirebaseSync] Orders hydrated:', merged.length);
         this._notifyOrdersChange(merged);
       }
-      // Products
+      // Products: overlay Firestore cloud data onto baseline catalog
       const fsProducts = await this.fetchProducts();
       if (fsProducts && fsProducts.length > 0 && typeof Store !== 'undefined') {
-        localStorage.setItem(Store.KEYS.PRODUCTS, JSON.stringify(fsProducts));
-        console.log('[FirebaseSync] Products hydrated:', fsProducts.length);
-        this._notifyProductsChange(fsProducts);
+        const localProducts = Store.getProducts();
+        const map = new Map();
+        if (typeof DEFAULT_PRODUCTS !== 'undefined' && Array.isArray(DEFAULT_PRODUCTS)) {
+          DEFAULT_PRODUCTS.forEach(p => map.set(Number(p.id), { ...p }));
+        }
+        if (Array.isArray(localProducts)) {
+          localProducts.forEach(p => map.set(Number(p.id), { ...p }));
+        }
+        fsProducts.forEach(p => map.set(Number(p.id), { ...p }));
+        const merged = Array.from(map.values()).sort((a, b) => (a.id || 0) - (b.id || 0));
+        localStorage.setItem(Store.KEYS.PRODUCTS, JSON.stringify(merged));
+        console.log('[FirebaseSync] Products hydrated:', merged.length);
+        this._notifyProductsChange(merged);
       }
       // Config
       const fsConfig = await this.fetchConfig();

@@ -4,7 +4,7 @@
  * Stale-while-revalidate for static assets
  */
 
-const CACHE_NAME = 'grosshub-v4.8.0';
+const CACHE_NAME = 'grosshub-v4.8.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -60,7 +60,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // Network-First for HTML navigation / document requests (avoids stale home page)
-  if (event.request.mode === 'navigate' || event.request.destination === 'document' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+  if (event.request.mode === 'navigate' || event.request.destination === 'document' || url.pathname.endsWith('.html') || url.pathname.endsWith('/') || url.pathname.endsWith('/admin') || url.pathname === '/admin') {
     event.respondWith(
       fetch(event.request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
@@ -92,4 +92,8 @@ self.addEventListener('fetch', (event) => {
       return fetch(event.request);
     })
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
