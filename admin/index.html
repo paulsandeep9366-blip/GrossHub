@@ -449,14 +449,17 @@
             </form>
 
 
-            <!-- Automated WhatsApp Order Alerts -->
+                        <!-- Automated WhatsApp Order Alerts -->
             <div style="margin-top: 25px; padding: 22px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md);">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
                 <div style="display:flex; align-items:center; gap:10px;">
                   <span style="font-size:1.6rem;">📲</span>
                   <div>
-                    <h4 style="margin:0; color:#166534; font-size:1.05rem;">Automated WhatsApp Order Alerts</h4>
-                    <p style="margin:2px 0 0; font-size:0.82rem; color:#15803d;">Receive instant, itemized WhatsApp notifications on your phone whenever an order is placed.</p>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <h4 style="margin:0; color:#166534; font-size:1.05rem;">Automated WhatsApp Order Alerts</h4>
+                      <span id="adminWaStatusBadge" style="display:inline-block; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:12px; background:#fef3c7; color:#92400e;">🟡 Setup Key for Auto Alerts</span>
+                    </div>
+                    <p style="margin:2px 0 0; font-size:0.82rem; color:#15803d;">Receive instant, automated WhatsApp notifications on your phone whenever an order is placed on grosshub.in.</p>
                   </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -468,6 +471,24 @@
                 </div>
               </div>
 
+              <!-- Quick Setup Guide Box -->
+              <div style="background:#ffffff; border:1px solid #86efac; border-radius:8px; padding:14px; margin-bottom:14px;">
+                <div style="font-weight:700; color:#166534; font-size:0.88rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                  <span>⚡</span> <span>Get Free Automated WhatsApp Alerts in 15 Seconds (CallMeBot):</span>
+                </div>
+                <ol style="margin:0 0 10px 18px; padding:0; font-size:0.82rem; color:#334155; line-height:1.6;">
+                  <li>
+                    From your WhatsApp (<strong>+91 9862272399</strong>), tap to send the authorization message:
+                    <a href="https://wa.me/34941861602?text=I%20allow%20callmebot%20to%20send%20me%20messages" target="_blank" style="display:inline-flex; align-items:center; gap:4px; background:#22c55e; color:#ffffff; padding:2px 8px; border-radius:4px; font-weight:700; text-decoration:none; margin:2px 0;">
+                      👉 Send "I allow callmebot to send me messages" (+34 941 86 16 02)
+                    </a>
+                    <span style="color:#64748b;">(Backup bot: <a href="https://wa.me/34644653296?text=I%20allow%20callmebot%20to%20send%20me%20messages" target="_blank" style="color:#15803d; font-weight:600;">+34 644 65 32 96</a>)</span>
+                  </li>
+                  <li>CallMeBot will instantly reply with: <em>"API Activated... Your API Key is: [API_KEY]"</em>.</li>
+                  <li>Paste that API Key into the box below and click <strong>"Save WhatsApp Settings"</strong>. That's it! Every new order will ping your WhatsApp automatically!</li>
+                </ol>
+              </div>
+
               <div class="form-row-2">
                 <div class="form-group">
                   <label class="form-label">WhatsApp Alert Number</label>
@@ -476,9 +497,9 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">CallMeBot Free API Key (Automated Delivery)</label>
-                  <input type="text" id="adminWaCallMeBotKey" class="form-input" placeholder="Enter CallMeBot API key">
+                  <input type="text" id="adminWaCallMeBotKey" class="form-input" placeholder="Enter CallMeBot API key (e.g. 123456)">
                   <small class="text-muted">
-                    ⚡ <strong>Get Free Key in 10s:</strong> Send <code style="background:#dcfce7; padding:2px 6px; border-radius:4px; color:#166534;">I allow callmebot to send me messages</code> to <a href="https://wa.me/34941861602" target="_blank" style="color:#059669; font-weight:700;">+34 941 86 16 02</a> on WhatsApp.
+                    Instant 24/7 delivery to your WhatsApp without requiring customer intervention.
                   </small>
                 </div>
               </div>
@@ -486,7 +507,7 @@
               <div class="form-group" style="margin-top:8px;">
                 <label class="form-label">Custom Webhook URL (Optional)</label>
                 <input type="url" id="adminWaWebhookUrl" class="form-input" placeholder="https://hook.eu1.make.com/... or Zapier/Wati/custom webhook">
-                <small class="text-muted">Optional: Forward real-time order payloads to any external webhook or webhook service.</small>
+                <small class="text-muted">Optional: Forward real-time order payloads to Make.com, Zapier, Twilio, or Meta WhatsApp Business API.</small>
               </div>
 
               <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:16px;">

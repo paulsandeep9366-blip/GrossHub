@@ -1061,8 +1061,25 @@ This action cannot be undone.`);
       const waToggle = document.getElementById('adminWaAlertsEnabled');
       if (waToggle) waToggle.checked = waCfg.enabled !== false;
       set('adminWaTargetPhone', waCfg.targetPhone || config.whatsappNumber || '919862272399');
-      set('adminWaCallMeBotKey', waCfg.callMeBotApiKey || '');
-      set('adminWaWebhookUrl', waCfg.webhookUrl || '');
+      set('adminWaCallMeBotKey', waCfg.callMeBotApiKey || (config.whatsappNotifications?.callMeBotApiKey) || '');
+      set('adminWaWebhookUrl', waCfg.webhookUrl || (config.whatsappNotifications?.webhookUrl) || '');
+
+      const badge = document.getElementById('adminWaStatusBadge');
+      if (badge) {
+        if (waCfg.callMeBotApiKey && waCfg.callMeBotApiKey.trim().length > 0) {
+          badge.style.background = '#dcfce7';
+          badge.style.color = '#15803d';
+          badge.textContent = '🟢 Automated Alerts Active (CallMeBot)';
+        } else if (waCfg.webhookUrl && waCfg.webhookUrl.trim().length > 0) {
+          badge.style.background = '#e0f2fe';
+          badge.style.color = '#0369a1';
+          badge.textContent = '🟢 Automated Alerts Active (Webhook)';
+        } else {
+          badge.style.background = '#fef3c7';
+          badge.style.color = '#92400e';
+          badge.textContent = '🟡 Setup Key for Auto Alerts';
+        }
+      }
     }
 
   },
@@ -2110,6 +2127,23 @@ This action cannot be undone.`);
       callMeBotApiKey,
       webhookUrl
     });
+
+    const badge = document.getElementById('adminWaStatusBadge');
+    if (badge) {
+      if (saved.callMeBotApiKey && saved.callMeBotApiKey.trim().length > 0) {
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#15803d';
+        badge.textContent = '🟢 Automated Alerts Active (CallMeBot)';
+      } else if (saved.webhookUrl && saved.webhookUrl.trim().length > 0) {
+        badge.style.background = '#e0f2fe';
+        badge.style.color = '#0369a1';
+        badge.textContent = '🟢 Automated Alerts Active (Webhook)';
+      } else {
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#92400e';
+        badge.textContent = '🟡 Setup Key for Auto Alerts';
+      }
+    }
 
     const feedback = document.getElementById('adminWaStatusFeedback');
     if (feedback) {

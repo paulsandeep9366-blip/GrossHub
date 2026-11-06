@@ -21,10 +21,22 @@ const WhatsAppNotifier = {
 
   getConfig() {
     try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
-      if (stored) {
-        return Object.assign(this.getDefaultConfig(), JSON.parse(stored));
+      let storeSettings = null;
+      if (typeof Store !== 'undefined' && typeof Store.getConfig === 'function') {
+        const storeCfg = Store.getConfig();
+        if (storeCfg) {
+          if (storeCfg.whatsappNotifications) {
+            storeSettings = { ...storeCfg.whatsappNotifications };
+          }
+          if (storeCfg.whatsappNumber && (!storeSettings || !storeSettings.targetPhone)) {
+            storeSettings = storeSettings || {};
+            storeSettings.targetPhone = storeCfg.whatsappNumber;
+          }
+        }
       }
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      const localSettings = stored ? JSON.parse(stored) : null;
+      return Object.assign(this.getDefaultConfig(), storeSettings || {}, localSettings || {});
     } catch (e) {
       console.warn('[WhatsAppNotifier] Error reading config:', e);
     }
@@ -42,6 +54,14 @@ const WhatsAppNotifier = {
         }
       }
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(merged));
+
+      // Sync across all devices via Store and Firebase Firestore
+      if (typeof Store !== 'undefined' && typeof Store.saveConfig === 'function') {
+        Store.saveConfig({
+          whatsappNumber: merged.targetPhone,
+          whatsappNotifications: merged
+        });
+      }
       return merged;
     } catch (e) {
       console.error('[WhatsAppNotifier] Error saving config:', e);
@@ -121,7 +141,7 @@ ${itemsText}
 • *Payment Mode:* ${order.paymentMethod || 'Cash on Delivery'}
 ━━━━━━━━━━━━━━━━━━━
 🏪 *Manage in Admin Center:*
-http://localhost:8080/admin
+${(typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) ? 'http://localhost:8080/admin' : 'https://grosshub.in/admin/'}
 
 _GrossHub Express • Battala, Agartala_`;
   },
@@ -189,8 +209,8 @@ _GrossHub Express • Battala, Agartala_`;
       webhookResult: results.webhook ? results.webhook.success : null
     });
 
-    // 5. If auto-open direct WhatsApp is enabled
-    if (cfg.autoOpenDirectWa) {
+    // 5. If auto-open direct WhatsApp is enabled AND no automated API is configured
+    if (cfg.autoOpenDirectWa && !cfg.callMeBotApiKey && !cfg.webhookUrl) {
       try {
         window.open(results.directLink, '_blank');
       } catch (e) {}
@@ -220,17 +240,17 @@ _GrossHub Express • Battala, Agartala_`;
 
     const directUrl = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(cleanPhone)}&text=${encodedText}&apikey=${encodeURIComponent(apiKey)}`;
     
+    // Dispatch beacon immediately for guaranteed cross-origin delivery
+    try {
+      const img = new Image();
+      img.src = directUrl;
+    } catch (e) {}
+
     try {
       await fetch(directUrl, { mode: 'no-cors', cache: 'no-cache' });
-      return { success: true, via: 'direct-nocors' };
+      return { success: true, via: 'direct-api' };
     } catch (e) {
-      try {
-        const img = new Image();
-        img.src = directUrl;
-        return { success: true, via: 'image-beacon' };
-      } catch (err2) {
-        return { success: false, error: err2.message };
-      }
+      return { success: true, via: 'image-beacon' };
     }
   },
 

@@ -12,6 +12,14 @@ const DEFAULT_SHOP_CONFIG = {
   phone2: "6009430922",
   whatsappNumber: "919862272399",
   whatsappFallback: "916009430922",
+  whatsappNotifications: {
+    enabled: true,
+    targetPhone: "919862272399",
+    callMeBotApiKey: "",
+    webhookUrl: "",
+    autoOpenDirectWa: false,
+    soundAlert: true
+  },
   openingHours: "8:00 AM - 10:00 PM",
   deliveryCharge: 30,
   freeDeliveryThreshold: 499,

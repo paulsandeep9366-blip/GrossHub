@@ -1867,11 +1867,15 @@ function handleCheckoutSubmit(e) {
     grandTotal: totals.grandTotal
   });
 
-  // Direct WhatsApp dispatch to Store Admin (+91 9862272399)
-  if (typeof WhatsAppNotifier !== 'undefined' && typeof WhatsAppNotifier.getDirectWhatsAppUrl === 'function') {
+  // WhatsApp dispatch to Store Admin (+91 9862272399)
+  if (typeof WhatsAppNotifier !== 'undefined') {
     try {
-      const waUrl = WhatsAppNotifier.getDirectWhatsAppUrl(order);
-      window.open(waUrl, '_blank');
+      const waCfg = WhatsAppNotifier.getConfig();
+      // Only pop up window if automated background delivery (CallMeBot/Webhook) is NOT active
+      if (waCfg.autoOpenDirectWa && !waCfg.callMeBotApiKey && !waCfg.webhookUrl) {
+        const waUrl = WhatsAppNotifier.getDirectWhatsAppUrl(order);
+        window.open(waUrl, '_blank');
+      }
     } catch(e) {
       console.warn('[Checkout] Direct WhatsApp dispatch blocked by browser:', e);
     }
