@@ -668,6 +668,30 @@ This action cannot be undone.`);
     }
   },
 
+  async handleDeleteAllOrders() {
+    const orders = Store.getOrders();
+    if (!orders || orders.length === 0) {
+      showToast("No orders found in Order Management.", "info");
+      return;
+    }
+    const confirmed = window.confirm(`⚠️ DANGER: Permanently Delete ALL ${orders.length} Orders?
+
+This will permanently wipe all orders from both local memory and the cloud database (Firestore).
+This action CANNOT be undone.
+
+Are you sure you want to proceed?`);
+    if (!confirmed) return;
+
+    Store.clearAllOrders();
+    this.knownOrderIds = new Set();
+    showToast(`All ${orders.length} orders permanently deleted. 🗑️`, "success");
+    this.renderMetrics();
+    this.renderOrders();
+    if (typeof RiderPanel !== "undefined" && RiderPanel.renderOrders) {
+      RiderPanel.renderOrders();
+    }
+  },
+
   openCancelReasonModal(orderId) {
     const order = Store.getOrder(orderId);
     if (!order) return;

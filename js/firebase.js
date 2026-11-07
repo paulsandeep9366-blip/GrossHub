@@ -126,6 +126,38 @@ const FirebaseSync = {
     }
   },
 
+  async deleteOrder(orderId) {
+    const db = this.db();
+    if (!db || !orderId) return false;
+    try {
+      await db.collection(this.COLLECTIONS.ORDERS).doc(String(orderId)).delete();
+      console.log('[FirebaseSync] Order deleted:', orderId);
+      return true;
+    } catch (e) {
+      console.error('[FirebaseSync] deleteOrder error:', e);
+      return false;
+    }
+  },
+
+  async deleteAllOrders() {
+    const db = this.db();
+    if (!db) return false;
+    try {
+      const snapshot = await db.collection(this.COLLECTIONS.ORDERS).get();
+      if (snapshot.empty) return true;
+      const batch = db.batch();
+      snapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      console.log('[FirebaseSync] All orders deleted from Firestore.');
+      return true;
+    } catch (e) {
+      console.error('[FirebaseSync] deleteAllOrders error:', e);
+      return false;
+    }
+  },
+
   async fetchOrders() {
     const db = this.db();
     if (!db) return null;

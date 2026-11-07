@@ -462,6 +462,14 @@ const Store = {
     return deleted;
   },
 
+  clearAllOrders() {
+    this.saveOrders([]);
+    if (typeof FirebaseSync !== 'undefined' && FirebaseSync.isReady() && FirebaseSync.deleteAllOrders) {
+      FirebaseSync.deleteAllOrders().catch(e => console.warn('[Store] Firestore deleteAllOrders error:', e));
+    }
+    return [];
+  },
+
   updateCancelReason(orderId, newReason) {
     const orders = this.getOrders();
     const order = orders.find(o => o.id === orderId);
