@@ -49,6 +49,11 @@ const Store = {
     return { ...DEFAULT_SHOP_CONFIG };
   },
 
+  // Category Helper
+  getCategories() {
+    return (typeof CATEGORIES !== "undefined") ? CATEGORIES : [];
+  },
+
   // Uber Delivery Rider Fee & Distance Calculation
   calculateDeliveryFee(distanceKm = 1.5, subtotal = 0, coupon = null) {
     const config = this.getConfig();
@@ -163,6 +168,17 @@ const Store = {
             }
             return p;
           });
+          // Auto-merge newly added default products (e.g. Beverages & Ice Creams) into local catalog
+          const existingIds = new Set(parsed.map(p => Number(p.id)));
+          if (typeof DEFAULT_PRODUCTS !== "undefined" && Array.isArray(DEFAULT_PRODUCTS)) {
+            DEFAULT_PRODUCTS.forEach(defProd => {
+              if (!existingIds.has(Number(defProd.id))) {
+                updated.push({ ...defProd });
+                updatedNeeded = true;
+              }
+            });
+          }
+
           if (updatedNeeded) {
             try {
               localStorage.setItem(this.KEYS.PRODUCTS, JSON.stringify(updated));

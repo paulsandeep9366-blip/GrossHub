@@ -802,7 +802,19 @@ This action cannot be undone.`);
     }
   },
 
+  syncCategoryOptions() {
+    const select = document.getElementById("prodCategory");
+    if (!select || typeof CATEGORIES === "undefined" || !Array.isArray(CATEGORIES)) return;
+    const currentVal = select.value;
+    select.innerHTML = CATEGORIES
+      .filter(c => c.id !== "all")
+      .map(c => `<option value="${escapeHTML(c.id)}">${escapeHTML(c.name)}</option>`)
+      .join("");
+    if (currentVal) select.value = currentVal;
+  },
+
   openProductAddModal() {
+    this.syncCategoryOptions();
     this.editingProductId = null;
     const form = document.getElementById('adminProductForm');
     if (form) form.reset();
@@ -823,6 +835,7 @@ This action cannot be undone.`);
   },
 
   openProductEditModal(id) {
+    this.syncCategoryOptions();
     const product = Store.getProducts().find(p => Number(p.id) === Number(id));
     if (!product) {
       showToast('Product not found.', 'error');

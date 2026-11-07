@@ -73,6 +73,8 @@ const CATEGORIES = [
   { id: "spices-masala", name: "Spices & Masalas", icon: "🌶️" },
   { id: "dairy-breakfast", name: "Dairy & Breakfast", icon: "🥛" },
   { id: "tea-snacks", name: "Tea & Snacks", icon: "☕" },
+  { id: "beverages", name: "Beverages", icon: "🥤" },
+  { id: "ice-creams", name: "Ice Creams", icon: "🍦" },
   { id: "cleaning-home", name: "Cleaning & Home", icon: "🧼" },
   { id: "fresh-produce", name: "Fresh Produce", icon: "🥬" }
 ];
@@ -522,6 +524,70 @@ const DEFAULT_PRODUCTS = [
     description: "Fragrant, spicy hill ginger freshly harvested from local Tripura farms.",
     inStock: true,
     stockQty: 40
+  },
+
+  // Beverages
+  {
+    id: 28,
+    name: "Thums Up Charged Soft Drink",
+    category: "beverages",
+    categoryName: "Beverages",
+    unit: "750 ml bottle",
+    price: 40,
+    mrp: 45,
+    emoji: "🥤",
+    image: "images/products/thums-up.jpg",
+    badge: "Chilled Express",
+    description: "Strong, fizzy and refreshing carbonated cola beverage. Best served ice-cold.",
+    inStock: true,
+    stockQty: 40
+  },
+  {
+    id: 29,
+    name: "Frooti Fresh 'N' Juicy Mango Drink",
+    category: "beverages",
+    categoryName: "Beverages",
+    unit: "600 ml bottle",
+    price: 38,
+    mrp: 42,
+    emoji: "🥭",
+    image: "images/products/mango-drink.jpg",
+    badge: "Kids Favorite",
+    description: "Made from real ripe mango pulp for an authentic rich sweet mango burst.",
+    inStock: true,
+    stockQty: 45
+  },
+
+  // Ice Creams
+  {
+    id: 30,
+    name: "Amul Vanilla Magic Ice Cream Tub",
+    category: "ice-creams",
+    categoryName: "Ice Creams",
+    unit: "500 ml tub",
+    price: 95,
+    mrp: 110,
+    emoji: "🍨",
+    image: "images/products/vanilla-tub.jpg",
+    badge: "Cold Chain Safe",
+    description: "Rich, creamy vanilla ice cream prepared with pure milk solids and dairy cream.",
+    inStock: true,
+    stockQty: 25
+  },
+  {
+    id: 31,
+    name: "Kwality Wall's Chocolate Cornetto",
+    category: "ice-creams",
+    categoryName: "Ice Creams",
+    unit: "105 ml cone",
+    price: 45,
+    mrp: 50,
+    emoji: "🍦",
+    image: "images/products/choco-cone.jpg",
+    badge: "Express Chilled",
+    description: "Crispy waffle cone layered with creamy chocolate ice cream and topped with crunchy nuts.",
+    inStock: true,
+    stockQty: 30
   }
 ];
 

@@ -4,7 +4,7 @@
  * Stale-while-revalidate for static assets
  */
 
-const CACHE_NAME = 'grosshub-v4.8.2';
+const CACHE_NAME = 'grosshub-v4.8.3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -32,7 +32,11 @@ const ASSETS_TO_CACHE = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
-  './images/hero-basket.jpg'
+  './images/hero-basket.jpg',
+  './images/products/thums-up.jpg',
+  './images/products/mango-drink.jpg',
+  './images/products/vanilla-tub.jpg',
+  './images/products/choco-cone.jpg'
 ];
 
 self.addEventListener('install', (event) => {
